@@ -1,0 +1,37 @@
+{
+  "name": "webex-flint",
+  "version": "0.1.0",
+  "description": "Bot Framework for Node JS",
+  "main": "index.js",
+  "scripts": {
+    "test": "node_modules/.bin/mocha --exit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flint-bot/flint.git"
+  },
+  "keywords": [
+    "bot",
+    "bot framework",
+    "webex",
+    "webex teams",
+    "cisco"
+  ],
+  "bugs": {
+    "url": "https://github.com/flint-bot/flint/issues"
+  },
+  "homepage": "https://github.com/flint-bot/flint#readme",
+  "author": "Nicholas Marus <nmarus@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "moment": "^2.24.0",
+    "validator": "^12.0.0",
+    "webex": "^1.80.43"
+  },
+  "devDependencies": {
+    "doctoc": "^1.4.0",
+    "dotenv": "^8.2.0",
+    "jsdoc-to-markdown": "^5.0.2",
+    "mocha": "^6.2.2"
+  }
+}
