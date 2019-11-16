@@ -322,6 +322,39 @@ describe('User Created Room to create a Test Bot', () => {
       });
     });
 
+    describe('bot.sendCard', () => {
+      it('sends a card', () => {
+        let testName = 'bot sends a card';
+        let cardJson = require('../common/input-card.json');
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.flintMessageCreatedEventHandler(testName, flint, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.sendCard(cardJson, 'What is your name?')
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.attachments === 'object'),
+              `${testName} did not return a message with a card attachment`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return when(true);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+
+
+    });
+
   });
 
 });
