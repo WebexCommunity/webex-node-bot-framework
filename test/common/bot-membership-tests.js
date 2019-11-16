@@ -1,6 +1,6 @@
 // Variables an functions shared by all tests
 var common = require("../common/common");
-let flint = common.flint;
+let framework = common.framework;
 let userWebex = common.userWebex;
 let Bot_Test_Space_Title = common.Bot_Test_Space_Title;
 let User_Test_Space_Title = common.User_Test_Space_Title;
@@ -22,7 +22,7 @@ describe('User Created Room to create a Test Bot', () => {
     }));
 
   // Add our bot to the room and validate that it is spawned properly
-  before(() => common.addBotToSpace('Add Bot to Space', flint, userCreatedTestRoom, eventsData)
+  before(() => common.addBotToSpace('Add Bot to Space', framework, userCreatedTestRoom, eventsData)
     .then((b) => {
       userCreatedRoomBot = b;
       return validator.isBot(b);
@@ -33,7 +33,7 @@ describe('User Created Room to create a Test Bot', () => {
     if ((!userCreatedRoomBot) || (!userCreatedTestRoom)) {
       return Promise.resolve();
     }
-    return common.botLeaveRoom('Bot Leaves Space', flint, userCreatedRoomBot, userCreatedTestRoom, eventsData);
+    return common.botLeaveRoom('Bot Leaves Space', framework, userCreatedRoomBot, userCreatedTestRoom, eventsData);
   });
 
   // User deletes room -- cleanup
@@ -56,7 +56,7 @@ describe('User Created Room to create a Test Bot', () => {
     // Create a room as user to have test bot which will create other rooms
     before(() => {
       let testName = 'empty bot.newRoom() test';
-      return common.botCreateRoom(testName, flint, userCreatedRoomBot, eventsData)
+      return common.botCreateRoom(testName, framework, userCreatedRoomBot, eventsData)
         .then((b) => {
           botCreatedRoomBot = b;
           botCreatedTestRoom, b.room;
@@ -70,13 +70,13 @@ describe('User Created Room to create a Test Bot', () => {
         return Promise.resolve();
       }
       const membershipDeleted = new Promise((resolve) => {
-        common.flintMembershipDeletedHandler('flint init', flint, eventsData, resolve);
+        common.frameworkMembershipDeletedHandler('framework init', framework, eventsData, resolve);
       });
       const stopped = new Promise((resolve) => {
-        botCreatedRoomBot.stopHandler('flint init', resolve);
+        botCreatedRoomBot.stopHandler('framework init', resolve);
       });
       const despawned = new Promise((resolve) => {
-        common.flintDespawnHandler('flint init', flint, eventsData, resolve);
+        common.frameworkDespawnHandler('framework init', framework, eventsData, resolve);
       });
 
 
@@ -100,10 +100,10 @@ describe('User Created Room to create a Test Bot', () => {
         testName = 'adds a user to the room';
         // Wait for the events associated with a new membership before completing test..
         membershipCreatedEvent = new Promise((resolve) => {
-          common.flintMembershipCreatedHandler(testName, flint, eventsData, resolve);
+          common.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
         });
-        flintMemberEntersEvent = new Promise((resolve) => {
-          common.flintMemberEntersHandler(testName, flint, eventsData, resolve);
+        frameworkMemberEntersEvent = new Promise((resolve) => {
+          common.frameworkMemberEntersHandler(testName, framework, eventsData, resolve);
         });
         botMemberEntersEvent = new Promise((resolve) => {
           botCreatedRoomBot.memberEntersHandler(testName, eventsData, resolve);
@@ -115,7 +115,7 @@ describe('User Created Room to create a Test Bot', () => {
             assert((emails[0] === common.userInfo.emails[0]),
               'bot.add did not return the expected email');
             // Wait for all the event handlers to fire
-            return when.all([membershipCreatedEvent, flintMemberEntersEvent, botMemberEntersEvent]);
+            return when.all([membershipCreatedEvent, frameworkMemberEntersEvent, botMemberEntersEvent]);
           })
           .catch((e) => {
             console.error(`${testName} failed: ${e.message}`);
@@ -128,10 +128,10 @@ describe('User Created Room to create a Test Bot', () => {
       //   testName = 'makes user a moderator';
       //   // Wait for the events associated with a new membership before completing test..
       //   membershipUpdateEvent = new Promise((resolve) => {
-      //     flintMembershipUpdatedHandler(testName, flint, eventsData, resolve);
+      //     frameworkMembershipUpdatedHandler(testName, framework, eventsData, resolve);
       //   });
-      //   flintMemberAddedAsModerator = new Promise((resolve) => {
-      //     flintMemberAddedAsModeratorHandler(testName, flint, eventsData, resolve);
+      //   frameworkMemberAddedAsModerator = new Promise((resolve) => {
+      //     frameworkMemberAddedAsModeratorHandler(testName, framework, eventsData, resolve);
       //   });
       //   botMemberAddedAsModerator = new Promise((resolve) => {
       //     botCreatedRoomBot.memberAddedAsModerator(testName, eventsData, resolve);
@@ -143,7 +143,7 @@ describe('User Created Room to create a Test Bot', () => {
       //       assert((emails[0] === user.emails[0]),
       //         'bot.add did not return the expected email');
       //       // Wait for all the event handlers to fire
-      //       return when.all([membershipUpdateEvent, flintMemberAddedAsModerator, botMemberAddedAsModerator]);
+      //       return when.all([membershipUpdateEvent, frameworkMemberAddedAsModerator, botMemberAddedAsModerator]);
       //     })
       //     // .then(() => {
       //     //   // triggers.push(eventsData.trigger);
@@ -161,10 +161,10 @@ describe('User Created Room to create a Test Bot', () => {
         testName = 'removes a user from the room';
         // Wait for the events associated with a new membership before completing test..
         membershipDeletedEvent = new Promise((resolve) => {
-          common.flintMembershipDeletedHandler(testName, flint, eventsData, resolve);
+          common.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
         });
-        flintMemberExitsEvent = new Promise((resolve) => {
-          common.flintMemberExitsHandler(testName, flint, eventsData, resolve);
+        frameworkMemberExitsEvent = new Promise((resolve) => {
+          common.frameworkMemberExitsHandler(testName, framework, eventsData, resolve);
         });
         botMemberExitsEvent = new Promise((resolve) => {
           botCreatedRoomBot.memberExitsHandler(testName, eventsData, resolve);
@@ -176,7 +176,7 @@ describe('User Created Room to create a Test Bot', () => {
             assert((emails[0] === common.userInfo.emails[0]),
               'bot.remove did not return the expected email');
             // Wait for all the event handlers to fire
-            return when.all([membershipDeletedEvent, flintMemberExitsEvent, botMemberExitsEvent]);
+            return when.all([membershipDeletedEvent, frameworkMemberExitsEvent, botMemberExitsEvent]);
           })
           .catch((e) => {
             console.error(`${testName} failed: ${e.message}`);

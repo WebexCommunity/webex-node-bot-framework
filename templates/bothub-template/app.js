@@ -1,46 +1,46 @@
 "use strict";
 
-var Flint = require('node-flint');
-var webhook = require('node-flint/webhook');
+var Framework = require('webex-node-bot-framework');
+var webhook = require('webex-node-bot-framework/webhook');
 var express = require('express');
 var bodyParser = require('body-parser');
 var path = require('path');
 
 var config = require(path.join(__dirname, 'config.js'));
 
-// var RedisStore = require('node-flint/storage/redis');
+// var RedisStore = require('webex-node-bot-framework/storage/redis');
 
 var app = express();
 app.use(bodyParser.json());
 
-// init flint
-var flint = new Flint(config);
+// init framework
+var framework = new Framework(config);
 
 // use redis storage
-// flint.storageDriver(new RedisStore(process.env.REDIS_URL));
+// framework.storageDriver(new RedisStore(process.env.REDIS_URL));
 
-//start flint, load plugin(s)
-flint.start()
+//start framework, load plugin(s)
+framework.start()
   .then(() => {
-    flint.use(path.join(__dirname, 'flint.js'));
+    framework.use(path.join(__dirname, 'framework.js'));
   })
   .then(() => {
-    flint.debug('Flint has started');
+    framework.debug('Framework has started');
   });
 
 // define express path for incoming webhooks
-app.post('/flint', webhook(flint));
+app.post('/framework', webhook(framework));
 
 // start express server
 var server = app.listen(process.env.PORT, function () {
-  flint.debug('Flint listening on port %s', process.env.PORT);
+  framework.debug('Framework listening on port %s', process.env.PORT);
 });
 
 // gracefully shutdown (ctrl-c)
 process.on('SIGINT', function() {
-  flint.debug('stoppping...');
+  framework.debug('stoppping...');
   server.close();
-  flint.stop().then(function() {
+  framework.stop().then(function() {
     process.exit();
   });
 });

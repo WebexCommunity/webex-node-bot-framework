@@ -11,8 +11,8 @@ cat overview.md >> ${README}
 
 ${DOCTOC} --github --notitle --maxlevel 4 ${README}
 
-echo -e "\n# Flint Reference\n\n" >> ${README}
+echo -e "\n# Framework Reference\n\n" >> ${README}
 
-${JSDOC} ../lib/flint.js ../lib/bot.js >> ${README}
+${JSDOC} ../lib/framework.js ../lib/bot.js >> ${README}
 
 cat license.md >> ${README}

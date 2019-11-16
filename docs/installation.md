@@ -4,13 +4,13 @@
 ```bash
 mkdir myproj
 cd myproj
-git clone https://github.com/nmarus/flint
-npm install ./flint
+git clone https://github.com/jpjpjp/webex-node-bot-framework
+npm install ./webex-node-bot-framework
 ```
 
 #### Via NPM
 ```bash
 mkdir myproj
 cd myproj
-npm install node-flint
+npm install webex-node-bot-framework
 ```

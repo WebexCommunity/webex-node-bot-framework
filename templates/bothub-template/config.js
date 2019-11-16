@@ -7,5 +7,5 @@ module.exports = {
   requeueMinTime: 500,
   removeWebhooksOnStart: true,
   webhookSecret: process.env.FLYNN_APP_ID,
-  webhookUrl: 'http://' + process.env.FLYNN_APP_NAME + '.engine.bothub.io/flint'
+  webhookUrl: 'http://' + process.env.FLYNN_APP_NAME + '.engine.bothub.io/framework'
 };

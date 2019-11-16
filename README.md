@@ -1,53 +1,15 @@
-# webex-flint
+# webex-node-bot-framework
 
 ### Webex Teams Bot Framework for Node JS
 
-This project is inspired by, and provides an alternate implementation of, the awesome [node-flint](https://github.com/flint-bot/flint/) framework by [Nick Marus](https://github.com/nmarus).  The flint framework makes it easy to quickly develop a Webex Teams bot, abstractig away some of the complexity of Webex For Developers interfaces, such as registering for events and calling REST APIs. A bot developer can use the flint framework to spark their imagination and focus primarily on how the bot will interact with users in Webex Teams.
+**Warning** - *This project is still in its initial development, so use at your own risk.  For details on areas that may still require attention before the poejcet is fully complete please see the* [To Do List](./docs/ToDo.MD)
+
+This project is inspired by, and provides an alternate implementation of, the awesome [node-flint](https://github.com/flint-bot/flint/) framework by [Nick Marus](https://github.com/nmarus).  The framework makes it easy to quickly develop a Webex Teams bot, abstractig away some of the complexity of Webex For Developers interfaces, such as registering for events and calling REST APIs. A bot developer can use the framework to spark their imagination and focus primarily on how the bot will interact with users in Webex Teams.
 
 The primary change in this implementation is that it is based on the [webex-jssdk](https://webex.github.io/webex-js-sdk) which continues to be supported as new features and functionality are added to Webex.  
 
-For developers who are familiar with flint, or who wish to port existing bots built on node-flint to the webex-flint framework, this implementation is backwards compatible.  Please see [Differences from original flint framework](./docs/migrate-from-node-flint.md)
+For developers who are familiar with flint, or who wish to port existing bots built on node-flint to the webex-node-bot-framework, this implementation is NOT backwards compatible.  Please see [Differences from original flint framework](./docs/migrate-from-node-flint.md)
 
-**See [CHANGELOG.md](/CHANGELOG.md) for details on changes to versions of Flint.**
-
-## Differences from the original flint framework
-
-For developers who are familiar with flint, there are also other difference to be aware of.  This version of flint was designed with two themes in mind:
-* Mimimize Webex API Calls.  The original flint could be quite slow as it attempted to provide bot developers rich details about the space, membership, message and message author.   This version eliminates some of that data in the interests of efficiency, (but provides convenience methods to get it when required)
-* Leverage native Webex data types.   The original flint would copy details from the webex objects such as message and person into various flint objects.  This version simply attaches the native Webex objects.   This increases flint's efficiency and makes it future proof as new attributes are added to the webex DTO
-
-For developer's who are porting existing flint based bots to this framework the following tables provide an overview of the changes to the key objects:
-
-### Bot Framework for Node JS
-
-## News
-
-**10/25/19 Support for Adaptive Cards:**
-
-* Cisco recently introduced support for [Adaptive Cards](https://developer.webex.com/docs/api/guides/cards/) in the Webex Teams.   Bots can send cards, using the new `attachment` attribute of the message object. Cards are useful as an alternative to text messages and files in order to display or collect complex bits of information. Cards can be sent by passing an object to the bot.say() method that includes a valid attachment.   To process user input to cards, apps must implement a `flint.on('attachmentaction', ..)` function.   For more details see the [adaptive-card-example](./adaptive-card-example.md)
-
-**6/21/19 Deploying behind a firewall:**
-
-* Cisco has recently introduced support in the Webex Javascript SDK which allows applications to register to receive the message, membership, and room events via a socket instead of via wehbhoks.   This allows applications to be deployed behind firewalls and removes the requirement that webex bots and integrations must expose a public IP address to receive events.   To take advantage of this in your flint applications simply remove the `webhookUrl` field from the configuration object passed to the flint constructor.   If this field is not set, flint will register to listen for these events instead of creating webhooks.
-
-**6/21/18 IMPORTANT:**
-
-* On August 31st, 2018 all bots with the sparkbot.io domain name will be
-  renamed with a webex.bot domain. Today in flint, the code compares the bot's
-  email with the trigger email to filter out messages from itself. If this code
-  is running on August 31st the bot will start responding to its own messages.
-  Please update to Flint v4.7.x as soon as possible to avoid interruption. 
-
-**3/19/18 IMPORTANT:**
-
-* Note that Flint v4 is still using the node-sparky library version 3.x.
-  However the repo for node-sparky is now on version 4 which has some major
-  differences. This misalignment between Flint and Sparky version
-  will be fixed with the release of Flint v5. In the
-  short term if you are accessing the spark object directly from Flint via
-  `flint.spark` be sure to use the documentation for [node-sparky 3.x](https://github.com/flint-bot/sparky/tree/v3).   
-
-**See [CHANGELOG.md](/CHANGELOG.md) for details on changes to versions of Flint.**
 
 ## Contents
 
@@ -71,60 +33,90 @@ For developer's who are porting existing flint based bots to this framework the 
 ```bash
 mkdir myproj
 cd myproj
-git clone https://github.com/nmarus/flint
-npm install ./flint
+git clone https://github.com/jpjpjp/webex-node-bot-framework
+npm install ./webex-node-bot-framework
 ```
 
 #### Via NPM
 ```bash
 mkdir myproj
 cd myproj
-npm install node-flint
+npm install webex-node-bot-framework
 ```
 #### Example Template Using Express
 ```js
-var Flint = require('node-flint');
-var webhook = require('node-flint/webhook');
+var Framework = require('webex-node-bot-framework'); 
+var webhook = require('webex-node-bot-framework/webhook');
+
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 app.use(bodyParser.json());
 
-// flint options
+// framework options
 var config = {
-  webhookUrl: 'http://myserver.com/flint',
+  webhookUrl: 'http://myserver.com/framework',
   token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u',
   port: 80
 };
 
-// init flint
-var flint = new Flint(config);
-flint.start();
+// init framework
+var framework = new Framework(config);
+framework.start();
 
+// An initialized event means your webhooks are all registered and the 
+// framework has created a bot object for all the spaces your bot is in
+framework.on("initialized", function () {
+  framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
+});
+
+// A spawn event is generated when the framework finds a space with your bot in it
+framework.on('spawn', function (bot) {
+  if (!framework.initialized) {
+    // don't say anything here or your bot's spaces will get 
+    // spammed every time your server is restarted
+    framework.debug(`While starting up framework found our bot in a space called: ${bot.room.title}`);
+  } else {
+    // After initialization, a spawn event means your bot got added to 
+    // a new space.   Say hello, and tell users what you do!
+    bot.say('Hi there, you can say hello to me.  Don\'t forget you need to mention me in a group space!');
+  }
+});
+
+var responded = false;
 // say hello
-flint.hears('/hello', function(bot, trigger) {
-  bot.say('Hello %s!', trigger.personDisplayName);
+framework.hears('hello', function(bot, trigger) {
+  bot.say('Hello %s!', trigger.person.displayName);
+  responded = true;
+});
+
+// Its a good practice to handle unexpected input
+framework.hears(/.*/gim, function(bot, trigger) {
+  if (!responded) {
+    bot.say('Sorry, I don\'t know how to respond to "%s"', trigger.message.text);
+  }
+  responded = false;
 });
 
 // define express path for incoming webhooks
-app.post('/flint', webhook(flint));
+app.post('/framework', webhook(framework));
 
 // start express server
 var server = app.listen(config.port, function () {
-  flint.debug('Flint listening on port %s', config.port);
+  framework.debug('Framework listening on port %s', config.port);
 });
 
 // gracefully shutdown (ctrl-c)
 process.on('SIGINT', function() {
-  flint.debug('stoppping...');
+  framework.debug('stoppping...');
   server.close();
-  flint.stop().then(function() {
+  framework.stop().then(function() {
     process.exit();
   });
 });
 ```
 
-[**Restify Example**](https://github.com/nmarus/flint/blob/master/docs/example2.md)
+[**Restify Example**](https://github.com/nmarus/framework/blob/master/docs/example2.md)
 ## Overview
 
 Most of Flint's functionality is based around the flint.hears function. This
@@ -234,13 +226,13 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 * If defining a flint.hears() using regex, the trigger.args array is the entire
   message.
 
-# Flint Reference
+# Framework Reference
 
 
 ## Classes
 
 <dl>
-<dt><a href="#Flint">Flint</a></dt>
+<dt><a href="#Framework">Framework</a></dt>
 <dd></dd>
 <dt><a href="#Bot">Bot</a></dt>
 <dd></dd>
@@ -264,16 +256,16 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 
 <dl>
 <dt><a href="#event_log">"log"</a></dt>
-<dd><p>Flint log event.</p>
+<dd><p>Framework log event.</p>
 </dd>
 <dt><a href="#event_stop">"stop"</a></dt>
-<dd><p>Flint stop event.</p>
+<dd><p>Framework stop event.</p>
 </dd>
 <dt><a href="#event_start">"start"</a></dt>
-<dd><p>Flint start event.</p>
+<dd><p>Framework start event.</p>
 </dd>
 <dt><a href="#event_initialized">"initialized"</a></dt>
-<dd><p>Flint initialized event.</p>
+<dd><p>Framework initialized event.</p>
 </dd>
 <dt><a href="#event_roomLocked">"roomLocked"</a></dt>
 <dd><p>Room Locked event.</p>
@@ -281,8 +273,8 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 <dt><a href="#event_roomUnocked">"roomUnocked"</a></dt>
 <dd><p>Room Unocked event.</p>
 </dd>
-<dt><a href="#event_personEnters">"personEnters"</a></dt>
-<dd><p>Person Enter Room event.</p>
+<dt><a href="#event_userEnters">"userEnters"</a></dt>
+<dd><p>User Enter Room event.</p>
 </dd>
 <dt><a href="#event_botAddedAsModerator">"botAddedAsModerator"</a></dt>
 <dd><p>Bot Added as Room Moderator.</p>
@@ -316,66 +308,66 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 </dd>
 </dl>
 
-<a name="Flint"></a>
+<a name="Framework"></a>
 
-## Flint
+## Framework
 **Kind**: global class  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| id | <code>string</code> | Flint UUID |
-| active | <code>boolean</code> | Flint active state |
-| initialized | <code>boolean</code> | Flint fully initialized |
-| isBotAccount | <code>boolean</code> | Is Flint attached to Webex using a bot account? |
-| isUserAccount | <code>boolean</code> | Is Flint attached to Webex using a user account? |
-| person | <code>object</code> | Flint person object |
-| email | <code>string</code> | Flint email |
-| webex | <code>object</code> | The Webex JSSDK instance used by flint |
+| id | <code>string</code> | Framework UUID |
+| active | <code>boolean</code> | Framework active state |
+| initialized | <code>boolean</code> | Framework fully initialized |
+| isBotAccount | <code>boolean</code> | Is Framework attached to Webex using a bot account? |
+| isUserAccount | <code>boolean</code> | Is Framework attached to Webex using a user account? |
+| person | <code>object</code> | Framework person object |
+| email | <code>string</code> | Framework email |
+| webex | <code>object</code> | The Webex JSSDK instance used by Framework |
 
 
-* [Flint](#Flint)
-    * [new Flint(options)](#new_Flint_new)
-    * [.options](#Flint+options) : <code>object</code>
-    * [.setWebexToken(token)](#Flint+setWebexToken) ⇒ <code>Promise.&lt;String&gt;</code>
-    * [.stop()](#Flint+stop) ⇒ <code>Promise.&lt;Boolean&gt;</code>
-    * [.start()](#Flint+start) ⇒ <code>Promise.&lt;Boolean&gt;</code>
-    * [.restart()](#Flint+restart) ⇒ <code>Promise.&lt;Boolean&gt;</code>
-    * [.getMessage(messageId)](#Flint+getMessage) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
-    * [.getFiles(messageId)](#Flint+getFiles) ⇒ <code>Promise.&lt;Array&gt;</code>
-    * [.getAttachmentAction(attachmentActionId)](#Flint+getAttachmentAction) ⇒ <code>Promise.&lt;AttachmentAction&gt;</code>
-    * [.hears(phrase, action, [helpText], [preference])](#Flint+hears) ⇒ <code>String</code>
-    * [.clearHears(id)](#Flint+clearHears) ⇒ <code>null</code>
-    * [.showHelp([header], [footer])](#Flint+showHelp) ⇒ <code>String</code>
-    * [.setAuthorizer(Action)](#Flint+setAuthorizer) ⇒ <code>Boolean</code>
-    * [.clearAuthorizer()](#Flint+clearAuthorizer) ⇒ <code>null</code>
-    * [.storageDriver(Driver)](#Flint+storageDriver) ⇒ <code>null</code>
-    * [.use(path)](#Flint+use) ⇒ <code>Boolean</code>
+* [Framework](#Framework)
+    * [new Framework(options)](#new_Framework_new)
+    * [.options](#Framework+options) : <code>object</code>
+    * [.setWebexToken(token)](#Framework+setWebexToken) ⇒ <code>Promise.&lt;String&gt;</code>
+    * [.stop()](#Framework+stop) ⇒ <code>Promise.&lt;Boolean&gt;</code>
+    * [.start()](#Framework+start) ⇒ <code>Promise.&lt;Boolean&gt;</code>
+    * [.restart()](#Framework+restart) ⇒ <code>Promise.&lt;Boolean&gt;</code>
+    * [.getMessage(messageId)](#Framework+getMessage) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+    * [.getFiles(messageId)](#Framework+getFiles) ⇒ <code>Promise.&lt;Array&gt;</code>
+    * [.getAttachmentAction(attachmentActionId)](#Framework+getAttachmentAction) ⇒ <code>Promise.&lt;AttachmentAction&gt;</code>
+    * [.hears(phrase, action, [helpText], [preference])](#Framework+hears) ⇒ <code>String</code>
+    * [.clearHears(id)](#Framework+clearHears) ⇒ <code>null</code>
+    * [.showHelp([header], [footer])](#Framework+showHelp) ⇒ <code>String</code>
+    * [.setAuthorizer(Action)](#Framework+setAuthorizer) ⇒ <code>Boolean</code>
+    * [.clearAuthorizer()](#Framework+clearAuthorizer) ⇒ <code>null</code>
+    * [.storageDriver(Driver)](#Framework+storageDriver) ⇒ <code>null</code>
+    * [.use(path)](#Framework+use) ⇒ <code>Boolean</code>
 
-<a name="new_Flint_new"></a>
+<a name="new_Framework_new"></a>
 
-### new Flint(options)
-Creates an instance of Flint.
+### new Framework(options)
+Creates an instance of the Framework.
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| options | <code>Object</code> | Configuration object containing Flint settings. |
+| options | <code>Object</code> | Configuration object containing Framework settings. |
 
 **Example**  
 ```js
 var options = {
-  webhookUrl: 'http://myserver.com/flint',
+  webhookUrl: 'http://myserver.com/framework',
   token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u'
 };
-var flint = new Flint(options);
+var framework = new Framework(options);
 ```
-<a name="Flint+options"></a>
+<a name="Framework+options"></a>
 
-### flint.options : <code>object</code>
+### framework.options : <code>object</code>
 Options Object
 
-**Kind**: instance namespace of [<code>Flint</code>](#Flint)  
+**Kind**: instance namespace of [<code>Framework</code>](#Framework)  
 **Properties**
 
 | Name | Type | Default | Description |
@@ -393,97 +385,97 @@ Options Object
 | [requestTimeout] | <code>number</code> | <code>20000</code> | Timeout for an individual request recieving a response. |
 | [queueSize] | <code>number</code> | <code>10000</code> | Size of the buffer that holds outbound requests. |
 | [requeueSize] | <code>number</code> | <code>10000</code> | Size of the buffer that holds outbound re-queue requests. |
-| [id] | <code>string</code> | <code>&quot;random&quot;</code> | The id this instance of flint uses. |
+| [id] | <code>string</code> | <code>&quot;random&quot;</code> | The id this instance of Framework uses. |
 | [webhookRequestJSONLocation] | <code>string</code> | <code>&quot;body&quot;</code> | The property under the Request to find the JSON contents. |
 | [removeWebhooksOnStart] | <code>Boolean</code> | <code>true</code> | If you wish to have the bot remove all account webhooks when starting. |
 
-<a name="Flint+setWebexToken"></a>
+<a name="Framework+setWebexToken"></a>
 
-### flint.setWebexToken(token) ⇒ <code>Promise.&lt;String&gt;</code>
+### framework.setWebexToken(token) ⇒ <code>Promise.&lt;String&gt;</code>
 Tests, and then sets a new Webex Token.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| token | <code>String</code> | New Webex Token for Flint to use. |
+| token | <code>String</code> | New Webex Token for Framework to use. |
 
 **Example**  
 ```js
-flint.setWebexToken('Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u')
+framework.setWebexToken('Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u')
   .then(function(token) {
      console.log('token updated to: ' + token);
   });
 ```
-<a name="Flint+stop"></a>
+<a name="Framework+stop"></a>
 
-### flint.stop() ⇒ <code>Promise.&lt;Boolean&gt;</code>
-Stop Flint.
+### framework.stop() ⇒ <code>Promise.&lt;Boolean&gt;</code>
+Stop Framework.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 **Example**  
 ```js
-flint.stop();
+framework.stop();
 ```
-<a name="Flint+start"></a>
+<a name="Framework+start"></a>
 
-### flint.start() ⇒ <code>Promise.&lt;Boolean&gt;</code>
-Start Flint.
+### framework.start() ⇒ <code>Promise.&lt;Boolean&gt;</code>
+Start Framework.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 **Example**  
 ```js
-flint.start();
+framework.start();
 ```
-<a name="Flint+restart"></a>
+<a name="Framework+restart"></a>
 
-### flint.restart() ⇒ <code>Promise.&lt;Boolean&gt;</code>
-Restart Flint.
+### framework.restart() ⇒ <code>Promise.&lt;Boolean&gt;</code>
+Restart Framework.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 **Example**  
 ```js
-flint.restart();
+framework.restart();
 ```
-<a name="Flint+getMessage"></a>
+<a name="Framework+getMessage"></a>
 
-### flint.getMessage(messageId) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+### framework.getMessage(messageId) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
 Get Message Object by ID
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | messageId | <code>String</code> | Message ID from Webex API. |
 
-<a name="Flint+getFiles"></a>
+<a name="Framework+getFiles"></a>
 
-### flint.getFiles(messageId) ⇒ <code>Promise.&lt;Array&gt;</code>
+### framework.getFiles(messageId) ⇒ <code>Promise.&lt;Array&gt;</code>
 Get Files from Message Object by ID
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | messageId | <code>String</code> | Message ID from Webex API. |
 
-<a name="Flint+getAttachmentAction"></a>
+<a name="Framework+getAttachmentAction"></a>
 
-### flint.getAttachmentAction(attachmentActionId) ⇒ <code>Promise.&lt;AttachmentAction&gt;</code>
+### framework.getAttachmentAction(attachmentActionId) ⇒ <code>Promise.&lt;AttachmentAction&gt;</code>
 Get Attachement Action by ID
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | attachmentActionId | <code>String</code> | attachmentActionID from Webex API. |
 
-<a name="Flint+hears"></a>
+<a name="Framework+hears"></a>
 
-### flint.hears(phrase, action, [helpText], [preference]) ⇒ <code>String</code>
+### framework.hears(phrase, action, [helpText], [preference]) ⇒ <code>String</code>
 Add action to be performed when bot hears a phrase.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -495,23 +487,23 @@ Add action to be performed when bot hears a phrase.
 **Example**  
 ```js
 // using a string to match first word and defines help text
-flint.hears('/say', function(bot, trigger, id) {
+framework.hears('/say', function(bot, trigger, id) {
   bot.say(trigger.args.slice(1, trigger.arges.length - 1));
 }, '/say <greeting> - Responds with a greeting');
 ```
 **Example**  
 ```js
 // using regex to match across entire message
-flint.hears(/(^| )beer( |.|$)/i, function(bot, trigger, id) {
+framework.hears(/(^| )beer( |.|$)/i, function(bot, trigger, id) {
   bot.say('Enjoy a beer, %s! 🍻', trigger.personDisplayName);
 });
 ```
-<a name="Flint+clearHears"></a>
+<a name="Framework+clearHears"></a>
 
-### flint.clearHears(id) ⇒ <code>null</code>
-Remove a "flint.hears()" entry.
+### framework.clearHears(id) ⇒ <code>null</code>
+Remove a "framework.hears()" entry.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -520,35 +512,35 @@ Remove a "flint.hears()" entry.
 **Example**  
 ```js
 // using a string to match first word and defines help text
-var hearsHello = flint.hears('/flint', function(bot, trigger, id) {
+var hearsHello = framework.hears('/framework', function(bot, trigger, id) {
   bot.say('Hello %s!', trigger.personDisplayName);
 });
-flint.clearHears(hearsHello);
+framework.clearHears(hearsHello);
 ```
-<a name="Flint+showHelp"></a>
+<a name="Framework+showHelp"></a>
 
-### flint.showHelp([header], [footer]) ⇒ <code>String</code>
-Display help for registered Flint Commands.
+### framework.showHelp([header], [footer]) ⇒ <code>String</code>
+Display help for registered Framework Commands.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [header] | <code>String</code> | <code>Usage:</code> | String to use in header before displaying help message. |
-| [footer] | <code>String</code> | <code>Powered by Flint - https://github.com/nmarus/flint</code> | String to use in footer before displaying help message. |
+| [footer] | <code>String</code> | <code>Powered by Webex Node Bot Framework - https://github.com/jpjpjp/webex-node-bot-framework</code> | String to use in footer before displaying help message. |
 
 **Example**  
 ```js
-flint.hears('/help', function(bot, trigger, id) {
-  bot.say(flint.showHelp());
+framework.hears('/help', function(bot, trigger, id) {
+  bot.say(framework.showHelp());
 });
 ```
-<a name="Flint+setAuthorizer"></a>
+<a name="Framework+setAuthorizer"></a>
 
-### flint.setAuthorizer(Action) ⇒ <code>Boolean</code>
+### framework.setAuthorizer(Action) ⇒ <code>Boolean</code>
 Attaches authorizer function.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -567,24 +559,24 @@ function myAuthorizer(bot, trigger, id) {
     return false;
   }
 }
-flint.setAuthorizer(myAuthorizer);
+framework.setAuthorizer(myAuthorizer);
 ```
-<a name="Flint+clearAuthorizer"></a>
+<a name="Framework+clearAuthorizer"></a>
 
-### flint.clearAuthorizer() ⇒ <code>null</code>
+### framework.clearAuthorizer() ⇒ <code>null</code>
 Removes authorizer function.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 **Example**  
 ```js
-flint.clearAuthorizer();
+framework.clearAuthorizer();
 ```
-<a name="Flint+storageDriver"></a>
+<a name="Framework+storageDriver"></a>
 
-### flint.storageDriver(Driver) ⇒ <code>null</code>
+### framework.storageDriver(Driver) ⇒ <code>null</code>
 Defines storage backend.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -593,14 +585,14 @@ Defines storage backend.
 **Example**  
 ```js
 // define memory store (default if not specified)
-flint.storageDriver(new MemStore());
+framework.storageDriver(new MemStore());
 ```
-<a name="Flint+use"></a>
+<a name="Framework+use"></a>
 
-### flint.use(path) ⇒ <code>Boolean</code>
+### framework.use(path) ⇒ <code>Boolean</code>
 Load a Plugin from a external file.
 
-**Kind**: instance method of [<code>Flint</code>](#Flint)  
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -608,19 +600,19 @@ Load a Plugin from a external file.
 
 **Example**  
 ```js
-flint.use('events.js');
+framework.use('events.js');
 ```
 **Example**  
 ```js
 // events.js
-module.exports = function(flint) {
-  flint.on('spawn', function(bot) {
+module.exports = function(framework) {
+  framework.on('spawn', function(bot) {
     console.log('new bot spawned in room: %s', bot.myroom.title);
   });
-  flint.on('despawn', function(bot) {
+  framework.on('despawn', function(bot) {
     console.log('bot despawned in room: %s', bot.myroom.title);
   });
-  flint.on('messageCreated', function(message, bot) {
+  framework.on('messageCreated', function(message, bot) {
     console.log('"%s" said "%s" in room "%s"', message.personEmail, message.text, bot.myroom.title);
   });
 };
@@ -648,12 +640,12 @@ module.exports = function(flint) {
 
 
 * [Bot](#Bot)
-    * [new Bot(flint)](#new_Bot_new)
+    * [new Bot(framework, options, webex)](#new_Bot_new)
     * [.exit()](#Bot+exit) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.add(email(s), [moderator])](#Bot+add) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.remove(email(s))](#Bot+remove) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.getModerators()](#Bot+getModerators) ⇒ <code>Promise.&lt;Array&gt;</code>
-    * [.newRoom(name, emails)](#Bot+newRoom) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
+    * [.newRoom(name, emails, isTeam)](#Bot+newRoom) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
     * [.newTeamRoom(name, emails)](#Bot+newTeamRoom) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
     * [.moderateRoom()](#Bot+moderateRoom) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
     * [.unmoderateRoom()](#Bot+unmoderateRoom) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
@@ -662,6 +654,7 @@ module.exports = function(flint) {
     * [.implode()](#Bot+implode) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.say([format], message)](#Bot+say) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
     * [.dm(email, [format], message)](#Bot+dm) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+    * [.sendCard(cardJson, fallbackText)](#Bot+sendCard) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
     * [.uploadStream(filename, stream)](#Bot+uploadStream) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
     * [.messageStreamRoom(roomId, message)](#Bot+messageStreamRoom) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
     * [.upload(filepath)](#Bot+upload) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
@@ -674,13 +667,15 @@ module.exports = function(flint) {
 
 <a name="new_Bot_new"></a>
 
-### new Bot(flint)
-Creates a Bot instance that is then attached to a Spark Room.
+### new Bot(framework, options, webex)
+Creates a Bot instance that is then attached to a Webex Team Room.
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| flint | <code>Object</code> | The flint object this Bot spawns under. |
+| framework | <code>Object</code> | The framework object this Bot spawns under. |
+| options | <code>Object</code> | The options of the framework object this Bot spawns under. |
+| webex | <code>Object</code> | The webex sdk of the framework object this Bot spawns under. |
 
 <a name="Bot+exit"></a>
 
@@ -761,7 +756,7 @@ bot.getModerators()
 ```
 <a name="Bot+newRoom"></a>
 
-### bot.newRoom(name, emails) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
+### bot.newRoom(name, emails, isTeam) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
 Create new room with people by email
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
@@ -770,11 +765,16 @@ Create new room with people by email
 | --- | --- | --- |
 | name | <code>String</code> | Name of room. |
 | emails | <code>Array</code> | Emails of people to add to room. |
+| isTeam | <code>Boolean</code> | - Create a team room (if bot is already in a team space) |
 
 <a name="Bot+newTeamRoom"></a>
 
 ### bot.newTeamRoom(name, emails) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
 Create new Team Room
+
+This can also be done by passing an optional boolean 
+isTeam param to the newRoom() function, but this function
+is also kept for compatibility with node-flint
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 
@@ -786,7 +786,10 @@ Create new Team Room
 <a name="Bot+moderateRoom"></a>
 
 ### bot.moderateRoom() ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
-Enable Room Moderation.Enable.
+Enable Room Moderation.
+
+This function will not work when framework was created
+using a bot token, it requires an authorized user token
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 **Example**  
@@ -801,6 +804,9 @@ bot.moderateRoom()
 ### bot.unmoderateRoom() ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
 Disable Room Moderation.
 
+This function will not work when framework was created
+using a bot token, it requires an authorized user token
+
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 **Example**  
 ```js
@@ -813,6 +819,9 @@ bot.unmoderateRoom()
 
 ### bot.moderatorSet(email(s)) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
 Assign Moderator in Room
+
+This function will not work when framework was created
+using a bot token, it requires an authorized user token
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 
@@ -831,6 +840,9 @@ bot.moderatorSet('john@test.com')
 
 ### bot.moderatorClear(email(s)) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
 Unassign Moderator in Room
+
+This function will not work when framework was created
+using a bot token, it requires an authorized user token
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 
@@ -853,7 +865,7 @@ Remove a room and all memberships.
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 **Example**  
 ```js
-flint.hears('/implode', function(bot, trigger) {
+framework.hears('/implode', function(bot, trigger) {
   bot.implode();
 });
 ```
@@ -872,43 +884,57 @@ Send text with optional file to room.
 **Example**  
 ```js
 // Simple example
-flint.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', function(bot, trigger) {
   bot.say('hello');
 });
 ```
 **Example**  
 ```js
 // Simple example to send message and file
-flint.hears('/file', function(bot, trigger) {
+framework.hears('/file', function(bot, trigger) {
   bot.say({text: 'Here is your file!', file: 'http://myurl/file.doc'});
 });
 ```
 **Example**  
 ```js
 // Markdown Method 1 - Define markdown as default
-flint.messageFormat = 'markdown';
-flint.hears('/hello', function(bot, trigger) {
+framework.messageFormat = 'markdown';
+framework.hears('/hello', function(bot, trigger) {
   bot.say('**hello**, How are you today?');
 });
 ```
 **Example**  
 ```js
 // Markdown Method 2 - Define message format as part of argument string
-flint.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', function(bot, trigger) {
   bot.say('markdown', '**hello**, How are you today?');
 });
 ```
 **Example**  
 ```js
 // Mardown Method 3 - Use an object (use this method of bot.say() when needing to send a file in the same message as markdown text.
-flint.hears('/hello', function(bot, trigger) {
-  bot.say({markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.personDisplayName + '>*'});
+framework.hears('/hello', function(bot, trigger) {
+  bot.say();
 });
+```
+**Example**  
+```js
+// Send an Webex card by providing a fully formed message object.
+framework.hears('/card please', function(bot, trigger) {
+  bot.say({       
+     // Fallback text for clients that don't render cards is required
+     markdown: "If you see this message your client cannot render buttons and cards.",
+     attachments: [{
+       "contentType": "application/vnd.microsoft.card.adaptive",
+       "content": myCardsSchema
+    }]
+   });
 ```
 <a name="Bot+dm"></a>
 
 ### bot.dm(email, [format], message) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
-Send text with optional file in a direct message. This sends a message to a 1:1 room with the user (creates 1:1, if one does not already exist)
+Send text with optional file in a direct message. 
+This sends a message to a 1:1 room with the user (creates 1:1, if one does not already exist)
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 
@@ -921,38 +947,98 @@ Send text with optional file in a direct message. This sends a message to a 1:1 
 **Example**  
 ```js
 // Simple example
-flint.hears('/dm', function(bot, trigger) {
+framework.hears('/dm', function(bot, trigger) {
   bot.dm('someone@domain.com', 'hello');
 });
 ```
 **Example**  
 ```js
 // Simple example to send message and file
-flint.hears('/dm', function(bot, trigger) {
+framework.hears('/dm', function(bot, trigger) {
   bot.dm('someone@domain.com', {text: 'Here is your file!', file: 'http://myurl/file.doc'});
 });
 ```
 **Example**  
 ```js
 // Markdown Method 1 - Define markdown as default
-flint.messageFormat = 'markdown';
-flint.hears('/dm', function(bot, trigger) {
+framework.messageFormat = 'markdown';
+framework.hears('/dm', function(bot, trigger) {
   bot.dm('someone@domain.com', '**hello**, How are you today?');
 });
 ```
 **Example**  
 ```js
 // Markdown Method 2 - Define message format as part of argument string
-flint.hears('/dm', function(bot, trigger) {
+framework.hears('/dm', function(bot, trigger) {
   bot.dm('someone@domain.com', 'markdown', '**hello**, How are you today?');
 });
 ```
 **Example**  
 ```js
 // Mardown Method 3 - Use an object (use this method of bot.dm() when needing to send a file in the same message as markdown text.
-flint.hears('/dm', function(bot, trigger) {
+framework.hears('/dm', function(bot, trigger) {
   bot.dm('someone@domain.com', {markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.personDisplayName + '>*'});
 });
+```
+<a name="Bot+sendCard"></a>
+
+### bot.sendCard(cardJson, fallbackText) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+Send a Webex Teams Card to room.
+
+**Kind**: instance method of [<code>Bot</code>](#Bot)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| cardJson | <code>Object</code> | The card JSON to render.  This can come from the Webex Buttons and Cards Designer. |
+| fallbackText | <code>String</code> | Message to be displayed on client's that can't render cards. |
+
+**Example**  
+```js
+// Simple example
+framework.hears('card please', function(bot, trigger) {
+  bot.SendCard(
+   {
+      "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+      "type": "AdaptiveCard",
+      "version": "1.0",
+      "body": [
+          {
+              "type": "ColumnSet",
+              "columns": [
+                  {
+                      "type": "Column",
+                      "width": 2,
+                      "items": [
+                          {
+                              "type": "TextBlock",
+                              "text": "Card Sample",
+                              "weight": "Bolder",
+                              "size": "Medium"
+                          },
+                          {
+                              "type": "TextBlock",
+                              "text": "What is your name?",
+                              "wrap": true
+                          },
+                          {
+                              "type": "Input.Text",
+                              "id": "myName",
+                              "placeholder": "John Doe"
+                          }
+                      ]
+                  }
+              ]
+          }
+      ],
+      "actions": [
+          {
+              "type": "Action.Submit",
+              "title": "Submit"
+          }
+      ]
+   },
+   "This is the fallback text if the client can't render this card");
+ });
 ```
 <a name="Bot+uploadStream"></a>
 
@@ -968,7 +1054,7 @@ Upload a file to a room using a Readable Stream
 
 **Example**  
 ```js
-flint.hears('/file', function(bot, trigger) {
+framework.hears('/file', function(bot, trigger) {
 
   // define filename used when uploading to room
   var filename = 'test.png';
@@ -988,7 +1074,7 @@ Streams message to a room.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| roomId | <code>String</code> | Spark Room ID |
+| roomId | <code>String</code> | Webex Teams Room ID |
 | message | <code>Object</code> | Message Object |
 
 **Example**  
@@ -1019,7 +1105,7 @@ Upload a file to room.
 
 **Example**  
 ```js
-flint.hears('/file', function(bot, trigger) {
+framework.hears('/file', function(bot, trigger) {
   bot.upload('test.png');
 });
 ```
@@ -1057,11 +1143,14 @@ bot.roomRename('My Renamed Room')
 ### bot.getMessages(count) ⇒ <code>Promise.&lt;Array&gt;</code>
 Get messages from room. Returned data has newest message at bottom.
 
+This function will not work when framework was created
+using a bot token, it requires an authorized user token
+
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 
-| Param | Type |
-| --- | --- |
-| count | <code>Integer</code> | 
+| Param | Type | Description |
+| --- | --- | --- |
+| count | <code>Integer</code> | - count of messages to return (max 10) |
 
 **Example**  
 ```js
@@ -1174,7 +1263,7 @@ Trigger Object
 <a name="event_log"></a>
 
 ## "log"
-Flint log event.
+Framework log event.
 
 **Kind**: event emitted  
 **Properties**
@@ -1186,38 +1275,38 @@ Flint log event.
 <a name="event_stop"></a>
 
 ## "stop"
-Flint stop event.
+Framework stop event.
 
 **Kind**: event emitted  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_start"></a>
 
 ## "start"
-Flint start event.
+Framework start event.
 
 **Kind**: event emitted  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_initialized"></a>
 
 ## "initialized"
-Flint initialized event.
+Framework initialized event.
 
 **Kind**: event emitted  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_roomLocked"></a>
 
@@ -1230,7 +1319,7 @@ Room Locked event.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_roomUnocked"></a>
 
@@ -1243,12 +1332,12 @@ Room Unocked event.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
-<a name="event_personEnters"></a>
+<a name="event_userEnters"></a>
 
-## "personEnters"
-Person Enter Room event.
+## "userEnters"
+User Enter Room event.
 
 **Kind**: event emitted  
 **Properties**
@@ -1256,8 +1345,8 @@ Person Enter Room event.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
-| person | <code>object</code> | Person Object |
-| id | <code>string</code> | Flint UUID |
+| membership | <code>object</code> | Membership Object |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_botAddedAsModerator"></a>
 
@@ -1270,7 +1359,7 @@ Bot Added as Room Moderator.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_botRemovedAsModerator"></a>
 
@@ -1283,7 +1372,7 @@ Bot Removed as Room Moderator.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_personAddedAsModerator"></a>
 
@@ -1297,7 +1386,7 @@ Person Added as Moderator.
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
 | person | <code>object</code> | Person Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_personRemovedAsModerator"></a>
 
@@ -1311,7 +1400,7 @@ Person Removed as Moderator.
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
 | person | <code>object</code> | Person Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_personExits"></a>
 
@@ -1324,8 +1413,8 @@ Person Exits Room.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
-| person | <code>object</code> | Person Object |
-| id | <code>string</code> | Flint UUID |
+| membership | <code>object</code> | Membership Object |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_mentioned"></a>
 
@@ -1339,7 +1428,7 @@ Bot Mentioned.
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
 | trigger | <code>object</code> | Trigger Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_message"></a>
 
@@ -1353,7 +1442,7 @@ Message Recieved.
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
 | trigger | <code>object</code> | Trigger Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_files"></a>
 
@@ -1367,7 +1456,7 @@ File Recieved.
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
 | trigger | <code>trigger</code> | Trigger Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_spawn"></a>
 
@@ -1380,7 +1469,7 @@ Bot Spawned.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 <a name="event_despawn"></a>
 
@@ -1393,7 +1482,7 @@ Bot Despawned.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
-| id | <code>string</code> | Flint UUID |
+| id | <code>string</code> | Framework UUID |
 
 ## License
 

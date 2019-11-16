@@ -1,6 +1,6 @@
 // Variables an functions shared by all tests
 var common = require("../common/common");
-let flint = common.flint;
+let framework = common.framework;
 let userWebex = common.userWebex;
 let Bot_Test_Space_Title = common.Bot_Test_Space_Title;
 let User_Test_Space_Title = common.User_Test_Space_Title;
@@ -22,7 +22,7 @@ describe('User Created Room to create a Test Bot', () => {
     }));
 
   // Add our bot to the room and validate that it is spawned properly
-  before(() => common.addBotToSpace('Add Bot to Space', flint, userCreatedTestRoom, eventsData)
+  before(() => common.addBotToSpace('Add Bot to Space', framework, userCreatedTestRoom, eventsData)
     .then((b) => {
       userCreatedRoomBot = b;
       return validator.isBot(b);
@@ -33,7 +33,7 @@ describe('User Created Room to create a Test Bot', () => {
     if ((!userCreatedRoomBot) || (!userCreatedTestRoom)) {
       return Promise.resolve();
     }
-    return common.botLeaveRoom('Bot Leaves Space', flint, userCreatedRoomBot, userCreatedTestRoom, eventsData);
+    return common.botLeaveRoom('Bot Leaves Space', framework, userCreatedRoomBot, userCreatedTestRoom, eventsData);
   });
 
   // User deletes room -- cleanup
@@ -59,7 +59,7 @@ describe('User Created Room to create a Test Bot', () => {
     // Create a room as user to have test bot which will create other rooms
     before(() => {
       let testName = 'bot.newRoom() with user as member test';
-      return common.botCreateRoom(testName, flint, userCreatedRoomBot, eventsData, common.userInfo.emails[0])
+      return common.botCreateRoom(testName, framework, userCreatedRoomBot, eventsData, common.userInfo.emails[0])
         .then((b) => {
           botCreatedRoomBot = b;
           return validator.isBot(b);
@@ -72,13 +72,13 @@ describe('User Created Room to create a Test Bot', () => {
         return Promise.resolve();
       }
       const membershipDeleted = new Promise((resolve) => {
-        common.flintMembershipDeletedHandler('delete room', flint, eventsData, resolve);
+        common.frameworkMembershipDeletedHandler('delete room', framework, eventsData, resolve);
       });
       const stopped = new Promise((resolve) => {
         botCreatedRoomBot.stopHandler('delete room', resolve);
       });
       const despawned = new Promise((resolve) => {
-        common.flintDespawnHandler('flint init', flint, eventsData, resolve);
+        common.frameworkDespawnHandler('framework init', framework, eventsData, resolve);
       });
 
 
@@ -91,10 +91,10 @@ describe('User Created Room to create a Test Bot', () => {
 
     // remove the hears handlers we set up for these tests
     after(() => {
-      flint.clearHears(hearsHi);
-      flint.clearHears(hearsFile);
-      flint.clearHears(hearsAnything);
-      flint.clearHears(hearsSomeStuff);
+      framework.clearHears(hearsHi);
+      framework.clearHears(hearsFile);
+      framework.clearHears(hearsAnything);
+      framework.clearHears(hearsSomeStuff);
     });
 
     describe('#user.webex.message.create()', () => {
@@ -119,7 +119,7 @@ describe('User Created Room to create a Test Bot', () => {
         let hearsInfo = {
           phrase: 'hi'
         };
-        return common.userSendMessage(testName, flint, userWebex, bot,
+        return common.userSendMessage(testName, framework, userWebex, bot,
           eventsData, hearsInfo, `<@personId:${bot.person.id}> hi`)
           .then((m) => {
             hearsHi = hearsInfo.functionVar;
@@ -133,21 +133,21 @@ describe('User Created Room to create a Test Bot', () => {
           phrase: /.*file.*/igm,
         };
         // Wait for the `files` events (as well as the others)
-        flintFilesEvent = new Promise((resolve) => {
-          common.flintFilesHandler(testName, flint, eventsData, resolve);
+        frameworkFilesEvent = new Promise((resolve) => {
+          common.frameworkFilesHandler(testName, framework, eventsData, resolve);
         });
         botFilesEvent = new Promise((resolve) => {
           bot.filesHandler(testName, eventsData, resolve);
         });
 
-        return common.userSendMessage(testName, flint, userWebex, bot,
+        return common.userSendMessage(testName, framework, userWebex, bot,
           eventsData, hearsInfo,
           `<@personId:${bot.person.id}> Here is a file for ya`,
           process.env.HOSTED_FILE)
           .then((m) => {
             message = m;
             hearsFile = hearsInfo.functionVar;
-            return when.all([flintFilesEvent, botFilesEvent]);
+            return when.all([frameworkFilesEvent, botFilesEvent]);
           });
       });
 
@@ -159,13 +159,13 @@ describe('User Created Room to create a Test Bot', () => {
           priority: 99
         };
 
-        return common.userSendMessage(testName, flint, userWebex, bot,
+        return common.userSendMessage(testName, framework, userWebex, bot,
           eventsData, hearsInfo,
           `<@personId:${bot.person.id}>Here is a whole mess of stuff for ya`)
           .then((m) => {
             hearsAnything = hearsInfo.functionVar;
             message = m;
-            return when.all([flintFilesEvent, botFilesEvent]);
+            return when.all([frameworkFilesEvent, botFilesEvent]);
           });
       });
 
@@ -177,13 +177,13 @@ describe('User Created Room to create a Test Bot', () => {
           priority: 2 // lower number == higher priority
         };
 
-        return common.userSendMessage(testName, flint, userWebex, bot,
+        return common.userSendMessage(testName, framework, userWebex, bot,
           eventsData, hearsInfo,
           `<@personId:${bot.person.id}>Here is a Some Stuff for ya`)
           .then((m) => {
             hearsSomeStuff = hearsInfo.functionVar;
             message = m;
-            return when.all([flintFilesEvent, botFilesEvent]);
+            return when.all([frameworkFilesEvent, botFilesEvent]);
           });
       });
 
@@ -196,11 +196,11 @@ describe('User Created Room to create a Test Bot', () => {
         testName = 'Bot posts message to room';
         message = {};
         eventsData = { bot: botCreatedRoomBot };
-        flint.messageFormat = 'markdown';
+        framework.messageFormat = 'markdown';
 
         // Wait for the events associated with a new message before completing test..
         messageCreatedEvent = new Promise((resolve) => {
-          common.flintMessageCreatedEventHandler(testName, flint, eventsData, resolve);
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
         });
       });
 
@@ -219,9 +219,9 @@ describe('User Created Room to create a Test Bot', () => {
             }
           }
           if (trigger.phrase) {
-            message += `\nIt matched the flint.hears() phrase: ${trigger.phrase}`;
+            message += `\nIt matched the framework.hears() phrase: ${trigger.phrase}`;
           }
-          flint.debug(message);
+          framework.debug(message);
         } else {
           message = '';
         }
@@ -329,7 +329,7 @@ describe('User Created Room to create a Test Bot', () => {
 
         // Wait for the events associated with a new message before completing test..
         messageCreatedEvent = new Promise((resolve) => {
-          common.flintMessageCreatedEventHandler(testName, flint, eventsData, resolve);
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
         });
 
         return botCreatedRoomBot.sendCard(cardJson, 'What is your name?')

@@ -1,40 +1,40 @@
 ## Example #2 Using Restify
 ```js
-var Flint = require('node-flint');
-var webhook = require('node-flint/webhook');
+var Framework = require('webex-node-bot-framework');
+var webhook = require('webex-node-bot-framework/webhook');
 var Restify = require('restify');
 var server = Restify.createServer();
 server.use(Restify.bodyParser());
 
-// flint options
+// framework options
 var config = {
-  webhookUrl: 'http://myserver.com/flint',
+  webhookUrl: 'http://myserver.com/framework',
   token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u',
   port: 80
 };
 
-// init flint
-var flint = new Flint(config);
-flint.start();
+// init framework
+var framework = new Framework(config);
+framework.start();
 
 // say hello
-flint.hears('/hello', function(bot, trigger) {
-  bot.say('Hello %s!', trigger.personDisplayName);
+framework.hears('/hello', function(bot, trigger) {
+  bot.say('Hello %s!', trigger.person.displayName);
 });
 
 // define restify path for incoming webhooks
-server.post('/flint', webhook(flint));
+server.post('/framework', webhook(framework));
 
 // start restify server
 server.listen(config.port, function () {
-  flint.debug('Flint listening on port %s', config.port);
+  framework.debug('Framework listening on port %s', config.port);
 });
 
 // gracefully shutdown (ctrl-c)
 process.on('SIGINT', function() {
-  flint.debug('stoppping...');
+  framework.debug('stoppping...');
   server.close();
-  flint.stop().then(function() {
+  framework.stop().then(function() {
     process.exit();
   });
 });

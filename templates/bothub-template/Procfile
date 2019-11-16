@@ -1,1 +1,1 @@
-web: DEBUG=flint,bot node app.js
+web: DEBUG=framework,bot node app.js

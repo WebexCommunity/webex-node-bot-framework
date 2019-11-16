@@ -1,6 +1,6 @@
 // Variables an functions shared by all tests
 var common = require("../common/common");
-let flint = common.flint;
+let framework = common.framework;
 let userWebex = common.userWebex;
 let User_Test_Space_Title = common.User_Test_Space_Title;
 
@@ -26,7 +26,7 @@ describe('User Created Rooms Tests', () => {
     }));
 
   // Add our bot to the room and validate that it is spawned properly
-  before(() => common.addBotToSpace('Add bot to user created room', flint, userCreatedTestRoom, eventsData)
+  before(() => common.addBotToSpace('Add bot to user created room', framework, userCreatedTestRoom, eventsData)
     .then((b) => {
       bot = b;
       return validator.isBot(b);
@@ -34,10 +34,10 @@ describe('User Created Rooms Tests', () => {
 
   // remove the hears handlers we set up for these tests
   after(() => {
-    flint.clearHears(hearsHi);
-    flint.clearHears(hearsFile);
-    flint.clearHears(hearsAnything);
-    flint.clearHears(hearsSomeStuff);
+    framework.clearHears(hearsHi);
+    framework.clearHears(hearsFile);
+    framework.clearHears(hearsAnything);
+    framework.clearHears(hearsSomeStuff);
   });
 
   // Bot leaves rooms
@@ -45,7 +45,7 @@ describe('User Created Rooms Tests', () => {
     if ((!bot) || (!userCreatedTestRoom)) {
       return Promise.resolve();
     }
-    return common.botLeaveRoom('Remove bot from user created room', flint, bot, userCreatedTestRoom, eventsData);
+    return common.botLeaveRoom('Remove bot from user created room', framework, bot, userCreatedTestRoom, eventsData);
   });
 
   // User deletes room -- cleanup
@@ -81,7 +81,7 @@ describe('User Created Rooms Tests', () => {
       let hearsInfo = {
         phrase: 'hi'
       };
-      return common.userSendMessage(testName, flint, userWebex, bot,
+      return common.userSendMessage(testName, framework, userWebex, bot,
         eventsData, hearsInfo, `<@personId:${bot.person.id}> hi`)
         .then((m) => {
           hearsHi = hearsInfo.functionVar;
@@ -95,21 +95,21 @@ describe('User Created Rooms Tests', () => {
         phrase: /.*file.*/igm,
       };
       // Wait for the `files` events (as well as the others)
-      flintFilesEvent = new Promise((resolve) => {
-        common.flintFilesHandler(testName, flint, eventsData, resolve);
+      frameworkFilesEvent = new Promise((resolve) => {
+        common.frameworkFilesHandler(testName, framework, eventsData, resolve);
       });
       botFilesEvent = new Promise((resolve) => {
         bot.filesHandler(testName, eventsData, resolve);
       });
 
-      return common.userSendMessage(testName, flint, userWebex, bot,
+      return common.userSendMessage(testName, framework, userWebex, bot,
         eventsData, hearsInfo,
         `<@personId:${bot.person.id}> Here is a file for ya`,
         process.env.HOSTED_FILE)
         .then((m) => {
           message = m;
           hearsFile = hearsInfo.functionVar;
-          return when.all([flintFilesEvent, botFilesEvent]);
+          return when.all([frameworkFilesEvent, botFilesEvent]);
         });
     });
 
@@ -121,13 +121,13 @@ describe('User Created Rooms Tests', () => {
         priority: 99
       };
 
-      return common.userSendMessage(testName, flint, userWebex, bot,
+      return common.userSendMessage(testName, framework, userWebex, bot,
         eventsData, hearsInfo,
         `<@personId:${bot.person.id}>Here is a whole mess of stuff for ya`)
         .then((m) => {
           hearsAnything = hearsInfo.functionVar;
           message = m;
-          return when.all([flintFilesEvent, botFilesEvent]);
+          return when.all([frameworkFilesEvent, botFilesEvent]);
         });
     });
 
@@ -139,13 +139,13 @@ describe('User Created Rooms Tests', () => {
         priority: 2 // lower number == higher priority
       };
 
-      return common.userSendMessage(testName, flint, userWebex, bot,
+      return common.userSendMessage(testName, framework, userWebex, bot,
         eventsData, hearsInfo,
         `<@personId:${bot.person.id}>Here is a Some Stuff for ya`)
         .then((m) => {
           hearsSomeStuff = hearsInfo.functionVar;
           message = m;
-          return when.all([flintFilesEvent, botFilesEvent]);
+          return when.all([frameworkFilesEvent, botFilesEvent]);
         });
     });
 
@@ -158,11 +158,11 @@ describe('User Created Rooms Tests', () => {
       testName = 'Bot posts message to room';
       message = {};
       eventsData = { bot: bot };
-      flint.messageFormat = 'markdown';
+      framework.messageFormat = 'markdown';
 
       // Wait for the events associated with a new message before completing test..
       messageCreatedEvent = new Promise((resolve) => {
-        common.flintMessageCreatedEventHandler(testName, flint, eventsData, resolve);
+        common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
       });
     });
 
@@ -181,9 +181,9 @@ describe('User Created Rooms Tests', () => {
           }
         }
         if (trigger.phrase) {
-          message += `\nIt matched the flint.hears() phrase: ${trigger.phrase}`;
+          message += `\nIt matched the framework.hears() phrase: ${trigger.phrase}`;
         }
-        flint.debug(message);
+        framework.debug(message);
       } else {
         message = '';
       }
@@ -291,17 +291,17 @@ describe('User Created Rooms Tests', () => {
       testName = 'Bot posts message to room';
       message = {};
       eventsData = { bot: bot };
-      flint.messageFormat = 'markdown';
+      framework.messageFormat = 'markdown';
 
       // Wait for the events associated with a new message before completing test..
       messageCreatedEvent = new Promise((resolve) => {
-        common.flintMessageCreatedEventHandler(testName, flint, eventsData, resolve);
+        common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
       });
     });
 
     it('sends a file attachment', () => {
       testName = 'sends a file attachment';
-      flint.messageFormat = 'text';
+      framework.messageFormat = 'text';
       messageText = 'Here is your file!';
       return bot.say({ text: messageText, file: process.env.HOSTED_FILE })
         .then((m) => {
@@ -325,10 +325,10 @@ describe('User Created Rooms Tests', () => {
         });
     });
 
-    it('sends a flint.format=text message', () => {
-      testName = 'sends a flint.format=text message';
-      flint.messageFormat = 'text';
-      messageText = 'This message is plain text, inferred from flint\'s messageFormat';
+    it('sends a framework.format=text message', () => {
+      testName = 'sends a framework.format=text message';
+      framework.messageFormat = 'text';
+      messageText = 'This message is plain text, inferred from framework\'s messageFormat';
       return bot.say(messageText)
         .then((m) => {
           message = m;
@@ -349,10 +349,10 @@ describe('User Created Rooms Tests', () => {
         });
     });
 
-    it('sends a flint.format=markdown message', () => {
-      testName = 'sends a flint.format=markdown message';
-      flint.messageFormat = 'markdown';
-      messageText = 'This message is **markdown** text, inferred from flint\'s messageFormat';
+    it('sends a framework.format=markdown message', () => {
+      testName = 'sends a framework.format=markdown message';
+      framework.messageFormat = 'markdown';
+      messageText = 'This message is **markdown** text, inferred from framework\'s messageFormat';
       return bot.say(messageText)
         .then((m) => {
           message = m;
@@ -375,7 +375,7 @@ describe('User Created Rooms Tests', () => {
 
     it('sends an explicitly formatted text message', () => {
       testName = 'sends an explicitly formatted text message';
-      flint.messageFormat = 'markdown';
+      framework.messageFormat = 'markdown';
       messageText = 'This message is plain text, explicitly set in the bot.say() call';
       return bot.say('text', messageText)
         .then((m) => {
@@ -398,8 +398,8 @@ describe('User Created Rooms Tests', () => {
     });
 
     it('sends an explicitly formatted markdown message', () => {
-      testName = 'sends a flint.format=markdown message';
-      flint.messageFormat = 'text';
+      testName = 'sends a framework.format=markdown message';
+      framework.messageFormat = 'text';
       messageText = 'This message is **markdown**, explicitly set in the bot.say() call';
       return bot.say('markdown', messageText)
         .then((m) => {
@@ -412,7 +412,7 @@ describe('User Created Rooms Tests', () => {
         })
         .then(() => {
           // Set this back to our default
-          flint.messageFormat = 'markdown';
+          framework.messageFormat = 'markdown';
           assert(validator.objIsEqual(message, eventsData.message),
             'message returned by API did not match the one from the messageCreated event');
           return when(true);

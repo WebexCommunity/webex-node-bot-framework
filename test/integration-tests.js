@@ -1,27 +1,27 @@
 /* integration-tests.js
  *
- * A set of tests to validate flint functionality
- * when flint is created using an authorized user token
+ * A set of tests to validate framework functionality
+ * when framework is created using an authorized user token
  */
 
-const Flint = require('../lib/flint');
+const Framework = require('../lib/framework');
 const Webex = require('webex');
 console.log('Starting integration-tests...');
 
-// Initialize the flint and user objects once for all the tests
-// TODO support another Env variable for emails of users to add to a space in order to test flint batch APIs
-let flint, userWebex;
+// Initialize the framework and user objects once for all the tests
+// TODO support another Env variable for emails of users to add to a space in order to test framework batch APIs
+let framework, userWebex;
 // Read in environment variables
 require('dotenv').config();
 environmentEvaluated = true;
 if ((typeof process.env.AUTHORIZED_FLINT_USER_API_TOKEN === 'string') &&
   (typeof process.env.USER_API_TOKEN === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
-  flint = new Flint({ token: process.env.AUTHORIZED_FLINT_USER_API_TOKEN });
+  framework = new Framework({ token: process.env.AUTHORIZED_FLINT_USER_API_TOKEN });
   userWebex = new Webex({ credentials: process.env.USER_API_TOKEN });
 } else {
   console.error('Missing required evnvironment variables:\n' +
-    '- AUTHORIZED_FLINT_USER_API_TOKEN -- token associatd with a user who authorized a flint based integrationt\n' +
+    '- AUTHORIZED_FLINT_USER_API_TOKEN -- token associatd with a user who authorized a framework based integrationt\n' +
     '- USER_API_TOKEN -- token associated with an existing user that integration will interact with\n' +
     '- HOSTED_FILE -- url to a file that can be attached to test messages\n' +
     'The tests will create a new space with the bot and the user');
@@ -32,16 +32,16 @@ if ((typeof process.env.AUTHORIZED_FLINT_USER_API_TOKEN === 'string') &&
 // Load the common module which includes functions and variables
 // shared by multiple tests
 var common = require("./common/common");
-common.setFlint(flint);
+common.setFramework(framework);
 common.setUser(userWebex);
 
-// Start up an instance of flint that we will use across multiple tests
-describe('#flint', () => {
-  // Validate that flint starts and that we have a valid user
-  before(() => common.initFlint('flint init', flint, userWebex));
+// Start up an instance of framework that we will use across multiple tests
+describe('#framework', () => {
+  // Validate that framework starts and that we have a valid user
+  before(() => common.initFramework('framework init', framework, userWebex));
 
-  //Stop flint to shut down the event listeners
-  after(() => common.stopFlint('shutdown flint', flint));
+  //Stop framework to shut down the event listeners
+  after(() => common.stopFramework('shutdown framework', framework));
 
   // Test app interactions in a user created test space
   require('./as-user/user-created-room-tests.js');
@@ -59,8 +59,8 @@ describe('#flint', () => {
 
 // gracefully shutdown (ctrl-c)
 process.on('SIGINT', function () {
-  flint.debug('stoppping...');
-  flint.stop().then(function () {
+  framework.debug('stoppping...');
+  framework.stop().then(function () {
     process.exit();
   });
 });

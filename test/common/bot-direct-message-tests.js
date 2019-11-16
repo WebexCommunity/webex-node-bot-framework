@@ -1,6 +1,6 @@
 // Variables an functions shared by all tests
 var common = require("../common/common");
-let flint = common.flint;
+let framework = common.framework;
 let userWebex = common.userWebex;
 
 let assert = common.assert;
@@ -14,7 +14,7 @@ describe('Bot interacts with user in 1-1 space', () => {
   let message;
   let eventsData = {};
   let trigger = {};
-  let messageCreatedEvent, flintMessageEvent, botMessageEvent;
+  let messageCreatedEvent, frameworkMessageEvent, botMessageEvent;
   // Setup the promises for the events that come from user input that mentions a bot
   beforeEach(() => {
     message = {};
@@ -26,10 +26,10 @@ describe('Bot interacts with user in 1-1 space', () => {
     eventsData = { bot: common.botForUser1on1Space };
     common.createBotEventHandlers(common.botForUser1on1Space);
     messageCreatedEvent = new Promise((resolve) => {
-      common.flintMessageCreatedEventHandler(testName, flint, eventsData, resolve);
+      common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
     });
-    flintMessageEvent = new Promise((resolve) => {
-      common.flintMessageHandler(testName, flint, eventsData, resolve);
+    frameworkMessageEvent = new Promise((resolve) => {
+      common.frameworkMessageHandler(testName, framework, eventsData, resolve);
     });
     botMessageEvent = new Promise((resolve) => {
       common.botForUser1on1Space.messageHandler(testName, eventsData, resolve);
@@ -46,13 +46,13 @@ describe('Bot interacts with user in 1-1 space', () => {
     }
     // Wait for the hears event associated with the input text
     const heard = new Promise((resolve) => {
-      flint.hears(/^DM: hi.*/igm, (b, t) => {
+      framework.hears(/^DM: hi.*/igm, (b, t) => {
         assert((b.id === common.botForUser1on1Space.id),
           'bot returned in fint.hears("hi") is not the one expected');
         assert(validator.objIsEqual(t, eventsData.trigger),
-          'trigger returned in flint.hears(/^hi.*/) was not as expected');
+          'trigger returned in framework.hears(/^hi.*/) was not as expected');
         trigger = t;
-        flint.debug('Bot heard message  that user posted');
+        framework.debug('Bot heard message  that user posted');
         resolve(true);
       });
     });
@@ -67,7 +67,7 @@ describe('Bot interacts with user in 1-1 space', () => {
         assert(validator.isMessage(message),
           'create message did not return a valid message');
         // Wait for all the event handlers and the heard handler to fire
-        return when.all([messageCreatedEvent, flintMessageEvent, botMessageEvent, heard]);
+        return when.all([messageCreatedEvent, frameworkMessageEvent, botMessageEvent, heard]);
       })
       .catch((e) => {
         console.error(`${testName} failed: ${e.message}`);

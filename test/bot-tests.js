@@ -1,20 +1,20 @@
 /* bot-tests.js
  *
- * A set of tests to validate flint functionality
- * when flint is created using a bot token
+ * A set of tests to validate framework functionality
+ * when framework is created using a bot token
  */
 
-const Flint = require('../lib/flint');
+const Framework = require('../lib/framework');
 const Webex = require('webex');
 console.log('Starting bot-tests...');
 
-// Initialize the flint and user objects once for all the tests
-let flint, userWebex;
+// Initialize the framework and user objects once for all the tests
+let framework, userWebex;
 require('dotenv').config();
 if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   (typeof process.env.USER_API_TOKEN === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
-  flint = new Flint({ token: process.env.BOT_API_TOKEN });
+  framework = new Framework({ token: process.env.BOT_API_TOKEN });
   userWebex = new Webex({ credentials: process.env.USER_API_TOKEN });
 } else {
   console.error('Missing required evnvironment variables:\n' +
@@ -28,20 +28,20 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
 // Load the common module which includes functions and variables
 // shared by multiple tests
 var common = require("./common/common");
-common.setFlint(flint);
+common.setFramework(framework);
 common.setUser(userWebex);
 
-// Start up an instance of flint that we will use across multiple tests
-describe('#flint', () => {
-  // Validate that flint starts and that we have a valid user
-  before(() => common.initFlint('flint init', flint, userWebex));
+// Start up an instance of framework that we will use across multiple tests
+describe('#framework', () => {
+  // Validate that framework starts and that we have a valid user
+  before(() => common.initFramework('framework init', framework, userWebex));
 
-  //Stop flint to shut down the event listeners
-  after(() => common.stopFlint('shutdown flint', flint));
+  //Stop framework to shut down the event listeners
+  after(() => common.stopFramework('shutdown framework', framework));
 
-  // Run some basic validation against the flint methods
+  // Run some basic validation against the framework methods
   // Could probably get rid of these if they are used internally by the other tests
-  require('./common/flint-functions.js');
+  require('./common/framework-functions.js');
 
   // Test bot interactions in a user created test space
   require('./as-bot/user-created-room-tests.js');
@@ -59,8 +59,8 @@ describe('#flint', () => {
 
 // gracefully shutdown (ctrl-c)
 process.on('SIGINT', function () {
-  flint.debug('stoppping...');
-  flint.stop().then(function () {
+  framework.debug('stoppping...');
+  framework.stop().then(function () {
     process.exit();
   });
 });

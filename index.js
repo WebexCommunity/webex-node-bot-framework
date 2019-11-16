@@ -1,1 +1,1 @@
-module.exports = require('./lib/flint');
+module.exports = require('./lib/framework');

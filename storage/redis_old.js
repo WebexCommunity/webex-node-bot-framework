@@ -5,7 +5,7 @@ var when = require('when');
 var _ = require('lodash');
 
 function Storage(connectionUrl, name) {
-  name = typeof name === 'string' ? name : 'flint';
+  name = typeof name === 'string' ? name : 'framework';
   var redis = Redis.createClient({ url: connectionUrl });
 
   var memStore = {};

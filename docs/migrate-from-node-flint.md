@@ -1,27 +1,59 @@
 # Differences from the original flint framework
 
-The primary reason for creating the webex-flint framework was to create a framework based on the [webex-jssdk](https://webex.github.io/webex-js-sdk) which continues to be supported as new features and functionality are added to Webex. This version of flint was designed with two themes in mind:
+The primary reason for creating the webex-node-bot-framework was to create a framework based on the [webex-jssdk](https://webex.github.io/webex-js-sdk) which continues to be supported as new features and functionality are added to Webex. This version of the proejct was designed with two themes in mind:
 
 * Mimimize Webex API Calls.  The original flint could be quite slow as it attempted to provide bot developers rich details about the space, membership, message and message author.   This version eliminates some of that data in the interests of efficiency, (but provides convenience methods to enable bot developers to get this information if it is required)
-* Leverage native Webex data types.   The original flint would copy details from the webex objects such as message and person into various flint objects.  This version simply attaches the native Webex objects.   This increases flint's efficiency and makes it future proof as new attributes are added to the various webex DTOs
+* Leverage native Webex data types.   The original flint would copy details from the webex objects such as message and person into various flint objects.  This version simply attaches the native Webex objects.   This increases the framework's efficiency and makes it future proof as new attributes are added to the various webex DTOs
+
+It's also worth noting that the `flint` object from node-flint has been renamed simply to `framework`.  For developers porting to from node-flint, it may be simpler to modify code that looks like this:
+
+```javascript
+var Flint = require('node-flint');
+var webhook = require('node-flint/webhook');
+// flint options
+var config = {
+  webhookUrl: 'http://myserver.com/framework',
+  token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u',
+  port: 80
+};
+var flint = new Flint(config);
+```
+
+To look something like this:
+
+```javascript
+var Framework = require('webex-node-bot-framework');
+var webhook = require('webex-node-bot-framework/webhook');
+// framework options
+var config = {
+  webhookUrl: 'http://myserver.com/framework',
+  token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u',
+  port: 80
+};
+var flint = new Framework(config);
+```
+Naming the new Framework object `flint`, allows existing `flint.hears()` and `flint.on()` functions to behave as the currently do.  
+
+With that said, please review the other changes outlined in this document to determine if any flint handler function logic needs to be updated.
+
 
 ## Core Object Changes
 For developer's who are porting existing flint based bots to this framework the following tables provide an overview of the changes to the key objects (note that all dates are strings, not moment objects as they were in node-flint):
 
-## Flint
+## Framework (Formerly Flint)
 **Kind**: global class  
 **Properties**
 
-| Orig Flint Name | New Flint Name | Description                    | Reason For Change                    |
+| Orig Flint Name | New Framework Name | Description                    | Reason For Change                    |
 | --------------- | -------------- | ------------------------------ | ------------------------------------ |
-| id              | id             | Flint UUID                     |                                      |
-| active          | active         | Flint active state             |                                      |
-| intialized      | initialized    | Flint fully initialized        |                                      |
-| isBotAccount    | isBotAccount   | Is Flint using a bot account?  |                                      |
-| isUserAccount   | isUserAccount  | Is Flint using a user account? |                                      |
-| person          | person         | Flint person object            | Now is unchanged webex person object |
-| email           | email          | Flint email                    | No longer set to all lower case      |
-| spark           | webex          | Flint SDK                      | now based on webex jsssdk            |
+| id              | id             | Framework UUID                     |                                      |
+| active          | active         | Framework active state             |                                      |
+| intialized      | initialized    | Framework fully initialized        |                                      |
+| isBotAccount    | isBotAccount   | Is Framework using a bot account?  |                                      |
+| isUserAccount   | isUserAccount  | Is Framework using a user account? |                                      |
+| person          | person         | Framework person object            | Now is unchanged webex person object |
+| email           | email          | Framework email                    | No longer set to all lower case      |
+| spark           | webex          | Framework SDK                      | now based on webex jsssdk            |
 
 ## Bot
 **Kind**: global class  
@@ -30,9 +62,10 @@ For developer's who are porting existing flint based bots to this framework the 
 | Orig Bot Name | New Bot Name | Description                                  | Reason For Change                                            |
 | ------------- | ------------ | -------------------------------------------- | -------------------------------------------------------------|
 | id            | id           | Bot UUID                                     |                                                              |
+| flint          | framework          | Framework object                      | Name change                                                              |
 | active        | active       | Bot active state                             |                                                              |
-| person        | --           | Bot Person Object                            | Availabile in flint object                                   |
-| email         | --           | Bot email                                    | Availabile in flint object                                   | 
+| person        | --           | Bot Person Object                            | Availabile as bot.framework.person                         |
+| email         | --           | Bot email                                    | Availabile as bot.framework.person.emails[0]                                   | 
 | team          | --           | Bot team object                              | available via bot.getTeam() convenience function TODO        |
 | room          | room         | Bot room object                              | Now is standard webex room object                            |
 | membership    | membership   | Bot membership object                        | Standard Webex Teams membership object for bot               |
@@ -82,7 +115,7 @@ Trigger Object
 | personMembership  |  --                 | Person Membership object for person             | use bot.getTriggerMembership()          |
 
 ## Event changes
-Node-flint generated a set of `person` events based on membership changes.  For each membership, the framework would fetch the person object associated with that memebership pass it to the event handler.  Since many bots don't even register these handers this seems expensive.  Information like the personEmail and personDisplayName are also already included in the membership DTO.  Finally, bots that truly wish to get the person object can always query it directly via the `flint.getPerson(membership.personId)` function.
+Node-flint generated a set of `person` events based on membership changes.  For each membership, the framework would fetch the person object associated with that memebership pass it to the event handler.  Since many bots don't even register these handers this seems expensive.  Information like the personEmail and personDisplayName are also already included in the membership DTO.  Finally, bots that truly wish to get the person object can always query it directly via the `framework.getPerson(membership.personId)` function.
 
  Our framework instead generates a set of related `member` named events and passes the membership associated with the change to event handler.   This makes the framework snappier and the events seem more aptly named (since the membership change may be associated with another bot as well as a person).
 
@@ -92,31 +125,28 @@ Witht this in mind the following node-flint events are now renamed as follows:
 * `personAddedAsModerator`  -> `memberAddedAsModerator`
 * `personRemovedAsModerator` -> `memberRemovedAsModerator`
 
-The payload passed to the event handlers will be a bot, the membership object, and the bot or flint id.  Therefore an app that implemented something like:
+The payload passed to the event handlers will be a bot, the *membership object* (not a person object), and the bot or framework id.  Therefore an app that implemented something like:
 
 ```javascript
-flint.on('personEnters', function (bot, person) {
-  bot.sy(`Welcome ${person.displayName}!`);
+framework.on('personEnters', function (bot, person) {
+  bot.say(`Welcome ${person.displayName}!`);
 });
 ```
 
 Would need to be modified to handle the `memberAdded` event with a memebership object instead, ie:
 
 ```javascript
-flint.on('memberAdded', function (bot, membership) {
-  bot.sy(`Welcome ${membership.personDisplayName}!`);
+framework.on('memberAdded', function (bot, membership) {
+  bot.say(`Welcome ${membership.personDisplayName}!`);
 });
 ```
 
-For every message node-flint generates a set of messages which may include
+For every message node-flint generates a set of events which may include
 * `messageCreated`
 * `mentioned`
 * `message`
 * `files`
 
-Our new framework will ONLY generate the `messageCreated` event in instances when the message was sent by the bot.  In almost all cases bots and applications don't want to respond to their own messages, however those that choose to do so should build the logic for processing them in a `flint.on("messageCreated", message, flintId)` handler since the other events are no longer sent.   If any other space member posts a message the `message` event will always fire and the `mentioned` event will fire if the message mentioned the bot, and a `files` event will fire if the message includes file attachments.
+Our new framework will ONLY generate the `messageCreated` event in instances when the message was sent by the bot.  In almost all cases bots and applications don't want to respond to their own messages, however those that choose to do so should build the logic for processing them in a `flint.on("messageCreated", message, flintId)` handler since the other events are no longer sent.   If any other space member posts a message, the `message` event will always fire and the `mentioned` event will fire if the message mentioned the bot, and a `files` event will fire if the message includes file attachments.
 
-* bot.memberships
-* trigger
-* Messages from the bot are ignored earlier in the process.   Even if the bot mentions itself in a message this message will be ignored.
 

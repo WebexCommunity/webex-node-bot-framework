@@ -1,31 +1,31 @@
 #### Adaptive Card Template Using Express
 ```js
-var Flint = require('node-flint');
-var webhook = require('node-flint/webhook');
+var Framework = require('webex-node-bot-framework');
+var webhook = require('webex-node-bot-framework/webhook');
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 app.use(bodyParser.json());
 
-// flint options
+// framework options
 var config = {
-  webhookUrl: 'http://myserver.com/flint',
+  webhookUrl: 'http://myserver.com/framework',
   token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u',
   port: 80
 };
 
-// init flint
-var flint = new Flint(config);
-flint.start();
+// init framework
+var framework = new Framework(config);
+framework.start();
 
-flint.on("initialized", async function () {
-  flint.debug("Flint initialized successfully! [Press CTRL-C to quit]");
+framework.on("initialized", async function () {
+  framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
 });
 
 
 
 // send an example card in response to any input
-flint.hears(/.*/, function(bot) {
+framework.hears(/.*/, function(bot) {
   bot.say({
     // Fallback text for clients that don't render cards
     markdown: "[Tell us about yourself](https://www.example.com/form/book-vacation). We just need a few more details to get you booked for the trip of a lifetime!",
@@ -34,23 +34,23 @@ flint.hears(/.*/, function(bot) {
 });
 
 // Process a submitted card
-flint.on('attachmentAction', function (bot, attachmentAction) {
-  bot.say(`Got an attachmentAction:\n${JSON.stringify(attachmentAction, null, 2)}`);
+framework.on('attachmentAction', function (bot, trigger) {
+  bot.say(`Got an attachmentAction:\n${JSON.stringify(trigger.attachmentAction, null, 2)}`);
 });
 
 // define express path for incoming webhooks
-app.post('/', webhook(flint));
+app.post('/', webhook(framework));
 
 // start express server
 var server = app.listen(config.port, function () {
-  flint.debug('Flint listening on port %s', config.port);
+  framework.debug('Framework listening on port %s', config.port);
 });
 
 // gracefully shutdown (ctrl-c)
 process.on('SIGINT', function() {
-  flint.debug('stoppping...');
+  framework.debug('stoppping...');
   server.close();
-  flint.stop().then(function() {
+  framework.stop().then(function() {
     process.exit();
   });
 });
