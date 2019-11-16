@@ -4,7 +4,8 @@
   "description": "Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha --exit"
+    "test-as-bot": "node_modules/.bin/mocha test/bot-tests.js --exit",
+    "test-as-user": "node_modules/.bin/mocha test/integration-tests.js --exit"
   },
   "repository": {
     "type": "git",

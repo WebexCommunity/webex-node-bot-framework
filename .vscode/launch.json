@@ -21,7 +21,7 @@
         "--timeout",
         "90000",
         "--colors",
-        "${workspaceFolder}/test"
+        "${workspaceFolder}/test/bot-tests.js"
       ],
       "internalConsoleOptions": "openOnSessionStart"
     }

@@ -81,7 +81,7 @@ Trigger Object
 | personDomain      | --                  | Person Domain name                              | derive from trigger.person[0]           |
 | personMembership  |  --                 | Person Membership object for person             | use bot.getTriggerMembership()          |
 
-## Event handler changes
+## Event changes
 Node-flint generated a set of `person` events based on membership changes.  For each membership, the framework would fetch the person object associated with that memebership pass it to the event handler.  Since many bots don't even register these handers this seems expensive.  Information like the personEmail and personDisplayName are also already included in the membership DTO.  Finally, bots that truly wish to get the person object can always query it directly via the `flint.getPerson(membership.personId)` function.
 
  Our framework instead generates a set of related `member` named events and passes the membership associated with the change to event handler.   This makes the framework snappier and the events seem more aptly named (since the membership change may be associated with another bot as well as a person).
@@ -108,6 +108,13 @@ flint.on('memberAdded', function (bot, membership) {
 });
 ```
 
+For every message node-flint generates a set of messages which may include
+* `messageCreated`
+* `mentioned`
+* `message`
+* `files`
+
+Our new framework will ONLY generate the `messageCreated` event in instances when the message was sent by the bot.  In almost all cases bots and applications don't want to respond to their own messages, however those that choose to do so should build the logic for processing them in a `flint.on("messageCreated", message, flintId)` handler since the other events are no longer sent.   If any other space member posts a message the `message` event will always fire and the `mentioned` event will fire if the message mentioned the bot, and a `files` event will fire if the message includes file attachments.
 
 * bot.memberships
 * trigger
