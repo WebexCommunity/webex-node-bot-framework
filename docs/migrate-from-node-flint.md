@@ -34,7 +34,19 @@ var flint = new Framework(config);
 ```
 Naming the new Framework object `flint`, allows existing `flint.hears()` and `flint.on()` functions to behave as the currently do.  
 
-With that said, please review the other changes outlined in this document to determine if any flint handler function logic needs to be updated.
+## Common migration tasks
+Alternatly, since elements of the bot and trigger objects have also changed, one might just bite the bullet, and do some search and replace.  The biggest migration tasks come from the renaming of flint to framework and the change in structures for the bot and trigger objects.  Common case sensitive search and replace tasks might include
+
+* node-flint --> webex-node-bot-framework
+* Flint --> Framework 
+* flint --> framework
+* trigger.personDisplayName --> trigger.person.displayName
+* trigger.roomTitle --> trigger.room.title
+* trigger.personEmail --> trigger.person.emails[0]
+* trigger.roomId --> trigger.room.id
+* bot.roomId --> bot.room.id
+
+With that said, please review the other changes outlined in this document to determine if any existing flint.hears() or flint.on() handler function logic needs to be updated.
 
 
 ## Core Object Changes
