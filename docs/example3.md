@@ -1,43 +1,71 @@
-## Example #3 Using Socket2me (experimental and under development)
+## Example #3 Using Webex SDK's events via websockets
 An inbound, internet reachable port, is required for the Webex API to notify
-Framework of webhook events. This is not always easy or possible.
+Framework of webhook events. This is not always easy or possible. 
 
-Framework utilize a remote socket client through a
-[socket2me](https://github.com/nmarus/socket2me) server in the event you want to
-stand up a bot where forwarding a port is not possible.
+In the summer of 2019, Cisco introduced a new mechanism in the Webex Javascript SDK which allows applications to register to receive the message, membership, and room events via a socket instead of via wehbhoks. This allows applications to be deployed behind firewalls and removes the requirement that webex bots and integrations must expose a public IP address to receive events. 
 
-The remote socket2me server allows you to run Framework behind a NAT without adding
-a port forward configuration to your firewall. To make use of a socket2me
-server, you can either stand up your own socket2me server or make use of a
-public/shared socket2me server. A single socket2me server can support many
-clients/bots simultaneously.
+The webex-node-bot-framework allows your application to take advantage of this by simply removing the webhookUrl field from the configuration object passed to the flint constructor. If this field is not set, flint will register to listen for the socket based events instead of creating webhooks.
 
 ```js
-var Framework = require('webex-node-bot-framework');
-var webhook = require('webex-node-bot-framework/webhook');
-var Socket2meClient = require('socket2me-client');
-var server = new Socket2meClient('https://socket.bothub.io');
+var Framework = require('webex-node-bot-framework'); 
+
+// No express server needed when running in websocket mode
 
 // framework options
 var config = {
+  // No webhookUrl, webhookSecret, or port needed
   token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u'
 };
 
-// get a remote webhook from socket2me server
-server.on('connected', function(webhookUrl) {
-  config.webhookUrl = webhookUrl;
+// init framework
+var framework = new Framework(config);
+framework.start();
 
-  var framework = new Framework(config);
-  framework.start();
+// An initialized event means your webhooks are all registered and the 
+// framework has created a bot object for all the spaces your bot is in
+framework.on("initialized", function () {
+  framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
+});
 
-  // say hello
-  framework.hears('/hello', function(bot, trigger) {
-    bot.say('Hello %s!', trigger.person.displayName);
-  });
+// A spawn event is generated when the framework finds a space with your bot in it
+framework.on('spawn', function (bot) {
+  if (!framework.initialized) {
+    // don't say anything here or your bot's spaces will get 
+    // spammed every time your server is restarted
+    framework.debug(`While starting up framework found our bot in a space called: ${bot.room.title}`);
+  } else {
+    // After initialization, a spawn event means your bot got added to 
+    // a new space.   Say hello, and tell users what you do!
+    bot.say('Hi there, you can say hello to me.  Don\'t forget you need to mention me in a group space!');
+  }
+});
 
-  server.requestHandler(function(request, respond) {
-    webhook(framework)(request);
-    respond(200, 'OK');
+var responded = false;
+// say hello
+framework.hears('hello', function(bot, trigger) {
+  bot.say('Hello %s!', trigger.person.displayName);
+  responded = true;
+});
+
+// Its a good practice to handle unexpected input
+framework.hears(/.*/gim, function(bot, trigger) {
+  if (!responded) {
+    bot.say('Sorry, I don\'t know how to respond to "%s"', trigger.message.text);
+  }
+  responded = false;
+});
+
+// gracefully shutdown (ctrl-c)
+process.on('SIGINT', function() {
+  framework.debug('stoppping...');
+  // server.close();
+  framework.stop().then(function() {
+    process.exit();
   });
 });
 ```
+[**Express Example**](./docs/example1.md)
+
+[**Restify Example**](./docs/example2.md)
+
+[**Back to README**](../README.md)

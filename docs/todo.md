@@ -17,6 +17,8 @@ The initial goal of the project was to support the basic framework initiation an
 - [ ] Add tests for bot.roomRename
 - [ ] Expand tests for bot.newRoom to exercise an array of users to be added, and with the moderator flag on
 - [ ] Add convenience functions promised in the migration readme
+- [ ] Re-add support for retries after 429, was in sparky, but is not in webex sdk
+- [ ] Validate that pagination works the same way with webex sdk
 
 ## Documentation
 

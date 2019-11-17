@@ -116,26 +116,51 @@ process.on('SIGINT', function() {
 });
 ```
 
-[**Restify Example**](https://github.com/nmarus/framework/blob/master/docs/example2.md)
+[**Websocket Example**](./docs/example3.md)
+
+[**Restify Example**](./docs/example2.md)
+
 ## Overview
 
-Most of Flint's functionality is based around the flint.hears function. This
-defines the phrase or pattern the bot is listening for and what actions to take
-when that phrase or pattern is matched. The flint.hears function gets a callback
-than includes two objects. The bot object, and the trigger object.
-
-Flint generates a bot object instance of the Bot class for each room the Spark
-account Flint is running under. The bot object instance tracks the specifics
-about the room it is running in and is passed to the  "hears" command callback
-when a phrase is heard.
-
-Flint also generates a trigger object based on the person and room that the
-flint.hears function was triggered.
-
-A simple example of a flint.hears() function setup:
+The framework provides developers with some basic scaffolding to quickly get a bot up and running.  Once a framework object is created with a configuration that includes a bot token, calling the framework.start() method kicks of the setup of this scaffolding.   The framework registers for all Webex Teams events, and discovers any existing Webex Teams spaces that the bot is already a member of.  A bot object is created for each space.  When all existing bot objects are created the framework generates an `initialized` event signalling that it is ready to begin "listening" for user input.
 
 ```js
-flint.hears(phrase, function(bot, trigger) {
+// init framework
+var framework = new Framework(config);
+framework.start();
+
+// An initialized event means your webhooks are all registered and the 
+// framework has created a bot object for all the spaces your bot is in
+framework.on("initialized", function () {
+  framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
+});
+
+// A spawn event is generated when the framework finds a space with your bot in it
+framework.on('spawn', function (bot) {
+  if (!framework.initialized) {
+    // don't say anything here or your bot's spaces will get 
+    // spammed every time your server is restarted
+    framework.debug(`While starting up framework found our bot in a space called: ${bot.room.title}`);
+  } else {
+    // After initialization, a spawn event means your bot got added to 
+    // a new space.   Say hello, and tell users what you do!
+    bot.say('Hi there, you can say hello to me.  Don\'t forget you need to mention me in a group space!');
+  }
+});
+```
+
+Most of the framework's functionality is based around the framework.hears function. This
+defines the phrase or pattern the bot is listening for and what actions to take
+when that phrase or pattern is matched. The framework.hears function gets a callback
+than includes two objects. The bot object, and the trigger object.
+
+The bot object is a specific instance of the Bot class associated with the Webex Teams space that triggered the framework.hears call.  
+The trigger object provides details about the person and room and message, that caused the framework.hears function to be triggered.
+
+A simple example of a framework.hears() function setup:
+
+```js
+framework.hears(phrase, function(bot, trigger) {
   bot.<command>
     .then(function(returnedValue) {
       // do something with returned value
@@ -162,23 +187,23 @@ of the chained 'then' functions.
 * `commands` : The commands that are ran when the `phrase` is heard.
 
 ## Authentication
-The token used to authenticate Flint to the Spark API is passed as part of the
-options used when instantiating the Flint class. To change or update the
-token, use the Flint#setSparkToken() method.
+The token used to authenticate the Framework with the Webex API is passed as part of the
+options used when instantiating the Framework class. To change or update the
+token, use the Framework#setWebexToken() method.
 
 **Example:**
 
 ```js
 var newToken = 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u';
 
-flint.setSparkToken(newToken)
+framework.setWebexToken(newToken)
 .then(function(token) {
   console.log('token updated to: ' + token);
 });
 ```
 
 ## Storage
-The storage system used in flint is a simple key/value store and resolves around
+The storage system used in the framework is a simple key/value store and resolves around
 these 3 methods:
 
 * `bot.store(key, value)` - Store a value to a bot instance where 'key' is a
@@ -191,18 +216,18 @@ these 3 methods:
   is an optional property that when defined, removes the specific key, and when
   undefined, removes all keys. Returns a resolved promise if deleted or not found.
 
-When a bot despawns (removed from room), the key/value store for that bot
-instance will automatically be removed from the store. Flint currently has an
+When a bot despawns (is removed from a space), the key/value store for that bot
+instance will automatically be removed from the store. Framework currently has an
 in-memory store and a Redis based store. By default, the in-memory store is
 used. Other backend stores are possible by replicating any one of the built-in
-storage modules and passing it to the `flint.storeageDriver()` method. *See
+storage modules and passing it to the `framework.storeageDriver()` method. *See
 docs for store, recall, forget for more details.*
 
 **Example:**
 
 ```js
-var redisDriver = require('node-flint/storage/redis');
-flint.storageDriver(redisDriver('redis://localhost'));
+var redisDriver = require('webex-node-bot-framework/storage/redis');
+framework.storageDriver(redisDriver('redis://localhost'));
 ```
 
 ## Bot Accounts
@@ -210,20 +235,20 @@ flint.storageDriver(redisDriver('redis://localhost'));
 **When using "Bot Accounts" the major differences are:**
 
 * Webhooks for message:created only trigger when the Bot is mentioned by name
-* Unable to read messages in rooms using the Spark API
+* Unable to read messages in rooms using the Webex API
 
-**Differences with trigger.args using Flint with a "Bot Account":**
+**Differences with trigger.args using Framework with a "Bot Account":**
 
 The trigger.args array is a shortcut in processing the trigger.text string. It
 consists of an array of the words that are in the trigger.message string split
 by one or more spaces. Punctation is included if there is no space between the
 symbol and the word. With bot accounts, this behaves a bit differently.
 
-* If defining a `flint.hears()` using a string (not regex), `trigger.args` is a
+* If defining a `framework.hears()` using a string (not regex), `trigger.args` is a
   filtered array of words from the message that begins *after* the first match of
   bot mention.
 
-* If defining a flint.hears() using regex, the trigger.args array is the entire
+* If defining a framework.hears() using regex, the trigger.args array is the entire
   message.
 
 # Framework Reference
@@ -241,12 +266,6 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 ## Objects
 
 <dl>
-<dt><a href="#Message">Message</a> : <code>object</code></dt>
-<dd><p>Message Object</p>
-</dd>
-<dt><a href="#File">File</a> : <code>object</code></dt>
-<dd><p>File Object</p>
-</dd>
 <dt><a href="#Trigger">Trigger</a> : <code>object</code></dt>
 <dd><p>Trigger Object</p>
 </dd>
@@ -273,8 +292,8 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 <dt><a href="#event_roomUnocked">"roomUnocked"</a></dt>
 <dd><p>Room Unocked event.</p>
 </dd>
-<dt><a href="#event_userEnters">"userEnters"</a></dt>
-<dd><p>User Enter Room event.</p>
+<dt><a href="#event_memberEnters">"memberEnters"</a></dt>
+<dd><p>Member Enter Room event.</p>
 </dd>
 <dt><a href="#event_botAddedAsModerator">"botAddedAsModerator"</a></dt>
 <dd><p>Bot Added as Room Moderator.</p>
@@ -282,14 +301,14 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 <dt><a href="#event_botRemovedAsModerator">"botRemovedAsModerator"</a></dt>
 <dd><p>Bot Removed as Room Moderator.</p>
 </dd>
-<dt><a href="#event_personAddedAsModerator">"personAddedAsModerator"</a></dt>
-<dd><p>Person Added as Moderator.</p>
+<dt><a href="#event_memberAddedAsModerator">"memberAddedAsModerator"</a></dt>
+<dd><p>Member Added as Moderator.</p>
 </dd>
-<dt><a href="#event_personRemovedAsModerator">"personRemovedAsModerator"</a></dt>
-<dd><p>Person Removed as Moderator.</p>
+<dt><a href="#event_memberRemovedAsModerator">"memberRemovedAsModerator"</a></dt>
+<dd><p>Member Removed as Moderator.</p>
 </dd>
-<dt><a href="#event_personExits">"personExits"</a></dt>
-<dd><p>Person Exits Room.</p>
+<dt><a href="#event_memberExits">"memberExits"</a></dt>
+<dd><p>Meber Exits Room.</p>
 </dd>
 <dt><a href="#event_mentioned">"mentioned"</a></dt>
 <dd><p>Bot Mentioned.</p>
@@ -333,7 +352,7 @@ symbol and the word. With bot accounts, this behaves a bit differently.
     * [.stop()](#Framework+stop) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.start()](#Framework+start) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.restart()](#Framework+restart) ⇒ <code>Promise.&lt;Boolean&gt;</code>
-    * [.getMessage(messageId)](#Framework+getMessage) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+    * [.getMessage(messageId)](#Framework+getMessage) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.getFiles(messageId)](#Framework+getFiles) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.getAttachmentAction(attachmentActionId)](#Framework+getAttachmentAction) ⇒ <code>Promise.&lt;AttachmentAction&gt;</code>
     * [.hears(phrase, action, [helpText], [preference])](#Framework+hears) ⇒ <code>String</code>
@@ -439,7 +458,7 @@ framework.restart();
 ```
 <a name="Framework+getMessage"></a>
 
-### framework.getMessage(messageId) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+### framework.getMessage(messageId) ⇒ <code>Promise.&lt;Message&gt;</code>
 Get Message Object by ID
 
 **Kind**: instance method of [<code>Framework</code>](#Framework)  
@@ -495,7 +514,7 @@ framework.hears('/say', function(bot, trigger, id) {
 ```js
 // using regex to match across entire message
 framework.hears(/(^| )beer( |.|$)/i, function(bot, trigger, id) {
-  bot.say('Enjoy a beer, %s! 🍻', trigger.personDisplayName);
+  bot.say('Enjoy a beer, %s! 🍻', trigger.person.displayName);
 });
 ```
 <a name="Framework+clearHears"></a>
@@ -513,7 +532,7 @@ Remove a "framework.hears()" entry.
 ```js
 // using a string to match first word and defines help text
 var hearsHello = framework.hears('/framework', function(bot, trigger, id) {
-  bot.say('Hello %s!', trigger.personDisplayName);
+  bot.say('Hello %s!', trigger.person.displayName);
 });
 framework.clearHears(hearsHello);
 ```
@@ -652,13 +671,13 @@ module.exports = function(framework) {
     * [.moderatorSet(email(s))](#Bot+moderatorSet) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
     * [.moderatorClear(email(s))](#Bot+moderatorClear) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
     * [.implode()](#Bot+implode) ⇒ <code>Promise.&lt;Boolean&gt;</code>
-    * [.say([format], message)](#Bot+say) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
-    * [.dm(email, [format], message)](#Bot+dm) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
-    * [.sendCard(cardJson, fallbackText)](#Bot+sendCard) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
-    * [.uploadStream(filename, stream)](#Bot+uploadStream) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
-    * [.messageStreamRoom(roomId, message)](#Bot+messageStreamRoom) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
-    * [.upload(filepath)](#Bot+upload) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
-    * [.censor(messageId)](#Bot+censor) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+    * [.say([format], message)](#Bot+say) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.dm(email, [format], message)](#Bot+dm) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.sendCard(cardJson, fallbackText)](#Bot+sendCard) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.uploadStream(filename, stream)](#Bot+uploadStream) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.messageStreamRoom(roomId, message)](#Bot+messageStreamRoom) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.upload(filepath)](#Bot+upload) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.censor(messageId)](#Bot+censor) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.roomRename(title)](#Bot+roomRename) ⇒ <code>Promise.&lt;Room&gt;</code>
     * [.getMessages(count)](#Bot+getMessages) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.store(key, value)](#Bot+store) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
@@ -871,7 +890,7 @@ framework.hears('/implode', function(bot, trigger) {
 ```
 <a name="Bot+say"></a>
 
-### bot.say([format], message) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+### bot.say([format], message) ⇒ <code>Promise.&lt;Message&gt;</code>
 Send text with optional file to room.
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
@@ -932,7 +951,7 @@ framework.hears('/card please', function(bot, trigger) {
 ```
 <a name="Bot+dm"></a>
 
-### bot.dm(email, [format], message) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+### bot.dm(email, [format], message) ⇒ <code>Promise.&lt;Message&gt;</code>
 Send text with optional file in a direct message. 
 This sends a message to a 1:1 room with the user (creates 1:1, if one does not already exist)
 
@@ -977,12 +996,12 @@ framework.hears('/dm', function(bot, trigger) {
 ```js
 // Mardown Method 3 - Use an object (use this method of bot.dm() when needing to send a file in the same message as markdown text.
 framework.hears('/dm', function(bot, trigger) {
-  bot.dm('someone@domain.com', {markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.personDisplayName + '>*'});
+  bot.dm('someone@domain.com', {markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.person.displayName + '>*'});
 });
 ```
 <a name="Bot+sendCard"></a>
 
-### bot.sendCard(cardJson, fallbackText) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+### bot.sendCard(cardJson, fallbackText) ⇒ <code>Promise.&lt;Message&gt;</code>
 Send a Webex Teams Card to room.
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
@@ -1042,7 +1061,7 @@ framework.hears('card please', function(bot, trigger) {
 ```
 <a name="Bot+uploadStream"></a>
 
-### bot.uploadStream(filename, stream) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+### bot.uploadStream(filename, stream) ⇒ <code>Promise.&lt;Message&gt;</code>
 Upload a file to a room using a Readable Stream
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
@@ -1067,7 +1086,7 @@ framework.hears('/file', function(bot, trigger) {
 ```
 <a name="Bot+messageStreamRoom"></a>
 
-### bot.messageStreamRoom(roomId, message) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+### bot.messageStreamRoom(roomId, message) ⇒ <code>Promise.&lt;Message&gt;</code>
 Streams message to a room.
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
@@ -1094,7 +1113,7 @@ bot.messageStreamRoom(roomId, message)
 ```
 <a name="Bot+upload"></a>
 
-### bot.upload(filepath) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+### bot.upload(filepath) ⇒ <code>Promise.&lt;Message&gt;</code>
 Upload a file to room.
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
@@ -1111,7 +1130,7 @@ framework.hears('/file', function(bot, trigger) {
 ```
 <a name="Bot+censor"></a>
 
-### bot.censor(messageId) ⇒ [<code>Promise.&lt;Message&gt;</code>](#Message)
+### bot.censor(messageId) ⇒ <code>Promise.&lt;Message&gt;</code>
 Remove Message By Id.
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
@@ -1196,50 +1215,6 @@ Forget a key or entire store.
 | Param | Type | Description |
 | --- | --- | --- |
 | [key] | <code>String</code> | Key under id object (optional). If key is not passed, id and all children are removed. |
-
-<a name="Message"></a>
-
-## Message : <code>object</code>
-Message Object
-
-**Kind**: global namespace  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| id | <code>string</code> | Message ID |
-| personId | <code>string</code> | Person ID |
-| personEmail | <code>string</code> | Person Email |
-| personAvatar | <code>string</code> | PersonAvatar URL |
-| personDomain | <code>string</code> | Person Domain Name |
-| personDisplayName | <code>string</code> | Person Display Name |
-| roomId | <code>string</code> | Room ID |
-| text | <code>string</code> | Message text |
-| files | <code>array</code> | Array of File objects |
-| created | <code>date</code> | Date Message created |
-
-<a name="File"></a>
-
-## File : <code>object</code>
-File Object
-
-**Kind**: global namespace  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| id | <code>string</code> | Webex API Content ID |
-| name | <code>string</code> | File name |
-| ext | <code>string</code> | File extension |
-| type | <code>string</code> | Header [content-type] for file |
-| binary | <code>buffer</code> | File contents as binary |
-| base64 | <code>string</code> | File contents as base64 encoded string |
-| personId | <code>string</code> | Person ID of who added file |
-| personEmail | <code>string</code> | Person Email of who added file |
-| personAvatar | <code>string</code> | PersonAvatar URL |
-| personDomain | <code>string</code> | Person Domain Name |
-| personDisplayName | <code>string</code> | Person Display Name |
-| created | <code>date</code> | Date file was added to room |
 
 <a name="Trigger"></a>
 
@@ -1334,10 +1309,10 @@ Room Unocked event.
 | bot | <code>object</code> | Bot Object |
 | id | <code>string</code> | Framework UUID |
 
-<a name="event_userEnters"></a>
+<a name="event_memberEnters"></a>
 
-## "userEnters"
-User Enter Room event.
+## "memberEnters"
+Member Enter Room event.
 
 **Kind**: event emitted  
 **Properties**
@@ -1374,24 +1349,10 @@ Bot Removed as Room Moderator.
 | bot | <code>object</code> | Bot Object |
 | id | <code>string</code> | Framework UUID |
 
-<a name="event_personAddedAsModerator"></a>
+<a name="event_memberAddedAsModerator"></a>
 
-## "personAddedAsModerator"
-Person Added as Moderator.
-
-**Kind**: event emitted  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| bot | <code>object</code> | Bot Object |
-| person | <code>object</code> | Person Object |
-| id | <code>string</code> | Framework UUID |
-
-<a name="event_personRemovedAsModerator"></a>
-
-## "personRemovedAsModerator"
-Person Removed as Moderator.
+## "memberAddedAsModerator"
+Member Added as Moderator.
 
 **Kind**: event emitted  
 **Properties**
@@ -1399,13 +1360,27 @@ Person Removed as Moderator.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
-| person | <code>object</code> | Person Object |
+| membership | <code>object</code> | Membership Object |
 | id | <code>string</code> | Framework UUID |
 
-<a name="event_personExits"></a>
+<a name="event_memberRemovedAsModerator"></a>
 
-## "personExits"
-Person Exits Room.
+## "memberRemovedAsModerator"
+Member Removed as Moderator.
+
+**Kind**: event emitted  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| bot | <code>object</code> | Bot Object |
+| membership | <code>object</code> | Membership Object |
+| id | <code>string</code> | Framework UUID |
+
+<a name="event_memberExits"></a>
+
+## "memberExits"
+Meber Exits Room.
 
 **Kind**: event emitted  
 **Properties**

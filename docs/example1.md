@@ -71,4 +71,7 @@ process.on('SIGINT', function() {
 });
 ```
 
-[**Restify Example**](https://github.com/nmarus/framework/blob/master/docs/example2.md)
+[**Websocket Example**](./docs/example3.md)
+
+[**Restify Example**](./docs/example2.md)
+
