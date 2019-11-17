@@ -73,5 +73,7 @@ process.on('SIGINT', function() {
 
 [**Websocket Example**](./docs/example3.md)
 
+[**Buttons and Cards Example**](./docs/buttons-and-cards-example.md)
+
 [**Restify Example**](./docs/example2.md)
 

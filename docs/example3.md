@@ -68,4 +68,6 @@ process.on('SIGINT', function() {
 
 [**Restify Example**](./docs/example2.md)
 
+[**Buttons and Cards Example**](./docs/buttons-and-cards-example.md)
+
 [**Back to README**](../README.md)
