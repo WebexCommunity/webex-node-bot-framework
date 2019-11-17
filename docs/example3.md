@@ -64,10 +64,10 @@ process.on('SIGINT', function() {
   });
 });
 ```
-[**Express Example**](./docs/example1.md)
+[**Express Example**](./example1.md)
 
-[**Restify Example**](./docs/example2.md)
+[**Restify Example**](./example2.md)
 
-[**Buttons and Cards Example**](./docs/buttons-and-cards-example.md)
+[**Buttons and Cards Example**](./buttons-and-cards-example.md)
 
 [**Back to README**](../README.md)

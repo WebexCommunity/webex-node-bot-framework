@@ -39,10 +39,10 @@ process.on('SIGINT', function() {
   });
 });
 ```
-[**Express Example**](./docs/example1.md)
+[**Express Example**](./example1.md)
 
-[**Websocket Example**](./docs/example3.md)
+[**Websocket Example**](./example3.md)
 
-[**Buttons and Cards Example**](./docs/buttons-and-cards-example.md)
+[**Buttons and Cards Example**](./buttons-and-cards-example.md)
 
 [**Back to README**](../README.md)
