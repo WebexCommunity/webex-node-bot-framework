@@ -2,7 +2,6 @@
 var common = require("../common/common");
 let framework = common.framework;
 let userWebex = common.userWebex;
-let Bot_Test_Space_Title = common.Bot_Test_Space_Title;
 let User_Test_Space_Title = common.User_Test_Space_Title;
 
 let assert = common.assert;
@@ -355,6 +354,72 @@ describe('User Created Room to create a Test Bot', () => {
 
     });
 
+    describe('bot.reply', () => {
+      it.only('sends a message and then replies to it', () => {
+        let testName = 'bot sends a message and then a reply';
+        let message = {};
+        let messageFormat = framework.messageFormat;
+        let bot = botCreatedRoomBot;
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.say('This is the parent message')
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return bot.reply(message, 'This is the first reply');
+          })
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message, 'This is a reply to the reply!');
+          })
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message,
+              {
+                roomId: 'this will be ignored',
+                markdown: 'This is a reply sent as a message object',
+                parentId: 'this will be ignored'
+              });
+          })
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            framework.messageFormat = 'text';
+            return bot.reply(message,
+              'This is **the final** reply, with the format set explicitly', 'markdown');
+          })
+          .then(() => when(framework.messageFormat = messageFormat))
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            console.error('This test is of an EFT threaded reply feature, and your bot may not be configured for it.' +
+            '  If this is the only test that fails, do not worry about it.');
+            return Promise.reject(e);
+          });
+      });
+
+
+    });
   });
 
 });

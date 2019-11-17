@@ -674,6 +674,7 @@ module.exports = function(framework) {
     * [.moderatorClear(email(s))](#Bot+moderatorClear) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
     * [.implode()](#Bot+implode) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.say([format], message)](#Bot+say) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.reply(replyMessage, message, [format])](#Bot+reply) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.dm(email, [format], message)](#Bot+dm) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.sendCard(cardJson, fallbackText)](#Bot+sendCard) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.uploadStream(filename, stream)](#Bot+uploadStream) ⇒ <code>Promise.&lt;Message&gt;</code>
@@ -935,7 +936,7 @@ framework.hears('/hello', function(bot, trigger) {
 ```js
 // Mardown Method 3 - Use an object (use this method of bot.say() when needing to send a file in the same message as markdown text.
 framework.hears('/hello', function(bot, trigger) {
-  bot.say();
+  bot.say({markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.personDisplayName + '>*'});
 });
 ```
 **Example**  
@@ -947,9 +948,54 @@ framework.hears('/card please', function(bot, trigger) {
      markdown: "If you see this message your client cannot render buttons and cards.",
      attachments: [{
        "contentType": "application/vnd.microsoft.card.adaptive",
-       "content": myCardsSchema
+       "content": myCardsJson
     }]
    });
+```
+<a name="Bot+reply"></a>
+
+### bot.reply(replyMessage, message, [format]) ⇒ <code>Promise.&lt;Message&gt;</code>
+Send a threaded message reply
+
+NOTE:  Posting a threaded message response via API is currently a Webex EFT feature.  This method WILL FAIL
+if your application identity is not configured for EFT access
+
+**Kind**: instance method of [<code>Bot</code>](#Bot)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| replyMessage | <code>Object</code> |  | Message to send to reply to. |
+| message | <code>String</code> \| <code>Object</code> |  | Message to send to room. This can be a simple string, or a object for advanced use. |
+| [format] | <code>String</code> | <code>text</code> | Set message format. Valid options are 'text' or 'markdown'. |
+
+**Example**  
+```js
+// Simple example
+framework.hears('/hello', function(bot, trigger) {
+  bot.reply(trigger.message, 'hello back at you');
+});
+```
+**Example**  
+```js
+// Markdown Method 1 - Define markdown as default
+framework.messageFormat = 'markdown';
+framework.hears('/hello', function(bot, trigger) {
+  bot.reply(trigger.message, '**hello**, How are you today?');
+});
+```
+**Example**  
+```js
+// Markdown Method 2 - Define message format as part of argument string
+framework.hears('/hello', function(bot, trigger) {
+  bot.reply(trigger.message, '**hello**, How are you today?', 'markdown');
+});
+```
+**Example**  
+```js
+// Mardown Method 3 - Use an object (use this method of bot.reply() when needing to send a file in the same message as markdown text.
+framework.hears('/hello', function(bot, trigger) {
+  bot.reply(trigger.message, {markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.personDisplayName + '>*'});
+});
 ```
 <a name="Bot+dm"></a>
 

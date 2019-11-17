@@ -37,7 +37,7 @@ The initial goal of the project was to support the basic framework initiation an
 A goal of this project was to extend the framework to support new functionality that becomes avaialble on Webex
 
 - [x] Add bot.sayCard()
-- [ ] Add bot.reply
+- [x] Add bot.reply
 
 ## Storage
 node-flint provides a storage system to allow developers to store and retrieve data associated with individual bot/space combinations.   This framework has not modified that code, but has also not tested it to see if it has broken.
