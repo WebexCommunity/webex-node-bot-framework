@@ -322,6 +322,7 @@ describe('User Created Room to create a Test Bot', () => {
     });
 
     describe('bot.sendCard', () => {
+      let message;
       it('sends a card', () => {
         let testName = 'bot sends a card';
         let cardJson = require('../common/input-card.json');
@@ -355,7 +356,7 @@ describe('User Created Room to create a Test Bot', () => {
     });
 
     describe('bot.reply', () => {
-      it.only('sends a message and then replies to it', () => {
+      it('sends a message and then replies to it', () => {
         let testName = 'bot sends a message and then a reply';
         let message = {};
         let messageFormat = framework.messageFormat;
