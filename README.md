@@ -675,7 +675,7 @@ module.exports = function(framework) {
     * [.implode()](#Bot+implode) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.say([format], message)](#Bot+say) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.reply(replyTo, message, [format])](#Bot+reply) ⇒ <code>Promise.&lt;Message&gt;</code>
-    * [.dm(email, [format], message)](#Bot+dm) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.dm(person, [format], message)](#Bot+dm) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.sendCard(cardJson, fallbackText)](#Bot+sendCard) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.uploadStream(filename, stream)](#Bot+uploadStream) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.messageStreamRoom(roomId, message)](#Bot+messageStreamRoom) ⇒ <code>Promise.&lt;Message&gt;</code>
@@ -1006,7 +1006,7 @@ framework.on('attachmentAction', function(bot, trigger) {
 ```
 <a name="Bot+dm"></a>
 
-### bot.dm(email, [format], message) ⇒ <code>Promise.&lt;Message&gt;</code>
+### bot.dm(person, [format], message) ⇒ <code>Promise.&lt;Message&gt;</code>
 Send text with optional file in a direct message. 
 This sends a message to a 1:1 room with the user (creates 1:1, if one does not already exist)
 
@@ -1014,44 +1014,44 @@ This sends a message to a 1:1 room with the user (creates 1:1, if one does not a
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| email | <code>String</code> |  | Email of person to send Direct Message. |
+| person | <code>String</code> |  | Email or personId of person to send Direct Message. |
 | [format] | <code>String</code> | <code>text</code> | Set message format. Valid options are 'text' or 'markdown'. |
 | message | <code>String</code> \| <code>Object</code> |  | Message to send to room. This can be a simple string, or a object for advanced use. |
 
 **Example**  
 ```js
 // Simple example
-framework.hears('/dm', function(bot, trigger) {
-  bot.dm('someone@domain.com', 'hello');
+framework.hears('dm me', function(bot, trigger) {
+  bot.dm(trigger.person.id, 'hello');
 });
 ```
 **Example**  
 ```js
 // Simple example to send message and file
-framework.hears('/dm', function(bot, trigger) {
-  bot.dm('someone@domain.com', {text: 'Here is your file!', file: 'http://myurl/file.doc'});
+framework.hears('dm me a file', function(bot, trigger) {
+  bot.dm(trigger.person.id, {text: 'Here is your file!', file: 'http://myurl/file.doc'});
 });
 ```
 **Example**  
 ```js
 // Markdown Method 1 - Define markdown as default
 framework.messageFormat = 'markdown';
-framework.hears('/dm', function(bot, trigger) {
-  bot.dm('someone@domain.com', '**hello**, How are you today?');
+framework.hears('dm me some rich text', function(bot, trigger) {
+  bot.dm(trigger.person.id, '**hello**, How are you today?');
 });
 ```
 **Example**  
 ```js
 // Markdown Method 2 - Define message format as part of argument string
-framework.hears('/dm', function(bot, trigger) {
-  bot.dm('someone@domain.com', 'markdown', '**hello**, How are you today?');
+framework.hears('dm someone', function(bot, trigger) {
+  bot.dm('john@doe.com', 'markdown', '**hello**, How are you today?');
 });
 ```
 **Example**  
 ```js
 // Mardown Method 3 - Use an object (use this method of bot.dm() when needing to send a file in the same message as markdown text.
-framework.hears('/dm', function(bot, trigger) {
-  bot.dm('someone@domain.com', {markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.person.displayName + '>*'});
+framework.hears('dm someone', function(bot, trigger) {
+  bot.dm('someone@domain.com', {markdown: '*Hello <@personId:' + trigger.person.id + '|' + trigger.person.displayName + '>*'});
 });
 ```
 <a name="Bot+sendCard"></a>
@@ -1505,7 +1505,24 @@ Bot Spawned.
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
 | id | <code>string</code> | Framework UUID |
+| addedBy | <code>string</code> | ID of user who added bot to space if available Bots are typically spawned in one of two ways 1) When the framework first starts it looks for spaces that     our bot is already part of.  When discovered a new bot is spawned 2) After the framework has started, if a user adds our bot to a space    a membership:created event occurs which also spawns a bot In the latter case, we pass the actorId associated with the membership:created event.  This allows bots to do something with info about the user who added them when they are first spawned. |
 
+**Example**  
+```js
+// DM the user who added bot to a group space
+framework.on('spawn', function(bot, flintId, addedBy) {
+  if (!framework.initialized) {
+     // don't say anything here or your bot's spaces will get
+     // spammed every time your server is restarted
+     framework.debug(`While starting up our bot was found '+
+       in a space called: ${bot.room.title}`);
+  } else {
+    if ((bot.room.type === 'group) && (addedBy)) {
+      bot.dm(addedBy, 'I see you added me to the the space '  + bot.room.title + ',
+        but I'm not allowed in group spaces.  We can talk here if you like.');
+      bot.exit();
+});
+```
 <a name="event_despawn"></a>
 
 ## "despawn"
