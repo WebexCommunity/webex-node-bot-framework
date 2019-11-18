@@ -42,7 +42,7 @@ describe('Bot interacts with user in 1-1 space', () => {
     if (!common.botForUser1on1Space) {
       console.error('No 1-1 space to run direct message tests.  This isn\'t bad, it just is...');
       console.error('If you want to run the direct message tests, manually create a 1-1 space with your test bot and test user.');
-      return this.skip();
+      return when(true);
     }
     // Wait for the hears event associated with the input text
     const heard = new Promise((resolve) => {
@@ -78,7 +78,7 @@ describe('Bot interacts with user in 1-1 space', () => {
   it('bot responds with a direct mention', () => {
     testName = 'bot responds with a direct mention';
     if (!common.botForUser1on1Space) {
-      return this.skip();
+      return when(true);
     }
     // send the bots response
     let msg = 'I heard you';
