@@ -43,7 +43,7 @@ Alternatly, since elements of the bot and trigger objects have also changed, one
 * trigger.personDisplayName --> trigger.person.displayName
 * trigger.roomTitle --> trigger.room.title
 * trigger.personEmail --> trigger.person.emails[0]
-* trigger.roomId --> trigger.room.id
+* trigger.roomId --> bot.room.id
 * bot.roomId --> bot.room.id
 
 With that said, please review the other changes outlined in this document to determine if any existing flint.hears() or flint.on() handler function logic needs to be updated.
@@ -112,19 +112,18 @@ Trigger Object
 | files             | --                  | Message Files (or false if no files in trigger) | inspect for trigger.message.mentionedPeople |
 | created           | --                  | Message Created date                            | inspect trigger.message.created         |
 |                   | attachmentAction    | Webex Teams attachmentAction Object             | see [Buttons and Cards Guide](https://developer.webex.com/docs/api/guides/cards/overview)|
-| roomId            | --                  | Room ID                                         | inspect bot.room object                 |
-| --                | room                | Webex Rooms Object for bot's space              | Webex Rooms Object                      |
-| roomTitle         | --                  | Room Title                                      | inspect bot.room.title                |
-| roomType          | --                  | Room Type (group or direct)                     | inspect bot.room.type                 |
-| roomIsLocked      | --                  | Room Locked/Moderated status                    | inspect bot.room.isLocked                 |
-|                   | person              | Webex Person Object                             | Added for forward extensibility         |
-| personId          | personId            | Person ID                                       | Still at top level for convenience      |
-| personAvatar      | --                  | Person Avatar URL                               | insepct trigger.person.avatar           |
-| personDisplayName | --                  | Person Display Name                             | insepct trigger.person.displayName      |
-| personEmail       | --                  | Person Email                                    | insepct trigger.person[0]               |
-| personUsername    | --                  | Person Username                                 | derive from trigger.person[0]           |
-| personDomain      | --                  | Person Domain name                              | derive from trigger.person[0]           |
-| personMembership  |  --                 | Person Membership object for person             | use bot.getTriggerMembership()          |
+| roomId            | --                  | Room ID                                         | inspect bot.room.id                 |
+| roomTitle         | --                  | Room Title                                      | inspect bot.room.title              |
+| roomType          | --                  | Room Type (group or direct)                     | inspect bot.room.type               |
+| roomIsLocked      | --                  | Room Locked/Moderated status                    | inspect bot.room.isLocked           |
+|                   | person              | Webex Person Object                             | Added for forward extensibility     |
+| personId          | personId            | Person ID                                       | Still at top level for convenience  |
+| personAvatar      | --                  | Person Avatar URL                               | insepct trigger.person.avatar       |
+| personDisplayName | --                  | Person Display Name                             | insepct trigger.person.displayName  |
+| personEmail       | --                  | Person Email                                    | insepct trigger.person[0]           |
+| personUsername    | --                  | Person Username                                 | derive from trigger.person[0]       |
+| personDomain      | --                  | Person Domain name                              | derive from trigger.person[0]       |
+| personMembership  |  --                 | Person Membership object for person             | use bot.getTriggerMembership()    (TODO)  |
 
 ## Event changes
 Node-flint generated a set of `person` events based on membership changes.  For each membership, the framework would fetch the person object associated with that memebership pass it to the event handler.  Since many bots don't even register these handers this seems expensive.  Information like the personEmail and personDisplayName are also already included in the membership DTO.  Finally, bots that truly wish to get the person object can always query it directly via the `framework.getPerson(membership.personId)` function.
