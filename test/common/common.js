@@ -267,9 +267,14 @@ module.exports = {
   },
 
   frameworkSpawnedHandler: function (testName, framework, eventsData, promiseResolveFunction) {
-    this.framework.once('spawn', (bot) => {
+    this.framework.once('spawn', (bot, frameworkId, addedBy) => {
       framework.debug(`Framework spawned  event occurred in test ${testName}`);
       eventsData.bot = bot;
+      assert((frameworkId === framework.id),
+        `In ${testName}, the frameworkId passed to the spawned handler was not as expected`);
+      if (addedBy) {
+        eventsData.addedBy = addedBy;
+      }
       promiseResolveFunction(assert(validator.isBot(bot),
         'spawned event did not include a valid bot'));
     });

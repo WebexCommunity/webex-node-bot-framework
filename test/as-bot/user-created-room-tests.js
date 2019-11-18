@@ -29,6 +29,8 @@ describe('User Created Rooms Tests', () => {
   before(() => common.addBotToSpace('Add bot to user created room', framework, userCreatedTestRoom, eventsData)
     .then((b) => {
       bot = b;
+      assert((eventsData.addedBy === common.userInfo.id),
+        'after user added bot to test space, addedBy ID did not match the test webex user\'s');
       return validator.isBot(b);
     }));
 
