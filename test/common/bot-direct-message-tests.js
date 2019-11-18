@@ -75,7 +75,7 @@ describe('Bot interacts with user in 1-1 space', () => {
       });
   });
 
-  it('bot responds with a direct mention', () => {
+  it('bot responds with a direct mention via email', () => {
     testName = 'bot responds with a direct mention';
     if (!common.botForUser1on1Space) {
       return when(true);
@@ -105,5 +105,37 @@ describe('Bot interacts with user in 1-1 space', () => {
         return Promise.reject(e);
       });
   });
+
+  it('bot responds with a direct mention via personId', () => {
+    testName = 'bot responds with a direct mention via personId';
+    if (!common.botForUser1on1Space) {
+      return when(true);
+    }
+    // send the bots response
+    let msg = 'I heard you - by personId this time.';
+    let personId = common.userInfo.id;
+    if ((trigger.message) && (trigger.person) &&
+      (trigger.message.markdown) && (trigger.person.emails[0])) {
+      msg += ` say: "${trigger.message.markdown}"`;
+      email = trigger.person.emails[0];
+    } else {
+      console.error('Could not read previous test trigger object.  Did the test fail?');
+    }
+
+    return common.botForUser1on1Space.dm(personId, msg)
+      .then((m) => {
+        message = m;
+        // messages.push(m); 
+        assert(validator.isMessage(message),
+          'create message did not return a valid message');
+        // Wait for all the event handlers and the heard handler to fire
+        return when(messageCreatedEvent);
+      })
+      .catch((e) => {
+        console.error(`${testName} failed: ${e.message}`);
+        return Promise.reject(e);
+      });
+  });
+
 
 });
