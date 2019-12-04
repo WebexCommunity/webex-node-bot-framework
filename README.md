@@ -10,6 +10,8 @@ The primary change in this implementation is that it is based on the [webex-jssd
 
 For developers who are familiar with flint, or who wish to port existing bots built on node-flint to the webex-node-bot-framework, this implementation is NOT backwards compatible.  Please see [Differences from original flint framework](./docs/migrate-from-node-flint.md)
 
+## [Version History](./docs/version-history.md)
+
 
 ## Contents
 
@@ -125,6 +127,8 @@ process.on('SIGINT', function() {
 ## Overview
 
 The framework provides developers with some basic scaffolding to quickly get a bot up and running.  Once a framework object is created with a configuration that includes a bot token, calling the framework.start() method kicks of the setup of this scaffolding.   The framework registers for all Webex Teams events, and discovers any existing Webex Teams spaces that the bot is already a member of.  A bot object is created for each space.  When all existing bot objects are created the framework generates an `initialized` event signalling that it is ready to begin "listening" for user input.
+
+
 
 ```js
 // init framework
@@ -1517,7 +1521,7 @@ framework.on('spawn', function(bot, flintId, addedBy) {
      framework.debug(`While starting up our bot was found '+
        in a space called: ${bot.room.title}`);
   } else {
-    if ((bot.room.type === 'group) && (addedBy)) {
+    if ((bot.room.type === 'group') && (addedBy)) {
       bot.dm(addedBy, 'I see you added me to the the space '  + bot.room.title + ',
         but I'm not allowed in group spaces.  We can talk here if you like.');
       bot.exit();
