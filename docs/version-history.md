@@ -1,3 +1,7 @@
+## v 0.4.0
+* Moved repo to https://github.com/webex/webex-node-bot-framework
+* Updated use of Buffer in lib/utils.js to avoid deprecation warning
+  
 ## v 0.3.2
 * removedBy param added to `despawn` event in cases when bot was removed from a space by a user after the framework was initialized.  
   
