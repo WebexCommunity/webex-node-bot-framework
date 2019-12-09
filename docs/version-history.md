@@ -1,3 +1,6 @@
+## v 0.3.2
+* removedBy param added to `despawn` event in cases when bot was removed from a space by a user after the framework was initialized.  
+  
 ## v 0.3.1
 * In bot.say() and bot.dm() handle wierd behavior with the javascript agruments object when second argument is undefined and the function was called from another function.   Prior to this the bot's message could add the string "undefined" at the end of the message.
   

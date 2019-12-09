@@ -1539,6 +1539,7 @@ Bot Despawned.
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
 | id | <code>string</code> | Framework UUID |
+| id | <code>string</code> | ID of user who removed the bot (if available) |
 
 ## License
 

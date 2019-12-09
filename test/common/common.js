@@ -431,10 +431,14 @@ module.exports = {
   },
 
   frameworkDespawnHandler: function (testName, framework, eventsData, promiseResolveFunction) {
-    this.framework.once('despawn', (bot, id) => {
+    this.framework.once('despawn', (bot, id, removedBy) => {
       framework.debug(`Framework despawn event occurred in test ${testName}`);
       assert(eventsData.bot.id === bot.id);
       eventsData.leftRoomId = bot.room.id;
+      if (removedBy) {
+        eventsData.removedBy = removedBy;
+      }
+
       assert((id === framework.id),
         'id returned in framework.on("despawn") is not the one expected');
       promiseResolveFunction(assert(validator.isBot(bot),
