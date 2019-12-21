@@ -323,7 +323,7 @@ describe('User Created Room to create a Test Bot', () => {
 
     describe('bot.sendCard', () => {
       let message;
-      it.only('sends a card', () => {
+      it('sends a card', () => {
         let testName = 'bot sends a card';
         let cardJson = require('../common/input-card.json');
 
@@ -352,7 +352,7 @@ describe('User Created Room to create a Test Bot', () => {
           });
       });
 
-      it.only('presses a button on a card', () => {
+      it('presses a button on a card', () => {
         let testName = 'user presses a button on a card';
         let attachmentAction;
         let inputs = {
@@ -382,10 +382,14 @@ describe('User Created Room to create a Test Bot', () => {
           .then(() => {
             assert(validator.objIsEqual(attachmentAction, eventsData.attachmentAction),
               'attachmentAction returned by API did not match the one from the attachmentAction event');
+            // Wait for the events associated with a new message before completing test..
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
             return botCreatedRoomBot.say(`Thanks. Now I know your name is ${attachmentAction.inputs.myName}, ` +
                `your email is ${attachmentAction.inputs.myEmail}, and your phone is ${attachmentAction.inputs.myTel}.`);
           })
-          .then(() => when(true))
+          .then(() => when(messageCreatedEvent))
           .catch((e) => {
             console.error(`${testName} failed: ${e.message}`);
             return Promise.reject(e);
