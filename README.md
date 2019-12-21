@@ -4,7 +4,7 @@
 
 **Warning** - *This project is still in its initial development, so use at your own risk.  For details on areas that may still require attention before the project is fully complete please see the* [To Do List](./docs/ToDo.MD)
 
-This project is inspired by, and provides an alternate implementation of, the awesome [node-flint](https://github.com/flint-bot/flint/) framework by [Nick Marus](https://github.com/nmarus).  The framework makes it easy to quickly develop a Webex Teams bot, abstractig away some of the complexity of Webex For Developers interfaces, such as registering for events and calling REST APIs. A bot developer can use the framework to spark their imagination and focus primarily on how the bot will interact with users in Webex Teams.
+This project is inspired by, and provides an alternate implementation of, the awesome [node-flint](https://github.com/flint-bot/flint/) framework by [Nick Marus](https://github.com/nmarus).  The framework makes it easy to quickly develop a Webex Teams bot, abstracting away some of the complexity of Webex For Developers interfaces, such as registering for events and calling REST APIs. A bot developer can use the framework to spark their imagination and focus primarily on how the bot will interact with users in Webex Teams.
 
 The primary change in this implementation is that it is based on the [webex-jssdk](https://webex.github.io/webex-js-sdk) which continues to be supported as new features and functionality are added to Webex.  
 
@@ -401,15 +401,6 @@ Options Object
 | [webhookUrl] | <code>string</code> |  | URL that is used for Webex API to send callbacks.  If not set events are received via websocket |
 | [webhookSecret] | <code>string</code> |  | If specified, inbound webhooks are authorized before being processed. Ignored if webhookUrl is not set. |
 | [messageFormat] | <code>string</code> | <code>&quot;text&quot;</code> | Default Webex message format to use with bot.say(). |
-| [maxPageItems] | <code>number</code> | <code>50</code> | Max results that the paginator uses. |
-| [maxConcurrent] | <code>number</code> | <code>3</code> | Max concurrent sessions to the Webex API |
-| [minTime] | <code>number</code> | <code>600</code> | Min time between consecutive request starts. |
-| [requeueMinTime] | <code>number</code> | <code>minTime*10</code> | Min time between consecutive request starts of requests that have been re-queued. |
-| [requeueMaxRetry] | <code>number</code> | <code>3</code> | Msx number of atteempts to make for failed request. |
-| [requeueCodes] | <code>array</code> | <code>[429,500,503]</code> | Array of http result codes that should be retried. |
-| [requestTimeout] | <code>number</code> | <code>20000</code> | Timeout for an individual request recieving a response. |
-| [queueSize] | <code>number</code> | <code>10000</code> | Size of the buffer that holds outbound requests. |
-| [requeueSize] | <code>number</code> | <code>10000</code> | Size of the buffer that holds outbound re-queue requests. |
 | [id] | <code>string</code> | <code>&quot;random&quot;</code> | The id this instance of Framework uses. |
 | [webhookRequestJSONLocation] | <code>string</code> | <code>&quot;body&quot;</code> | The property under the Request to find the JSON contents. |
 | [removeWebhooksOnStart] | <code>Boolean</code> | <code>true</code> | If you wish to have the bot remove all account webhooks when starting. Ignored if webhookUrl is not set. |

@@ -4,7 +4,7 @@
 
 **Warning** - *This project is still in its initial development, so use at your own risk.  For details on areas that may still require attention before the project is fully complete please see the* [To Do List](./docs/ToDo.MD)
 
-This project is inspired by, and provides an alternate implementation of, the awesome [node-flint](https://github.com/flint-bot/flint/) framework by [Nick Marus](https://github.com/nmarus).  The framework makes it easy to quickly develop a Webex Teams bot, abstractig away some of the complexity of Webex For Developers interfaces, such as registering for events and calling REST APIs. A bot developer can use the framework to spark their imagination and focus primarily on how the bot will interact with users in Webex Teams.
+This project is inspired by, and provides an alternate implementation of, the awesome [node-flint](https://github.com/flint-bot/flint/) framework by [Nick Marus](https://github.com/nmarus).  The framework makes it easy to quickly develop a Webex Teams bot, abstracting away some of the complexity of Webex For Developers interfaces, such as registering for events and calling REST APIs. A bot developer can use the framework to spark their imagination and focus primarily on how the bot will interact with users in Webex Teams.
 
 The primary change in this implementation is that it is based on the [webex-jssdk](https://webex.github.io/webex-js-sdk) which continues to be supported as new features and functionality are added to Webex.  
 
