@@ -91,7 +91,7 @@ describe('User Created Room to create a Test Bot', () => {
         });
     });
 
-    it('checks for non-existent testString', () => {
+    it('checks for forgotten testString', () => {
       let element = 'testString';
       let testName = `check for non existent storage element ${element}`;
       bot = userCreatedRoomBot;
@@ -107,7 +107,7 @@ describe('User Created Room to create a Test Bot', () => {
         });
     });
 
-    it('checks for non-existent testObject', () => {
+    it('checks for forgotten testObject', () => {
       let element = 'testObject';
       let testName = `check for non existent storage element ${element}`;
       bot = userCreatedRoomBot;
