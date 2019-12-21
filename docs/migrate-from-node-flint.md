@@ -38,7 +38,7 @@ Naming the new Framework object `flint`, allows existing `flint.hears()` and `fl
 Not all of the functionality in flint has been migrated to the new framework.  Apps that rely on any of the following may wish to postpone their migration (or look to implement these features some other way):
 
 * Retry logic for pagination and rate limiting.  The philosopy behind the framework is to encourage developers to leverage the Webex SDK (exposed as an element in the frameowrk and bot objects), natively when needed.   When appropriate applications should inspect the reponse headers for pagination and rate limiting (HTTP 429 Response Code) as needed.  `framework.start()` will fail when the framework was passed a config object that includes any of the following options:
-     * @property {number} [maxPageItems=50] - Max results that the paginator uses.
+   * @property {number} [maxPageItems=50] - Max results that the paginator uses.
    * @property {number} [maxConcurrent=3] - Max concurrent sessions to the Webex API
    * @property {number} [minTime=600] - Min time between consecutive request starts.
    * @property {number} [requeueMinTime=minTime*10] - Min time between consecutive request starts of requests that have been re-queued.
@@ -47,7 +47,7 @@ Not all of the functionality in flint has been migrated to the new framework.  A
    * @property {number} [queueSize=10000] - Size of the buffer that holds outbound requests.
    * @property {number} [requeueSize=10000] - Size of the buffer that holds outbound re-queue requests.
 
-* Storage. There has been no testing of the `bot.store()`, `bot.recall()`, `bot.forget()` functions.   While they may work, it is reccomended that developers validate this before publishing a bot that leverages them.  We do plan to add some type of store functionality at a later data.
+* Storage. There has been no testing of the redis version of the `bot.store()`, `bot.recall()`, `bot.forget()` functions.   While they may work, it is reccomended that developers validate this before publishing a bot that leverages redis.  
 
 ## Common migration tasks
 Alternatly, since elements of the bot and trigger objects have also changed, one might just bite the bullet, and do some search and replace.  The biggest migration tasks come from the renaming of flint to framework and the change in structures for the bot and trigger objects.  Common case sensitive search and replace tasks might include
