@@ -7,7 +7,6 @@ let User_Test_Space_Title = common.User_Test_Space_Title;
 let assert = common.assert;
 let validator = common.validator;
 let when = common.when;
-let _ = common._;
 
 describe('User Created Room to create a Test Bot', () => {
   let userCreatedTestRoom, userCreatedRoomBot;
@@ -46,6 +45,87 @@ describe('User Created Room to create a Test Bot', () => {
         console.error('Failed to cleanup test room', reason);
         throw reason;
       });
+  });
+
+  describe('bot storage tests', () => {
+    // TODO check if the storage adapter is persistent
+    //If so check what data was avaiable after the spawn event
+    it('sets and checks some storage elements', () => {
+      let testName = 'sets and checks some storage elements';
+      bot = userCreatedRoomBot;
+      testString = 'testStringVal';
+      testObject = { key1: 'val1', key2: 'val2' };
+      let storagePromises = [];
+
+      storagePromises.push(bot.store('testString', testString));
+      storagePromises.push(bot.store('testObject', testObject));
+      return when.all(storagePromises)
+        .then(() => {
+          storagePromises = [];
+          storagePromises.push(bot.recall('testString'));
+          storagePromises.push(bot.recall('testObject'));
+          return when.all(storagePromises);
+        })
+        .then((storedValues) => {
+          assert(((typeof storedValues === 'object') && (storedValues.length === 2)),
+            'bot.recall tests did not resolve promises as expected!');
+          for (result of storedValues) {
+            if (typeof result === 'string') {
+              assert((result === testString),
+                `${testName}: Expected bot.recall('testString') to return ${testString}, got ${result}`);
+            } else if (typeof result === 'object') {
+              assert((validator.objIsEqual(result, testObject)),
+                `${testName}: Expected bot.recall('testObject') to return ${testObject}, got ${result}`);
+            } else {
+              return when.reject(new Error('Got unexecpted return value in bot.recall tests'));
+            }
+          }
+          storagePromises = [];
+          storagePromises.push(bot.forget('testString'));
+          storagePromises.push(bot.forget('testObject'));
+          return when.all(storagePromises);
+        })
+        .catch((e) => {
+          console.error(`testname failed: ${e.message}`);
+          return when.reject(e);
+        });
+    });
+
+    it('checks for non-existent testString', () => {
+      let element = 'testString';
+      let testName = `check for non existent storage element ${element}`;
+      bot = userCreatedRoomBot;
+
+      return bot.recall(element)
+        .then((result) => {
+          let msg = `${testName} got a result of ${result} for bot.recall('${element}').  Expected a reject`;
+          return when.reject(new Error(msg));
+        })
+        .catch((e) => {
+          framework.debug(`Got expected reject: ${e.message}, for bot.recall('${element}') test.`);
+          return when(true);
+        });
+    });
+
+    it('checks for non-existent testObject', () => {
+      let element = 'testObject';
+      let testName = `check for non existent storage element ${element}`;
+      bot = userCreatedRoomBot;
+
+      return bot.recall(element)
+        .then((result) => {
+          let msg = `${testName} got a result of ${result} for bot.recall('${element}').  Expected a reject`;
+          return when.reject(new Error(msg));
+        })
+        .catch((e) => {
+          framework.debug(`Got expected reject: ${e.message}, for bot.recall('${element}') test.`);
+          return when(true);
+        });
+    });
+
+    //TODO Check if this is a persistent memory store and if so write something
+    // that a subsequent test run can check for
+
   });
 
   describe('Bot Created Rooms Tests', () => {
@@ -363,7 +443,7 @@ describe('User Created Room to create a Test Bot', () => {
 
         // Wait for the events associated with a new button press before completing test..
         attachmentActionEvent = new Promise((resolve) => {
-          common.frameworkAttachementActionEventHandler(testName, framework, 
+          common.frameworkAttachementActionEventHandler(testName, framework,
             botCreatedRoomBot, eventsData, resolve);
         });
 
@@ -387,7 +467,7 @@ describe('User Created Room to create a Test Bot', () => {
               common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
             });
             return botCreatedRoomBot.say(`Thanks. Now I know your name is ${attachmentAction.inputs.myName}, ` +
-               `your email is ${attachmentAction.inputs.myEmail}, and your phone is ${attachmentAction.inputs.myTel}.`);
+              `your email is ${attachmentAction.inputs.myEmail}, and your phone is ${attachmentAction.inputs.myTel}.`);
           })
           .then(() => when(messageCreatedEvent))
           .catch((e) => {

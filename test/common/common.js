@@ -486,20 +486,20 @@ module.exports = {
       });
     },
 
-      activeBot.messageHandler = function (testName, eventsData, promiseResolveFunction) {
-        activeBot.once('message', (bot, trigger, id) => {
-          this.framework.debug(`Bot message event occurred in test ${testName}`);
-          assert(validator.isBot(bot),
-            'message event did not include a valid bot');
-          assert((bot.id === activeBot.id),
-            'bot returned in bot.on("message") is not the one expected');
-          assert(validator.isTrigger(trigger),
-            'message event did not include a valid trigger');
-          assert((id === activeBot.id),
-            'id returned in framework.on("message") is not the one expected');
-          promiseResolveFunction(true);
-        });
-      };
+    activeBot.messageHandler = function (testName, eventsData, promiseResolveFunction) {
+      activeBot.once('message', (bot, trigger, id) => {
+        this.framework.debug(`Bot message event occurred in test ${testName}`);
+        assert(validator.isBot(bot),
+          'message event did not include a valid bot');
+        assert((bot.id === activeBot.id),
+          'bot returned in bot.on("message") is not the one expected');
+        assert(validator.isTrigger(trigger),
+          'message event did not include a valid trigger');
+        assert((id === activeBot.id),
+          'id returned in framework.on("message") is not the one expected');
+        promiseResolveFunction(true);
+      });
+    };
 
     activeBot.filesHandler = function (testName, eventsData, promiseResolveFunction) {
       activeBot.once('files', (bot, trigger, id) => {

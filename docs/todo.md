@@ -44,7 +44,7 @@ A goal of this project was to extend the framework to support new functionality 
 ## Storage
 node-flint provides a storage system to allow developers to store and retrieve data associated with individual bot/space combinations.   This framework has not modified that code, but has also not tested it to see if it has broken.
 
-- [ ] Add storage tests
+- [x] Add storage tests
 - [ ] Add mongo storage
 
 ## Migrating from node-flint
