@@ -31,6 +31,8 @@ The initial goal of the project was to support the basic framework initiation an
 - [x] Rename from flint to framework
 - [ ] Get rid fo flint pass through functions that are natively supported by the webex sdk
 - [x] Update contribution doc to explain how to run tests
+- [ ] Add retry logic for pagination
+- [ ] Add retry logic for 429s
 - [ ] Build a webex-node-integration-framework around this framework that demonstrates OAuth token management and creates a unique framework instance for each authorized user
 
 ## New functions
@@ -52,6 +54,7 @@ node-flint provides a storage system to allow developers to store and retrieve d
 ## Improving the tests
 
 - [ ] Add a ability to create a bot and user on the fly for the tests
+- [x] Add test case for attachmentAction events
 - [ ] Refactor the tests so the framework.isBotAccount variable is used to determine if mentions are needed in the user messages
 - [x] Break out the tests so they aren't in one monolithic file but don't create a new framework each time
 - [ ] Track and report the number of times each flint event was tested, to catch gaps in event validation
