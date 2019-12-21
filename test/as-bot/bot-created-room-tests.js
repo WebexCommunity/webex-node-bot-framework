@@ -323,7 +323,7 @@ describe('User Created Room to create a Test Bot', () => {
 
     describe('bot.sendCard', () => {
       let message;
-      it('sends a card', () => {
+      it.only('sends a card', () => {
         let testName = 'bot sends a card';
         let cardJson = require('../common/input-card.json');
 
@@ -352,6 +352,45 @@ describe('User Created Room to create a Test Bot', () => {
           });
       });
 
+      it.only('presses a button on a card', () => {
+        let testName = 'user presses a button on a card';
+        let attachmentAction;
+        let inputs = {
+          myName: common.userInfo.displayName,
+          myEmail: common.userInfo.emails[0],
+          myTel: '555-555-1234'
+        };
+
+        // Wait for the events associated with a new button press before completing test..
+        attachmentActionEvent = new Promise((resolve) => {
+          common.frameworkAttachementActionEventHandler(testName, framework, 
+            botCreatedRoomBot, eventsData, resolve);
+        });
+
+        return userWebex.attachmentActions.create({
+          // As the other user emulate an Action.Submit button press
+          type: 'submit',
+          messageId: message.id,
+          inputs
+        })
+          .then((a) => {
+            attachmentAction = a;
+            assert(validator.isAttachmentAction(attachmentAction),
+              'attachmentAction returned by sdk.attachmentActions.create() was not valid');
+            return when(attachmentActionEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(attachmentAction, eventsData.attachmentAction),
+              'attachmentAction returned by API did not match the one from the attachmentAction event');
+            return botCreatedRoomBot.say(`Thanks. Now I know your name is ${attachmentAction.inputs.myName}, ` +
+               `your email is ${attachmentAction.inputs.myEmail}, and your phone is ${attachmentAction.inputs.myTel}.`);
+          })
+          .then(() => when(true))
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
 
     });
 
@@ -414,7 +453,7 @@ describe('User Created Room to create a Test Bot', () => {
           .catch((e) => {
             console.error(`${testName} failed: ${e.message}`);
             console.error('This test is of an EFT threaded reply feature, and your bot may not be configured for it.' +
-            '  If this is the only test that fails, do not worry about it.');
+              '  If this is the only test that fails, do not worry about it.');
             return Promise.reject(e);
           });
       });
