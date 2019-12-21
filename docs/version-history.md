@@ -1,3 +1,9 @@
+## v 0.5.0
+* Updated framework to webex sdk v1.80.80
+* Added support for attachmentAction events via webesocket.  (SDK added this in v1.80.79)
+* Updated migration document to explicitly state that the framework does not support retries for pagination or 429 errors.   framework.start() will fail now if the parameters around retry logic are set.  Hope to add this back, at least for pagination, which the webex SDK provides an interface for, in the future.
+* Added tests for bot.[store,recall,forget].   Only tested memory storage so far.  Migrating doc still warns that redis is untested.
+  
 ## v 0.4.0
 * Moved repo to https://github.com/webex/webex-node-bot-framework
 * Updated use of Buffer in lib/utils.js to avoid deprecation warning

@@ -18,7 +18,7 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   framework = new Framework({ token: process.env.BOT_API_TOKEN });
   userWebex = new Webex({ credentials: process.env.USER_API_TOKEN });
 } else {
-  console.error('Missing required evnvironment variables:\n' +
+  console.error('Missing required environment variables:\n' +
     '- BOT_API_TOKEN -- token associatd with an existing bot\n' +
     '- USER_API_TOKEN -- token associated with an existing user\n' +
     '- HOSTED_FILE -- url to a file that can be attached to test messages\n' +
