@@ -430,6 +430,22 @@ module.exports = {
     });
   },
 
+  frameworkAttachementActionEventHandler: function (testName, framework, cardSendingBot, eventsData, promiseResolveFunction) {
+    this.framework.once('attachmentAction', (bot, trigger, id) => {
+      framework.debug(`Framework attachmentAction event occurred in test ${testName}`);
+      assert(id === framework.id);
+      assert(bot.id === cardSendingBot.id,
+        'bot returned in framework.on("attachmentAction") is not the same as the on that sent the card');
+      assert(validator.isTrigger(trigger),
+        'mentioned event did not include a valid trigger');
+      assert(trigger.type === 'attachmentAction',
+        'trigger returned in framework.on("attachmentAction") was not attachmentAction type!');
+      eventsData.attachmentAction = trigger.attachmentAction;
+      promiseResolveFunction(assert(validator.isAttachmentAction(trigger.attachmentAction),
+        'attachmentAction returned in framework.on("attachmentAction") is not valid'));
+    });
+  },
+
   frameworkDespawnHandler: function (testName, framework, eventsData, promiseResolveFunction) {
     this.framework.once('despawn', (bot, id, removedBy) => {
       framework.debug(`Framework despawn event occurred in test ${testName}`);
