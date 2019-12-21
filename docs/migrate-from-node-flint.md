@@ -34,6 +34,21 @@ var flint = new Framework(config);
 ```
 Naming the new Framework object `flint`, allows existing `flint.hears()` and `flint.on()` functions to behave as the currently do.  
 
+## Missing functionality
+Not all of the functionality in flint has been migrated to the new framework.  Apps that rely on any of the following may wish to postpone their migration (or look to implement these features some other way):
+
+* Retry logic for pagination and rate limiting.  The philosopy behind the framework is to encourage developers to leverage the Webex SDK (exposed as an element in the frameowrk and bot objects), natively when needed.   When appropriate applications should inspect the reponse headers for pagination and rate limiting (HTTP 429 Response Code) as needed.  `framework.start()` will fail when the framework was passed a config object that includes any of the following options:
+     * @property {number} [maxPageItems=50] - Max results that the paginator uses.
+   * @property {number} [maxConcurrent=3] - Max concurrent sessions to the Webex API
+   * @property {number} [minTime=600] - Min time between consecutive request starts.
+   * @property {number} [requeueMinTime=minTime*10] - Min time between consecutive request starts of requests that have been re-queued.
+   * @property {number} [requeueMaxRetry=3] - Msx number of atteempts to make for failed request.
+   * @property {array} [requeueCodes=[429,500,503]] - Array of http result codes that should be retried.
+   * @property {number} [queueSize=10000] - Size of the buffer that holds outbound requests.
+   * @property {number} [requeueSize=10000] - Size of the buffer that holds outbound re-queue requests.
+
+* Storage. There has been no testing of the `bot.store()`, `bot.recall()`, `bot.forget()` functions.   While they may work, it is reccomended that developers validate this before publishing a bot that leverages them.  We do plan to add some type of store functionality at a later data.
+
 ## Common migration tasks
 Alternatly, since elements of the bot and trigger objects have also changed, one might just bite the bullet, and do some search and replace.  The biggest migration tasks come from the renaming of flint to framework and the change in structures for the bot and trigger objects.  Common case sensitive search and replace tasks might include
 
@@ -78,10 +93,11 @@ For developer's who are porting existing flint based bots to this framework the 
 | active        | active       | Bot active state                             |                                                              |
 | person        | --           | Bot Person Object                            | Availabile as bot.framework.person                         |
 | email         | --           | Bot email                                    | Availabile as bot.framework.person.emails[0]                                   | 
-| team          | --           | Bot team object                              | available via bot.getTeam() convenience function TODO        |
+| team          | --           | Bot team object                              | This object is seldom used and creating it slows down spawning a bot.  Apps that want it can check if `bot.room.teamId` exists and if so call `bot.webex.teams.get(bot.room.teamId)`       |
 | room          | room         | Bot room object                              | Now is standard webex room object                            |
 | membership    | membership   | Bot membership object                        | Standard Webex Teams membership object for bot               |
-| memberships   | memberships  | All memberships for bot's space              | available via bot.getMemberships() convenience function TODO |
+| memberships   | memberships  | All memberships for bot's space              | This array is seldom used.  Creating it slows down the initial bot spawn, and keeping it "current" requires periodic "refresh" calls to the platform.  Apps that want to inspect room memberships can instead call `bot.webex.memberships.get({roomId: bot.room.id})` at the time the data is needed.  The response is a standard Webex response and the members will be in an array called `items`.
+|
 | isLocked      | isLocked     | If bot's space is locked                     |                                                              |
 | isModerator   | isModerator  | If bot is a moderator                        |                                                              |
 | isMonitor     | --           | If bot is a moderator                        |  isMonitor is deprecated                                     |
