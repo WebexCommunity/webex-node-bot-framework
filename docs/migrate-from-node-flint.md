@@ -44,7 +44,6 @@ Not all of the functionality in flint has been migrated to the new framework.  A
    * @property {number} [requeueMinTime=minTime*10] - Min time between consecutive request starts of requests that have been re-queued.
    * @property {number} [requeueMaxRetry=3] - Msx number of atteempts to make for failed request.
    * @property {array} [requeueCodes=[429,500,503]] - Array of http result codes that should be retried.
-   * @property {number} [requestTimeout=20000] - Timeout for an individual request recieving a response.
    * @property {number} [queueSize=10000] - Size of the buffer that holds outbound requests.
    * @property {number} [requeueSize=10000] - Size of the buffer that holds outbound re-queue requests.
 
