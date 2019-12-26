@@ -3,11 +3,48 @@
 const when = require('when');
 const _ = require('lodash');
 
-module.exports = exports = function() {
+module.exports = exports = function (config) {
   // define memstore object
   let memStore = {};
+  let defaultConfig = (config.defaultConfig) ? config.defaultConfig : {};
 
   return {
+    /**
+     * Init the global memory storage
+     *
+     * @function
+     * @returns {(Promise.<Boolean>} - True if setup
+     */
+    initialize: function () {
+      return when(true);
+    },
+
+    /**
+     * Called when a bot is spawned, this function reads in the exisitng
+     * bot configuration from the DB or creates the default one
+     *
+     *
+     * @function
+     * @param {String} id - Room/Conversation/Context ID
+     * @param {boolean} frameworkInitialized - false during framework startup
+     * @returns {(Promise.<Object>} - bot's initial config data
+     */
+    initStorage: function (id) {
+      if (typeof id === 'string') {
+        // if id does not exist, create
+        if (!memStore[id]) {
+          // create id object in memStore
+          memStore[id] = {};
+        }
+
+        if ((defaultConfig) && (typeof defaultConfig === 'object')) {
+          for (let key of Object.keys(defaultConfig)) {
+            memStore[key] = defaultConfig[key];
+          }
+        }
+      }
+    },
+
     /**
      * Store key/value data.
      *
@@ -19,15 +56,15 @@ module.exports = exports = function() {
      * @param {(String|Number|Boolean|Array|Object)} value - Value of key
      * @returns {(Promise.<String>|Promise.<Number>|Promise.<Boolean>|Promise.<Array>|Promise.<Object>)}
      */
-    store: function(id, key, value) {
-      if(typeof id === 'string') {
+    store: function (id, key, value) {
+      if (typeof id === 'string') {
         // if id does not exist, create
-        if(!memStore[id]) {
+        if (!memStore[id]) {
           // create id object in memStore
           memStore[id] = {};
         }
 
-        if(typeof key === 'string' && typeof value !== 'undefined') {
+        if (typeof key === 'string' && typeof value !== 'undefined') {
           memStore[id][key] = value;
           return when(memStore[id][key]);
         } else {
@@ -49,12 +86,12 @@ module.exports = exports = function() {
      * @param {String} [key] - Key under id object (optional). If key is not passed, all keys for id are returned as an object.
      * @returns {(Promise.<String>|Promise.<Number>|Promise.<Boolean>|Promise.<Array>|Promise.<Object>)}
      */
-    recall: function(id, key) {
-      if(typeof id === 'string') {
+    recall: function (id, key) {
+      if (typeof id === 'string') {
         // if key is defined and of type string....
-        if(typeof key === 'string') {
+        if (typeof key === 'string') {
           // if id/key exists...
-          if(memStore[id] && memStore[id][key]) {
+          if (memStore[id] && memStore[id][key]) {
             return when(memStore[id][key]);
           } else {
             return when.reject(new Error('bot.recall() could not find the value referenced by id/key'));
@@ -62,9 +99,9 @@ module.exports = exports = function() {
         }
 
         // else if key is not defined
-        else if(typeof key === 'undefined') {
+        else if (typeof key === 'undefined') {
           // if id exists...
-          if(memStore[id]) {
+          if (memStore[id]) {
             return when(memStore[id]);
           } else {
             return when.reject(new Error('bot.recall() has no key/values defined'));
@@ -90,12 +127,12 @@ module.exports = exports = function() {
      * @param {String} [key] - Key under id object (optional). If key is not passed, id and all children are removed.
      * @returns {(Promise.<String>|Promise.<Number>|Promise.<Boolean>|Promise.<Array>|Promise.<Object>)}
      */
-    forget: function(id, key) {
-      if(typeof id === 'string') {
+    forget: function (id, key) {
+      if (typeof id === 'string') {
         // if key is defined and of type string....
-        if(typeof key === 'string') {
+        if (typeof key === 'string') {
           // if id/key exists...
-          if(memStore[id] && memStore[id][key]) {
+          if (memStore[id] && memStore[id][key]) {
             let deletedKey = _.cloneDeep(memStore[id][key]);
             delete memStore[id][key];
             return when(deletedKey);
@@ -105,9 +142,9 @@ module.exports = exports = function() {
         }
 
         // else if key is not defined
-        else if(typeof key === 'undefined') {
+        else if (typeof key === 'undefined') {
           // if id exists...
-          if(memStore[id]) {
+          if (memStore[id]) {
             let deletedId = _.cloneDeep(memStore[id]);
             delete memStore[id];
             return when(deletedId);
