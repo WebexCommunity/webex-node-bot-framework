@@ -8,10 +8,62 @@ const _ = require('lodash');
 const jsonParse = when.lift(JSON.parse);
 const jsonStringify = when.lift(JSON.stringify);
 
-module.exports = exports = function(connectionUrl) {
+module.exports = exports = function (connectionUrl) {
   const redis = Redis.createClient({ url: connectionUrl });
+  const name = 'redis'
 
   return {
+
+    /**
+     * Init the global memory storage
+     * 
+     * This has never been tested.  Validating connections
+     * work here and throwing an exception when they don't 
+     * could be handy
+     *
+     * @function
+     * @returns {(Promise.<Boolean>} - True if setup
+     */
+    initialize: function () {
+      return when(true);
+    },
+
+
+    /**
+     * Get the storage adaptor's name
+     *
+     * @function
+     * @returns {string} - storage adaptor name
+     */
+    getName: function () {
+      return name;
+    },
+
+    /**
+     * Called when a bot is spawned, this function reads in the exisitng
+     * bot configuration from the DB or creates the default one
+     *
+     * This has never been tested and needs help from a redis user
+     *
+     * @function
+     * @param {String} id - Room/Conversation/Context ID
+     * @param {boolean} frameworkInitialized - false during framework startup
+     * @param {object} initBotData - object that contains the key/value pairs that should be set for new bots
+     * @returns {(Promise.<Object>} - bot's initial config data
+     */
+    initStorage: function (id, frameworkInitialized, initBotData) {
+      if (frameworkInitialized) {
+        // see if any exising data is in redis...
+      } else {
+        // Storage adaptors with persistent memory will add the initial 
+        // data only for "new" bots which are created after the framewor
+        // is initialized.   
+        if ((initBotData) && (typeof initBotData === 'object')) {
+          // Add this data to redis for this bot/space
+        }
+        return when(initBotData);
+      }
+    },
 
     /**
      * Store key/value data.
@@ -24,7 +76,7 @@ module.exports = exports = function(connectionUrl) {
      * @param {(String|Number|Boolean|Array|Object)} value - Value of key
      * @returns {(Promise.<String>|Promise.<Number>|Promise.<Boolean>|Promise.<Array>|Promise.<Object>)}
      */
-    store: function(id, key, value) {
+    store: function (id, key, value) {
       if (id && key) {
         if (value) {
           return jsonStringify(value)
@@ -57,7 +109,7 @@ module.exports = exports = function(connectionUrl) {
      * @param {String} [key] - Key under id object (optional). If key is not passed, all keys for id are returned as an object.
      * @returns {(Promise.<String>|Promise.<Number>|Promise.<Boolean>|Promise.<Array>|Promise.<Object>)}
      */
-    recall: function(id, key) {
+    recall: function (id, key) {
       if (id) {
         if (key) {
           return when.promise((resolve, reject) => redis.hget(id, key, (err, result) => {
@@ -100,7 +152,7 @@ module.exports = exports = function(connectionUrl) {
      * @param {String} [key] - Key under id object (optional). If key is not passed, id and all children are removed.
      * @returns {(Promise.<String>|Promise.<Number>|Promise.<Boolean>|Promise.<Array>|Promise.<Object>)}
      */
-    forget: function(id, key) {
+    forget: function (id, key) {
       if (id) {
         if (key) {
           return when.promise((resolve, reject) => redis.hdel(id, key, (err, result) => {

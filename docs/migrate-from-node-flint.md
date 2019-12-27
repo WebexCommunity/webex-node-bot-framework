@@ -47,7 +47,10 @@ Not all of the functionality in flint has been migrated to the new framework.  A
    * @property {number} [queueSize=10000] - Size of the buffer that holds outbound requests.
    * @property {number} [requeueSize=10000] - Size of the buffer that holds outbound re-queue requests.
 
-* Storage. There has been no testing of the redis version of the `bot.store()`, `bot.recall()`, `bot.forget()` functions.   While they may work, it is reccomended that developers validate this before publishing a bot that leverages redis.  
+* Storage. 
+  * There has been no testing of the redis version of the `bot.store()`, `bot.recall()`, `bot.forget()` functions.   While they may work, it is reccomended that developers validate this before publishing a bot that leverages redis.  
+  * A new framework config option `initBotStorageData` is now available.   Developers can set this to create an initial set of key/value pairs that a bot object will have when it is first spawned.
+  * A new mongo storage adaptor is available.  See the Storage Adaptor Changes for more details on how Storage Adaptors now work.
 
 ## Common migration tasks
 Alternatly, since elements of the bot and trigger objects have also changed, one might just bite the bullet, and do some search and replace.  The biggest migration tasks come from the renaming of flint to framework and the change in structures for the bot and trigger objects.  Common case sensitive search and replace tasks might include
@@ -177,3 +180,15 @@ For every message node-flint generates a set of events which may include
 Our new framework will ONLY generate the `messageCreated` event in instances when the message was sent by the bot.  In almost all cases bots and applications don't want to respond to their own messages, however those that choose to do so should build the logic for processing them in a `flint.on("messageCreated", message, flintId)` handler since the other events are no longer sent.   If any other space member posts a message, the `message` event will always fire and the `mentioned` event will fire if the message mentioned the bot, and a `files` event will fire if the message includes file attachments.
 
 
+## Storage Adaptor Changes
+For developer's who are porting existing flint based bots that use the storage adaptor capabilities there are some changes.
+
+The basic `bot.store()`, `bot.recall()`, and `bot.forget()` work as they always have when using the memory default memory storage adaptor, but there are changes in the persistent memory store adaptors.   
+
+A new mongo storage adaptor has been added which has been tested with cloud based mongo atlas DBs.   It adds several new functions:
+
+* initialize() -- this must be called before framework.start() is called and will validate that the configuration is correct
+* initStorage() -- this is called internally by the framework when a new bot is spawned.  If the new framework configuration elememnt `initBotStorageData` is set, these key/value pairs will be set on a the new bot.
+* writeMetrics() -- is a new, optional, method for storage adaptors that can be called to write breadcrumbs into the database that can be used to build reports on the bot's usage
+
+The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
