@@ -1,3 +1,6 @@
+## v 0.6.1
+* Bug fixes to ensure initStorage completes before 'spawned' event is emitted.
+
 ## v 0.6.0
 * Refactored storage adaptor logic
 * `framework.storageDriver()` now returns a promise 
