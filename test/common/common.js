@@ -19,6 +19,7 @@ module.exports = {
 
   // Common Tasks used by tests
   initFramework: function (testName, framework, userWebex) {
+    console.log('In initFramework...');
     // Wait for framework to generate events that indicate it started succesfully
     const started = new Promise((resolve) => {
       this.frameworkStartHandler(testName, framework, resolve);
@@ -34,6 +35,7 @@ module.exports = {
       });
     // While we wait for framework, lets validate the user
     let userInfoIsReady = userWebex.people.get('me');
+    console.log('Waiting for framework initialization to complete...');
     // Now wait until framework is initialized
     return when.all([started, initialized])
       .then(() => {

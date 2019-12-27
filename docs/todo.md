@@ -45,7 +45,8 @@ A goal of this project was to extend the framework to support new functionality 
 node-flint provides a storage system to allow developers to store and retrieve data associated with individual bot/space combinations.   This framework has not modified that code, but has also not tested it to see if it has broken.
 
 - [x] Add storage tests
-- [ ] Add mongo storage
+- [x] Add mongo storage
+- [x] Document that redis is likely broken
 
 ## Migrating from node-flint
 - [x] Add a chart in the readme that shows the difference in the bot and trigger structures

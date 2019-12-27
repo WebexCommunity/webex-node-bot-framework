@@ -48,43 +48,83 @@ describe('User Created Room to create a Test Bot', () => {
   });
 
   describe('bot storage tests', () => {
-    // TODO check if the storage adapter is persistent
+
+    //If the framework options included and initial storage config
+    // make sure these elements have been added to the newly created bot
+    it('checks the initial bot storage config is correct', () => {
+      let testName = 'checks the initial bot storage config is correct';
+      let storagePromises = [];
+      let initValues = [];
+      bot = userCreatedRoomBot;
+
+      if (typeof framework.initBotStorageData === 'object') {
+      } else {
+        debug('Skipping init storage test as not initial storage was found');
+        return when(true);
+      }
+
+      for (let entry of Object.entries(framework.initBotStorageData)) {
+        storagePromises.push(bot.recall(entry[0]));
+        initValues.push({ key: entry[0], value: entry[1] });
+      }
+      if (storagePromises.length === 0) {
+        debug('No initial config set, no values checked');
+        return Promise.resolve(true);
+      }
+
+      return when.all(storagePromises)
+        .then((storagePromises) => {
+          assert(((initValues.length === storagePromises.length)),
+            `bot initial storage tests did not find all ${initValues.length} key/value pairs`);
+          let objCount = 0;
+          for (result of initValues) {
+            if (typeof result.value === 'object') {
+              objCount += 1; //indexOf is sketchy with objects
+              continue;
+            }
+            let foundIndex = storagePromises.indexOf(result.value);
+            if (foundIndex == -1) {
+              return Promise.reject(new Error(`${testName} failed: ` +
+                `Did not find value "${result.value}" ` +
+                `for key "${result.key}" in the inital bot storage.`));
+            }
+            storagePromises.splice(foundIndex, 1);
+          }
+          // Since we didn't lookup objects, at least confirm the number of objects match
+          if (storagePromises.length !== objCount) {
+            return Promise.reject(new Error(`${testName} failed: ` +
+              `Expected to find ${objCount}` +
+              `objects in bot's initial data but found ${storagePromises.length}`));
+          }
+          return when(true);
+        })
+        .catch((e) => {
+          console.error(`${testName} failed: ${e.message}`);
+          return when.reject(e);
+        });
+    });
+
     //If so check what data was avaiable after the spawn event
     it('sets and checks some storage elements', () => {
       let testName = 'sets and checks some storage elements';
-      bot = userCreatedRoomBot;
       testString = 'testStringVal';
       testObject = { key1: 'val1', key2: 'val2' };
-      let storagePromises = [];
+      bot = userCreatedRoomBot;
 
-      storagePromises.push(bot.store('testString', testString));
-      storagePromises.push(bot.store('testObject', testObject));
-      return when.all(storagePromises)
-        .then(() => {
-          storagePromises = [];
-          storagePromises.push(bot.recall('testString'));
-          storagePromises.push(bot.recall('testObject'));
-          return when.all(storagePromises);
+      return bot.store('testString', testString)
+        .then(() => bot.store('testObject', testObject))
+        .then(() => bot.recall('testString'))
+        .then((result) => {
+          assert((result === testString),
+            `${testName}: Expected bot.recall('testString') to return ${testString}, got ${result}`);
+          return bot.recall('testObject');
         })
-        .then((storedValues) => {
-          assert(((typeof storedValues === 'object') && (storedValues.length === 2)),
-            'bot.recall tests did not resolve promises as expected!');
-          for (result of storedValues) {
-            if (typeof result === 'string') {
-              assert((result === testString),
-                `${testName}: Expected bot.recall('testString') to return ${testString}, got ${result}`);
-            } else if (typeof result === 'object') {
-              assert((validator.objIsEqual(result, testObject)),
-                `${testName}: Expected bot.recall('testObject') to return ${testObject}, got ${result}`);
-            } else {
-              return when.reject(new Error('Got unexecpted return value in bot.recall tests'));
-            }
-          }
-          storagePromises = [];
-          storagePromises.push(bot.forget('testString'));
-          storagePromises.push(bot.forget('testObject'));
-          return when.all(storagePromises);
+        .then((result) => {
+          assert((validator.objIsEqual(result, testObject)),
+            `${testName}: Expected bot.recall('testObject') to return ${testObject}, got ${result}`);
+          return bot.forget('testString');
         })
+        .then(() => bot.forget('testObject'))
         .catch((e) => {
           console.error(`testname failed: ${e.message}`);
           return when.reject(e);
@@ -123,8 +163,96 @@ describe('User Created Room to create a Test Bot', () => {
         });
     });
 
-    //TODO Check if this is a persistent memory store and if so write something
-    // that a subsequent test run can check for
+    it('tries to forget a non existing storage element', () => {
+      let element = 'testObject';
+      let testName = `tries to forget a non existing storage element: ${element}`;
+      bot = userCreatedRoomBot;
+
+      return bot.forget(element)
+        .then((result) => {
+          let msg = `${testName} got a result of ${result} for bot.recall('${element}').  Expected a reject`;
+          return when.reject(new Error(msg));
+        })
+        .catch((e) => {
+          framework.debug(`Got expected reject: ${e.message}, for bot.forget('${element}') test.`);
+          return when(true);
+        });
+    });
+
+    it('tries to write bot metrics', () => {
+      let testName = `tries to write bot metrics'`;
+      bot = userCreatedRoomBot;
+
+      return bot.writeMetric({ event: 'frameworkUnitTestWithActor' }, common.userInfo)
+        .then((result) => {
+          framework.debug('Succesfully wrote metrics data:');
+          framework.debug(result);
+        })
+        .catch((e) => {
+          if (typeof process.env.MONGO_USER !== 'string') {
+            // Extend as other providers support this method
+            framework.debug(`${testName}" Got expected reject when working ` +
+              `with non Mongo storage provider: ${e.message}`);
+            return when(true);
+          } else if (typeof process.env.MONGO_BOT_METRICS !== 'string') {
+            // Extend as other providers support this method
+            framework.debug(`${testName}" Got expected reject when working ` +
+              `with non Mongo storage provider with no metrics collection specific: ${e.message}`);
+            return when(true);
+          } else
+            return when.reject(e);
+        });
+    });
+
+    it('tries to write bot metrics with actorId', () => {
+      let testName = `tries to write bot metrics with actorId`;
+      bot = userCreatedRoomBot;
+
+      return bot.writeMetric({ event: 'frameworkUnitTestWithActorId' }, common.userInfo.id)
+        .then((result) => {
+          framework.debug('Succesfully wrote metrics data:');
+          framework.debug(result);
+        })
+        .catch((e) => {
+          if (typeof process.env.MONGO_USER !== 'string') {
+            // Extend as other providers support this method
+            framework.debug(`${testName}" Got expected reject when working ` +
+              `with non Mongo storage provider: ${e.message}`);
+            return when(true);
+          } else if (typeof process.env.MONGO_BOT_METRICS !== 'string') {
+            // Extend as other providers support this method
+            framework.debug(`${testName}" Got expected reject when working ` +
+              `with non Mongo storage provider with no metrics collection specific: ${e.message}`);
+            return when(true);
+          } else
+            return when.reject(e);
+        });
+    });
+
+    it('tries to write bot metrics no actor info', () => {
+      let testName = `tries to write bot metrics with actorId`;
+      bot = userCreatedRoomBot;
+
+      return bot.writeMetric({ event: 'frameworkUnitTestWithNoActorInfo' })
+        .then((result) => {
+          framework.debug('Succesfully wrote metrics data:');
+          framework.debug(result);
+        })
+        .catch((e) => {
+          if (typeof process.env.MONGO_USER !== 'string') {
+            // Extend as other providers support this method
+            framework.debug(`${testName}" Got expected reject when working ` +
+              `with non Mongo storage provider: ${e.message}`);
+            return when(true);
+          } else if (typeof process.env.MONGO_BOT_METRICS !== 'string') {
+            // Extend as other providers support this method
+            framework.debug(`${testName}" Got expected reject when working ` +
+              `with non Mongo storage provider with no metrics collection specific: ${e.message}`);
+            return when(true);
+          } else
+            return when.reject(e);
+        });
+    });
 
   });
 

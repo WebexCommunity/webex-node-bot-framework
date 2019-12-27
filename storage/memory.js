@@ -3,20 +3,30 @@
 const when = require('when');
 const _ = require('lodash');
 
-module.exports = exports = function (config) {
+module.exports = exports = function () {
   // define memstore object
   let memStore = {};
-  let defaultConfig = (config.defaultConfig) ? config.defaultConfig : {};
+  const name = "memory";
 
   return {
     /**
      * Init the global memory storage
      *
      * @function
-     * @returns {(Promise.<Boolean>} - True if setup
+     * @returns {(Promise.<Boolean>)} - True if setup
      */
     initialize: function () {
       return when(true);
+    },
+
+    /**
+     * Get the storage adaptor's name
+     *
+     * @function
+     * @returns {string} - storage adaptor name
+     */
+    getName: function () {
+      return name;
     },
 
     /**
@@ -27,9 +37,10 @@ module.exports = exports = function (config) {
      * @function
      * @param {String} id - Room/Conversation/Context ID
      * @param {boolean} frameworkInitialized - false during framework startup
-     * @returns {(Promise.<Object>} - bot's initial config data
+     * @param {object} initBotData - object that contains the key/value pairs that should be set for new bots
+     * @returns {(Promise.<Object>)} - bot's initial config data
      */
-    initStorage: function (id) {
+    initStorage: function (id, frameworkInitialized, initBotData) {
       if (typeof id === 'string') {
         // if id does not exist, create
         if (!memStore[id]) {
@@ -37,12 +48,19 @@ module.exports = exports = function (config) {
           memStore[id] = {};
         }
 
-        if ((defaultConfig) && (typeof defaultConfig === 'object')) {
-          for (let key of Object.keys(defaultConfig)) {
-            memStore[key] = defaultConfig[key];
+        // Storage adaptors with persistent memory will add the initial 
+        // data only for "new" bots which are created after the framewor
+        // is initialized.   The memory adapter loads the default data
+        // for all bots, since persistent storage is not available
+        if ((initBotData) && (typeof initBotData === 'object')) {
+          for (let key of Object.keys(initBotData)) {
+            memStore[id][key] = initBotData[key];
           }
+        } else {
+          return when.reject('Initial bot storage data must be an object');
         }
       }
+      return when(initBotData);
     },
 
     /**
@@ -54,7 +72,7 @@ module.exports = exports = function (config) {
      * @param {String} id - Room/Conversation/Context ID
      * @param {String} key - Key under id object
      * @param {(String|Number|Boolean|Array|Object)} value - Value of key
-     * @returns {(Promise.<String>|Promise.<Number>|Promise.<Boolean>|Promise.<Array>|Promise.<Object>)}
+     * @returns {(Promise.<String>|Promise.<Number>|Promise.<Boolean>|Promise.<Array>|Promise.<Object>)} -- stored value
      */
     store: function (id, key, value) {
       if (typeof id === 'string') {
@@ -91,7 +109,7 @@ module.exports = exports = function (config) {
         // if key is defined and of type string....
         if (typeof key === 'string') {
           // if id/key exists...
-          if (memStore[id] && memStore[id][key]) {
+          if (memStore[id] && (typeof memStore[id][key] !== 'undefined')) {
             return when(memStore[id][key]);
           } else {
             return when.reject(new Error('bot.recall() could not find the value referenced by id/key'));
