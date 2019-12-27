@@ -1,3 +1,10 @@
+## v 0.6.0
+* Refactored storage adaptor logic
+* `framework.storageDriver()` now returns a promise 
+* Added new Mongo storage adaptor to support bot storage that persists across server restarts
+* Added `initStorage()` method called by the framework when a bot is spawned that loads data in from database or, optionallky creates a default set of key/value pairs specified in the `initBotStorage` elment of the framework's configuration
+* Added a `writeMetrics()` method to the storage Adaptor framework, allowing developers who use a persistent storage to write bot activity data for potential engagement level reporting
+
 ## v 0.5.0
 * Updated framework to webex sdk v1.80.80
 * Added support for attachmentAction events via webesocket.  (SDK added this in v1.80.79)
