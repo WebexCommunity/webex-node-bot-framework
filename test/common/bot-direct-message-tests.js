@@ -9,7 +9,7 @@ let when = common.when;
 
 
 describe('Bot interacts with user in 1-1 space', () => {
-
+  let frameworkTestRuns = 0;
   let testName = 'Bot 1-1 Space Test';
   let message;
   let eventsData = {};
@@ -36,6 +36,26 @@ describe('Bot interacts with user in 1-1 space', () => {
     });
   });
 
+
+
+  it('checks for persistent storage from previous tests', () => {
+    let bot = common.botForUser1on1Space;
+    if (process.env.MONGO_USER) {
+      return bot.recall('frameworkTestRuns')
+        .then((count) => {
+          frameworkTestRuns = count;
+          framework.debug(`Found persistent config "frameworkTestRuns": ${count}`);
+          return Promise.resolve(true);
+        })
+        .catch((e) => {
+          return Promise.reject(new Error(`Did not find persistent config "frameworkTestRuns": ${e.message}` +
+            ` This is expected the first time the test is run`));
+        });
+    } else {
+      framework.debug('Skipping persistent storage test for non Mongo storage provider');
+      return Promise.resolve(true);
+    }
+  });
 
   it('hears the user without needing to be mentioned', () => {
     testName = 'hears the user without needing to be mentioned';
@@ -137,5 +157,17 @@ describe('Bot interacts with user in 1-1 space', () => {
       });
   });
 
+  it('updates persistent storage for the next tests', () => {
+    let bot = common.botForUser1on1Space;
+    if (process.env.MONGO_USER) {
+      return bot.store('frameworkTestRuns', frameworkTestRuns + 1)
+        .catch((e) => {
+          return Promise.reject(new Error(`Failed to update persistent config "frameworkTestRuns": ${e.message}`));
+        });
+    } else {
+      framework.debug('Skipping persistent storage test for non Mongo storage provider');
+      return Promise.resolve(true);
+    }
+  });
 
 });

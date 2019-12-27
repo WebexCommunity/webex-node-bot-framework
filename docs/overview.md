@@ -83,8 +83,7 @@ framework.setWebexToken(newToken)
 ```
 
 ## Storage
-The storage system used in the framework is a simple key/value store and resolves around
-these 3 methods:
+The storage system used in the framework is a simple key/value store and resolves around these 3 methods:
 
 * `bot.store(key, value)` - Store a value to a bot instance where 'key' is a
   string and 'value' is a boolean, number, string, array, or object. *This does
@@ -96,19 +95,23 @@ these 3 methods:
   is an optional property that when defined, removes the specific key, and when
   undefined, removes all keys. Returns a resolved promise if deleted or not found.
 
+When a bot is first spawned, the framework calls the `bot.initStorage` method which attepts to load any previously existing bot storage elements (if using a persistent storage driver such as [MongoStore](#MongoStore)), or will create an optional initial set of key/value pairs that were specified in the framework's configuration options `initBotStorageData` element.   If this is not set, new bots start off with no key/value pairs until `bot.store()` is called.
+
 When a bot despawns (is removed from a space), the key/value store for that bot
 instance will automatically be removed from the store. Framework currently has an
-in-memory store and a Redis based store. By default, the in-memory store is
+in-memory store and a mongo based store. By default, the in-memory store is
 used. Other backend stores are possible by replicating any one of the built-in
-storage modules and passing it to the `framework.storeageDriver()` method. *See
-docs for store, recall, forget for more details.*
+storage modules and passing it to the `framework.storeageDriver()` method. 
 
-**Example:**
+The [MongoStore](#MongoStore) (and potentially other stores that use a persistent storage mechanism), also support the following methods:
 
-```js
-var redisDriver = require('webex-node-bot-framework/storage/redis');
-framework.storageDriver(redisDriver('redis://localhost'));
-```
+* `initialize()` -- this must be called before `framework.storageDriver()` and `framework.start()` are called, and will validate that the configuration is correct
+* `writeMetrics()` -- is a new, optional, method for persistent storage adaptors that can be called to write breadcrumbs into the database that can be used to build reports on the bot's usage
+
+See [MongoStore](#MongoStore), for details on how to configure this storage adaptor.
+
+The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
+
 
 ## Bot Accounts
 

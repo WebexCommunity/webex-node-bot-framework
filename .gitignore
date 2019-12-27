@@ -10,8 +10,8 @@ Thumbs.db
 .Spotlight-V100
 .Trashes
 
-# Application specific files
-venv
+# Environment specific files
+.env*
 node_modules
 
 # Private environments

@@ -209,8 +209,7 @@ framework.setWebexToken(newToken)
 ```
 
 ## Storage
-The storage system used in the framework is a simple key/value store and resolves around
-these 3 methods:
+The storage system used in the framework is a simple key/value store and resolves around these 3 methods:
 
 * `bot.store(key, value)` - Store a value to a bot instance where 'key' is a
   string and 'value' is a boolean, number, string, array, or object. *This does
@@ -222,19 +221,23 @@ these 3 methods:
   is an optional property that when defined, removes the specific key, and when
   undefined, removes all keys. Returns a resolved promise if deleted or not found.
 
+When a bot is first spawned, the framework calls the `bot.initStorage` method which attepts to load any previously existing bot storage elements (if using a persistent storage driver such as [MongoStore](#MongoStore)), or will create an optional initial set of key/value pairs that were specified in the framework's configuration options `initBotStorageData` element.   If this is not set, new bots start off with no key/value pairs until `bot.store()` is called.
+
 When a bot despawns (is removed from a space), the key/value store for that bot
 instance will automatically be removed from the store. Framework currently has an
-in-memory store and a Redis based store. By default, the in-memory store is
+in-memory store and a mongo based store. By default, the in-memory store is
 used. Other backend stores are possible by replicating any one of the built-in
-storage modules and passing it to the `framework.storeageDriver()` method. *See
-docs for store, recall, forget for more details.*
+storage modules and passing it to the `framework.storeageDriver()` method. 
 
-**Example:**
+The [MongoStore](#MongoStore) (and potentially other stores that use a persistent storage mechanism), also support the following methods:
 
-```js
-var redisDriver = require('webex-node-bot-framework/storage/redis');
-framework.storageDriver(redisDriver('redis://localhost'));
-```
+* `initialize()` -- this must be called before `framework.storageDriver()` and `framework.start()` are called, and will validate that the configuration is correct
+* `writeMetrics()` -- is a new, optional, method for persistent storage adaptors that can be called to write breadcrumbs into the database that can be used to build reports on the bot's usage
+
+See [MongoStore](#MongoStore), for details on how to configure this storage adaptor.
+
+The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
+
 
 ## Bot Accounts
 
@@ -366,7 +369,7 @@ symbol and the word. With bot accounts, this behaves a bit differently.
     * [.showHelp([header], [footer])](#Framework+showHelp) ⇒ <code>String</code>
     * [.setAuthorizer(Action)](#Framework+setAuthorizer) ⇒ <code>Boolean</code>
     * [.clearAuthorizer()](#Framework+clearAuthorizer) ⇒ <code>null</code>
-    * [.storageDriver(Driver)](#Framework+storageDriver) ⇒ <code>null</code>
+    * [.storageDriver(Driver)](#Framework+storageDriver) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.use(path)](#Framework+use) ⇒ <code>Boolean</code>
 
 <a name="new_Framework_new"></a>
@@ -401,6 +404,7 @@ Options Object
 | [webhookUrl] | <code>string</code> |  | URL that is used for Webex API to send callbacks.  If not set events are received via websocket |
 | [webhookSecret] | <code>string</code> |  | If specified, inbound webhooks are authorized before being processed. Ignored if webhookUrl is not set. |
 | [messageFormat] | <code>string</code> | <code>&quot;text&quot;</code> | Default Webex message format to use with bot.say(). |
+| [initBotStorageData] | <code>object</code> | <code>{}</code> | Initial data for new bots to put into storage. |
 | [id] | <code>string</code> | <code>&quot;random&quot;</code> | The id this instance of Framework uses. |
 | [webhookRequestJSONLocation] | <code>string</code> | <code>&quot;body&quot;</code> | The property under the Request to find the JSON contents. |
 | [removeWebhooksOnStart] | <code>Boolean</code> | <code>true</code> | If you wish to have the bot remove all account webhooks when starting. Ignored if webhookUrl is not set. |
@@ -589,10 +593,11 @@ framework.clearAuthorizer();
 ```
 <a name="Framework+storageDriver"></a>
 
-### framework.storageDriver(Driver) ⇒ <code>null</code>
+### framework.storageDriver(Driver) ⇒ <code>Promise.&lt;Boolean&gt;</code>
 Defines storage backend.
 
 **Kind**: instance method of [<code>Framework</code>](#Framework)  
+**Returns**: <code>Promise.&lt;Boolean&gt;</code> - - True if driver loaded succesfully  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1532,11 +1537,177 @@ Bot Despawned.
 | id | <code>string</code> | Framework UUID |
 | id | <code>string</code> | ID of user who removed the bot (if available) |
 
+
+# Storage Driver Reference
+
+
+<a name="MongoStore"></a>
+
+## MongoStore
+**Kind**: global class  
+
+* [MongoStore](#MongoStore)
+    * [new MongoStore(config)](#new_MongoStore_new)
+    * [.config](#MongoStore+config) : <code>object</code>
+    * [.initialize()](#MongoStore+initialize) ⇒ <code>Promise.&lt;Boolean&gt;</code>
+    * [.getName()](#MongoStore+getName) ⇒ <code>string</code>
+    * [.initStorage(id, frameworkInitialized, initBotStorageData)](#MongoStore+initStorage) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.store(id, key, value)](#MongoStore+store) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
+    * [.recall(id, [key])](#MongoStore+recall) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
+    * [.forget(id, [key])](#MongoStore+forget) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
+    * [.writeMetric(bot, appData, actor)](#MongoStore+writeMetric) ⇒ <code>Promise.&lt;Object&gt;</code>
+
+<a name="new_MongoStore_new"></a>
+
+### new MongoStore(config)
+Creates an instance of the Mongo Storage Adaptor.
+This storage adaptor uses a Mongo database that allows
+bot storage information to persist across server restarts.
+It has been tested with cloud mongo db conections and requires
+mondodb driver 3.4 or greater.
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| config | <code>Object</code> | Configuration object containing mongo db and collection settings. |
+
+**Example**  
+```js
+var config = {
+  mongoUri: 'mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]]',
+  storageCollectionName: 'webexBotFrameworkStorage'
+};
+let MongoStore = require('webex-node-bot-framework/storage/mongo');
+let mongoStore = new MongoStore(config);
+```
+<a name="MongoStore+config"></a>
+
+### mongoStore.config : <code>object</code>
+Options Object
+
+**Kind**: instance namespace of [<code>MongoStore</code>](#MongoStore)  
+**Properties**
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| mongoUri | <code>string</code> |  | URI to connect to Mongo.            This is typically in the format of:\n mongodb+srv://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]],            ie: mongodb+srv://myUser:secretPassw0rd@cluster#-area.mongodb.net/myClusterDBName?retryWrites=true&w=majority`,            see:  https://docs.mongodb.com/manual/reference/connection-string/ |
+| [storageCollectionName] | <code>string</code> | <code>&quot;webexBotFramworkStorage&quot;</code> | Mongo collection name for bot.[store,recall]() (will be created if does not exist) |
+| [initBotStorageData] | <code>object</code> | <code>{}</code> | Object with any default key/value pairs that a new bot should get upon creation |
+| [metricsCollectionName] | <code>string</code> |  | Mongo collection name for bot.writeMetric() (will be created if set, but does not exist),     bot.writeMetric() calls will fail if this is not set |
+| [singleInstance] | <code>Boolean</code> | <code>false</code> | Optimize bot.recall() speed if the bot is only running a single instance.     Data is still written to db, but lookups are done from local memory     Should be used with caution! |
+
+<a name="MongoStore+initialize"></a>
+
+### mongoStore.initialize() ⇒ <code>Promise.&lt;Boolean&gt;</code>
+Initializes the connection to the db.
+Call this, and wait for the return before setting the 
+framework's storage adaptor, and then calling framework.start()
+
+**Kind**: instance method of [<code>MongoStore</code>](#MongoStore)  
+**Returns**: <code>Promise.&lt;Boolean&gt;</code> - - True if setup  
+**Example**  
+```js
+// Wait for the connection to the DB to initialize before setting the
+ // framework's storage driver and starting framework
+ mongoStore.initialize()
+   .then(() => framework.storageDriver(mongoStore))
+   .then(() => framework.start())
+   .catch((e) => {
+     console.error(`Initialization with mongo storage failed: ${e.message}`)
+     process.exit(-1);
+  });
+```
+<a name="MongoStore+getName"></a>
+
+### mongoStore.getName() ⇒ <code>string</code>
+Get the storage adaptor's name
+
+**Kind**: instance method of [<code>MongoStore</code>](#MongoStore)  
+**Returns**: <code>string</code> - - storage adaptor name  
+<a name="MongoStore+initStorage"></a>
+
+### mongoStore.initStorage(id, frameworkInitialized, initBotStorageData) ⇒ <code>Promise.&lt;Object&gt;</code>
+Called by the framework, when a bot is spawned,
+this function reads in any existng bot configuration from the DB
+or creates the default one if none is found
+
+In general bot developers should not need to call this method
+
+**Kind**: instance method of [<code>MongoStore</code>](#MongoStore)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - bot's initial or previously stored config data  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| id | <code>String</code> | Room/Conversation/Context ID |
+| frameworkInitialized | <code>boolean</code> | false during framework startup |
+| initBotStorageData | <code>object</code> | data to initialize a new bot with |
+
+<a name="MongoStore+store"></a>
+
+### mongoStore.store(id, key, value) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
+Store key/value data.
+
+This method is exposed as bot.store(key, value);
+
+**Kind**: instance method of [<code>MongoStore</code>](#MongoStore)  
+**Returns**: <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code> - -- stored value  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| id | <code>String</code> | Room/Conversation/Context ID |
+| key | <code>String</code> | Key under id object |
+| value | <code>String</code> \| <code>Number</code> \| <code>Boolean</code> \| <code>Array</code> \| <code>Object</code> | Value of key |
+
+<a name="MongoStore+recall"></a>
+
+### mongoStore.recall(id, [key]) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
+Recall value of data stored by 'key'.
+
+This method is exposed as bot.recall(key, value);
+
+**Kind**: instance method of [<code>MongoStore</code>](#MongoStore)  
+**Returns**: <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code> - -- recalled value  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| id | <code>String</code> | Room/Conversation/Context ID |
+| [key] | <code>String</code> | Key under id object (optional). If key is not passed, all keys for id are returned as an object. |
+
+<a name="MongoStore+forget"></a>
+
+### mongoStore.forget(id, [key]) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
+Forget a key or entire store.
+
+This method is exposed as bot.forget(key, value);
+
+**Kind**: instance method of [<code>MongoStore</code>](#MongoStore)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| id | <code>String</code> | Room/Conversation/Context ID |
+| [key] | <code>String</code> | Key to forget (optional). If key is not passed, all stored configs are removed. |
+
+<a name="MongoStore+writeMetric"></a>
+
+### mongoStore.writeMetric(bot, appData, actor) ⇒ <code>Promise.&lt;Object&gt;</code>
+Write a metrics object to the database
+
+This method is exposed as bot.writeMetric(appData, actor);
+
+**Kind**: instance method of [<code>MongoStore</code>](#MongoStore)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - final data object written  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| bot | <code>object</code> | bot that is writing the metric |
+| appData | <code>object</code> | app specific metric data. |
+| actor | <code>object</code> \| <code>string</code> | user that triggered the metric activity |
+
 ## License
 
 The MIT License (MIT)
 
-Copyright (c) 2016-2017
+Copyright (c) 2016-2020
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
