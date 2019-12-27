@@ -15,7 +15,19 @@ require('dotenv').config();
 if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   (typeof process.env.USER_API_TOKEN === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
-  framework = new Framework({ token: process.env.BOT_API_TOKEN });
+  frameworkOptions = { token: process.env.BOT_API_TOKEN };
+  if (typeof process.env.INIT_STORAGE === 'string') {
+    try {
+      frameworkOptions.initBotStorageData = JSON.parse(process.env.INIT_STORAGE);
+    } catch (e) {
+      console.error(`Unable to parse INIT_STORAGE value:${process.env.INIT_STORAGE}`);
+      console.error(`${e.message}`);
+      console.error('Make sure to set this to optional environment to a '+
+        'properly stringified JSON object in order to test that the storage adapter properly adds it to new bots.');
+      process.exit(-1);
+    }
+  }
+  framework = new Framework(frameworkOptions);
   userWebex = new Webex({ credentials: process.env.USER_API_TOKEN });
 } else {
   console.error('Missing required environment variables:\n' +
