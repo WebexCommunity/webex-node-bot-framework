@@ -182,12 +182,12 @@ class MongoStore {
             return when(this.memStore[id]);
           } else {
             debug(`Did not find stored config for existing spaceId: "${id}"`);
-            return this.createDefaultConfig(id, initBotStorageData);
+            return when(this.createDefaultConfig(id, initBotStorageData));
           }
         })
         .catch((e) => {
           this.logger.error(`Failed to contact DB on bot spawn for spaceId "${id}": ${e.message}.  Using default config`);
-          return this.createDefaultConfig(id, initBotStorageData);
+          return when(this.createDefaultConfig(id, initBotStorageData));
         });
     } else {
       // Start with the default config when our bot is added to a new space
@@ -204,6 +204,7 @@ class MongoStore {
       .then((mReturn) => {
         debug(`Mongo response when creating default store config for spaceId: ${id}:`);
         debug(mReturn);
+        return when(initBotStorageData);
       })
       .catch((e) => {
         console.error(`Failed to store default config for spaceId: "${id}": ${e.message}`);
