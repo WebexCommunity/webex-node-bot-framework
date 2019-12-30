@@ -47,22 +47,18 @@ module.exports = exports = function (connectionUrl) {
      *
      * @function
      * @param {String} id - Room/Conversation/Context ID
-     * @param {boolean} frameworkInitialized - false during framework startup
      * @param {object} initBotData - object that contains the key/value pairs that should be set for new bots
      * @returns {(Promise.<Object>} - bot's initial config data
      */
-    initStorage: function (id, frameworkInitialized, initBotData) {
-      if (frameworkInitialized) {
-        // see if any exising data is in redis...
-      } else {
-        // Storage adaptors with persistent memory will add the initial 
-        // data only for "new" bots which are created after the framewor
-        // is initialized.   
-        if ((initBotData) && (typeof initBotData === 'object')) {
-          // Add this data to redis for this bot/space
-        }
-        return when(initBotData);
+    initStorage: function (id, initBotData) {
+      // TO BE IMPLEMENTED
+      // Check if data already exists in this space
+      // If so return it here
+      // If not add each key/value pair in the initBotData
+      if ((initBotData) && (typeof initBotData === 'object')) {
+        // Add this data to redis for this bot/space
       }
+      return when(initBotData);
     },
 
     /**
