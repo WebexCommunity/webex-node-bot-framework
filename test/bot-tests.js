@@ -22,7 +22,7 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
     } catch (e) {
       console.error(`Unable to parse INIT_STORAGE value:${process.env.INIT_STORAGE}`);
       console.error(`${e.message}`);
-      console.error('Make sure to set this to optional environment to a '+
+      console.error('Make sure to set this to optional environment to a ' +
         'properly stringified JSON object in order to test that the storage adapter properly adds it to new bots.');
       process.exit(-1);
     }

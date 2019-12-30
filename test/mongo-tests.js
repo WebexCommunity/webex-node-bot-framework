@@ -6,7 +6,6 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-const assert = require('assert');
 console.log('Starting bot-tests...');
 
 require('dotenv').config();
@@ -80,7 +79,7 @@ describe('#framework', () => {
         .then(() => framework.storageDriver(mongoStore))
         .then(() => common.initFramework('framework init', framework, userWebex))
         .catch((e) => {
-          framework.debug(`Initialization with mongo storage failed: ${e.message}`)
+          framework.debug(`Initialization with mongo storage failed: ${e.message}`);
           return Promise.reject(e);
         });
     } else {
