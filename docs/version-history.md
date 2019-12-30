@@ -1,3 +1,8 @@
+## v 0.7.0
+* Webex list APIs such as /rooms and /memberships do not perform well for applications that belong in over 1000 spaces.   In order to support popular bots the framework will now do "late spawning" of bots that existed in spaces before the server started, but were not discovered until after the framework completed its initialization.
+* Added `maxStartupSpaces` parameter to framework options to set the number of bot objects to "pre-spawn".   The default is 100.  This is similar to how Webex Teams clients work when starting getting only the 100 or so "most recent" spaces and then discovering other spaces "on the fly" as messages are sent to them.
+* As a consquence to this, existing samples that used the value of `framework.initialized` in the `spawn` event handler to differentiate between spaces that were discovered at startup vs. spaces that the bot has newly been added to, needed to change since it is now possible that bots that were in spaces prior to the server startup are spawned after the framework is initialized.  The new best practice is to look for the presence of the `addedBy` parameter in the `spawn` event handler.  If this is is set, it means that this spawn event was generated in response to a new membership rather than a new message event, which means that the bot was just added to a new space.   Applications may use this to add logic to have the bot introduce itself when it is first added to a space (but not everytime it is spawned, since that would spam users every time the server is restarted)
+
 ## v 0.6.1
 * Bug fixes to ensure initStorage completes before 'spawned' event is emitted.
 

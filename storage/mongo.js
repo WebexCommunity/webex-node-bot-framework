@@ -155,11 +155,10 @@ class MongoStore {
    *
    * @function
    * @param {String} id - Room/Conversation/Context ID
-   * @param {boolean} frameworkInitialized - false during framework startup
    * @param {object} initBotStorageData - data to initialize a new bot with
    * @returns {(Promise.<Object>)} - bot's initial or previously stored config data
    */
-  initStorage(id, frameworkInitialized, initBotStorageData) {
+  initStorage(id, initBotStorageData) {
     if ((!this.initialized) || (!this.botStoreCollection)) {
       if (!this.config.singleInstance) {
         return when.reject(new Error('MongoStore.spawn() called when store is not initialized!'));
@@ -172,27 +171,22 @@ class MongoStore {
       return when(initBotStorageData);
     }
 
-    if (!frameworkInitialized) {
-      // Look for an existing storeConfig in the DB
-      return this.botStoreCollection.findOne({ '_id': id })
-        .then((dbStore) => {
-          if (dbStore !== null) {
-            debug(`Found stored config for existing spaceId: "${id}"`);
-            this.memStore[id] = dbStore;
-            return when(this.memStore[id]);
-          } else {
-            debug(`Did not find stored config for existing spaceId: "${id}"`);
-            return when(this.createDefaultConfig(id, initBotStorageData));
-          }
-        })
-        .catch((e) => {
-          this.logger.error(`Failed to contact DB on bot spawn for spaceId "${id}": ${e.message}.  Using default config`);
+    // Look for an existing storeConfig in the DB
+    return this.botStoreCollection.findOne({ '_id': id })
+      .then((dbStore) => {
+        if (dbStore !== null) {
+          debug(`Found stored config for existing spaceId: "${id}"`);
+          this.memStore[id] = dbStore;
+          return when(this.memStore[id]);
+        } else {
+          debug(`Did not find stored config for existing spaceId: "${id}"`);
           return when(this.createDefaultConfig(id, initBotStorageData));
-        });
-    } else {
-      // Start with the default config when our bot is added to a new space
-      return this.createDefaultConfig(id, initBotStorageData);
-    }
+        }
+      })
+      .catch((e) => {
+        this.logger.error(`Failed to contact DB on bot spawn for spaceId "${id}": ${e.message}.  Using default config`);
+        return when(this.createDefaultConfig(id, initBotStorageData));
+      });
   };
 
   createDefaultConfig(id, initStorage) {

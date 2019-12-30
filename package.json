@@ -1,12 +1,13 @@
 {
   "name": "webex-node-bot-framework",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Webex Teams Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
     "test": "node_modules/.bin/mocha test/bot-tests.js --exit",
     "test-as-user": "node_modules/.bin/mocha test/integration-tests.js --exit",
     "test-mongo": "node_modules/.bin/mocha test/mongo-tests.js --exit",
+    "test-late-discovery": "node_modules/.bin/mocha test/late-discovery-tests.js --exit",
     "build": "cd docs && ./build.sh && cd .."
   },
   "repository": {

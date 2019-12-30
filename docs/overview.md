@@ -16,23 +16,27 @@ framework.on("initialized", function () {
 });
 
 // A spawn event is generated when the framework finds a space with your bot in it
-framework.on('spawn', function (bot) {
-  if (!framework.initialized) {
+// You can use the bot object to send messages to that space
+// The id field is the id of the framework
+// If addedBy is set, it means that a user has added your bot to a new space
+// Otherwise, this bot was in the space before this server instance started
+framework.on('spawn', function (bot, id, addedBy) {
+  if (!addedBy) {
     // don't say anything here or your bot's spaces will get 
     // spammed every time your server is restarted
-    framework.debug(`While starting up framework found our bot in a space called: ${bot.room.title}`);
+    framework.debug(`Framework created an object for an existing bot in a space called: ${bot.room.title}`);
   } else {
-    // After initialization, a spawn event means your bot got added to 
-    // a new space.   Say hello, and tell users what you do!
+    // addedBy is the ID of the user who just added our bot to a new space, 
+    // Say hello, and tell users what you do!
     bot.say('Hi there, you can say hello to me.  Don\'t forget you need to mention me in a group space!');
   }
 });
 ```
 
-Most of the framework's functionality is based around the framework.hears function. This
+Most of the framework's functionality is based around the `framework.hears()` function. This
 defines the phrase or pattern the bot is listening for and what actions to take
-when that phrase or pattern is matched. The framework.hears function gets a callback
-than includes two objects. The bot object, and the trigger object.
+when that phrase or pattern is matched. The `framework.hears()` function gets a callback
+than includes two objects. The bot object, and the trigger object, and the id of the framework.
 
 The bot object is a specific instance of the Bot class associated with the Webex Teams space that triggered the framework.hears call.  
 The trigger object provides details about the person and room and message, that caused the framework.hears function to be triggered.
@@ -40,7 +44,7 @@ The trigger object provides details about the person and room and message, that 
 A simple example of a framework.hears() function setup:
 
 ```js
-framework.hears(phrase, function(bot, trigger) {
+framework.hears(phrase, function(bot, trigger, id) {
   bot.<command>
     .then(function(returnedValue) {
       // do something with returned value

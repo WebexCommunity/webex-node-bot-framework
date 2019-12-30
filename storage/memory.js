@@ -36,11 +36,10 @@ module.exports = exports = function () {
      *
      * @function
      * @param {String} id - Room/Conversation/Context ID
-     * @param {boolean} frameworkInitialized - false during framework startup
      * @param {object} initBotData - object that contains the key/value pairs that should be set for new bots
      * @returns {(Promise.<Object>)} - bot's initial config data
      */
-    initStorage: function (id, frameworkInitialized, initBotData) {
+    initStorage: function (id, initBotData) {
       if (typeof id === 'string') {
         // if id does not exist, create
         if (!memStore[id]) {
