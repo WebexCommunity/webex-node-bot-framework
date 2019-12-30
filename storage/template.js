@@ -37,13 +37,12 @@ module.exports = exports = function () {
      *
      * @function
      * @param {String} id - Room/Conversation/Context ID
-     * @param {boolean} frameworkInitialized - false during framework startup
      * @param {object} initBotData - object that contains the key/value pairs that should be set for new bots
      * @returns {(Promise.<Object>} - bot's initial config data
      */
-    initStorage: function (id, frameworkInitialized, initBotData) {
-      // if framework is initialized check store for id
-      // if not found or framework is not initizlied set the initial bot data passed in
+    initStorage: function (id, initBotData) {
+      // check if there is existing data for this id in the persistent store
+      // if not found, set the initial bot data passed in
       // if success, return promise that resolves to initBotData
       // if failure, returns a rejected promise
     },

@@ -52,6 +52,10 @@ Not all of the functionality in flint has been migrated to the new framework.  A
   * A new framework config option `initBotStorageData` is now available.   Developers can set this to create an initial set of key/value pairs that a bot object will have when it is first spawned.
   * A new mongo storage adaptor is available.  See the Storage Adaptor Changes for more details on how Storage Adaptors now work.
 
+## Spawn events
+Flint would attempt to find all spaces that the bot is part of before completing its initialization.   This could take time and provide inaccurate results, especially for bots that are in over a thousand spaces.  The framework works more like the Webex Teams clients.   By default it tries to find the 100 most recently active spaces at startup (this can be configured using the config option `maxStartupSpaces`).  As the framework processes message:created and membership:created events, it will spawn additional bot objects as needed.   Bots that are spawned due to being added to a new space (since the framework started) will have an additional `addedBy` parameter passed to the ["spawn" event handler](../README.md#"spawn")
+
+
 ## Common migration tasks
 Alternatly, since elements of the bot and trigger objects have also changed, one might just bite the bullet, and do some search and replace.  The biggest migration tasks come from the renaming of flint to framework and the change in structures for the bot and trigger objects.  Common case sensitive search and replace tasks might include
 

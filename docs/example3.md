@@ -28,17 +28,22 @@ framework.on("initialized", function () {
 });
 
 // A spawn event is generated when the framework finds a space with your bot in it
-framework.on('spawn', function (bot) {
-  if (!framework.initialized) {
+// You can use the bot object to send messages to that space
+// The id field is the id of the framework
+// If addedBy is set, it means that a user has added your bot to a new space
+// Otherwise, this bot was in the space before this server instance started
+framework.on('spawn', function (bot, id, addedBy) {
+  if (!addedBy) {
     // don't say anything here or your bot's spaces will get 
     // spammed every time your server is restarted
-    framework.debug(`While starting up framework found our bot in a space called: ${bot.room.title}`);
+    framework.debug(`Framework created an object for an existing bot in a space called: ${bot.room.title}`);
   } else {
-    // After initialization, a spawn event means your bot got added to 
-    // a new space.   Say hello, and tell users what you do!
+    // addedBy is the ID of the user who just added our bot to a new space, 
+    // Say hello, and tell users what you do!
     bot.say('Hi there, you can say hello to me.  Don\'t forget you need to mention me in a group space!');
   }
 });
+
 
 var responded = false;
 // say hello

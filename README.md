@@ -73,14 +73,18 @@ framework.on("initialized", function () {
 });
 
 // A spawn event is generated when the framework finds a space with your bot in it
-framework.on('spawn', function (bot) {
-  if (!framework.initialized) {
+// You can use the bot object to send messages to that space
+// The id field is the id of the framework
+// If addedBy is set, it means that a user has added your bot to a new space
+// Otherwise, this bot was in the space before this server instance started
+framework.on('spawn', function (bot, id, addedBy) {
+  if (!addedBy) {
     // don't say anything here or your bot's spaces will get 
     // spammed every time your server is restarted
-    framework.debug(`While starting up framework found our bot in a space called: ${bot.room.title}`);
+    framework.debug(`Framework created an object for an existing bot in a space called: ${bot.room.title}`);
   } else {
-    // After initialization, a spawn event means your bot got added to 
-    // a new space.   Say hello, and tell users what you do!
+    // addedBy is the ID of the user who just added our bot to a new space, 
+    // Say hello, and tell users what you do!
     bot.say('Hi there, you can say hello to me.  Don\'t forget you need to mention me in a group space!');
   }
 });
@@ -142,23 +146,27 @@ framework.on("initialized", function () {
 });
 
 // A spawn event is generated when the framework finds a space with your bot in it
-framework.on('spawn', function (bot) {
-  if (!framework.initialized) {
+// You can use the bot object to send messages to that space
+// The id field is the id of the framework
+// If addedBy is set, it means that a user has added your bot to a new space
+// Otherwise, this bot was in the space before this server instance started
+framework.on('spawn', function (bot, id, addedBy) {
+  if (!addedBy) {
     // don't say anything here or your bot's spaces will get 
     // spammed every time your server is restarted
-    framework.debug(`While starting up framework found our bot in a space called: ${bot.room.title}`);
+    framework.debug(`Framework created an object for an existing bot in a space called: ${bot.room.title}`);
   } else {
-    // After initialization, a spawn event means your bot got added to 
-    // a new space.   Say hello, and tell users what you do!
+    // addedBy is the ID of the user who just added our bot to a new space, 
+    // Say hello, and tell users what you do!
     bot.say('Hi there, you can say hello to me.  Don\'t forget you need to mention me in a group space!');
   }
 });
 ```
 
-Most of the framework's functionality is based around the framework.hears function. This
+Most of the framework's functionality is based around the `framework.hears()` function. This
 defines the phrase or pattern the bot is listening for and what actions to take
-when that phrase or pattern is matched. The framework.hears function gets a callback
-than includes two objects. The bot object, and the trigger object.
+when that phrase or pattern is matched. The `framework.hears()` function gets a callback
+than includes two objects. The bot object, and the trigger object, and the id of the framework.
 
 The bot object is a specific instance of the Bot class associated with the Webex Teams space that triggered the framework.hears call.  
 The trigger object provides details about the person and room and message, that caused the framework.hears function to be triggered.
@@ -166,7 +174,7 @@ The trigger object provides details about the person and room and message, that 
 A simple example of a framework.hears() function setup:
 
 ```js
-framework.hears(phrase, function(bot, trigger) {
+framework.hears(phrase, function(bot, trigger, id) {
   bot.<command>
     .then(function(returnedValue) {
       // do something with returned value
@@ -403,6 +411,7 @@ Options Object
 | token | <code>string</code> |  | Webex Token. |
 | [webhookUrl] | <code>string</code> |  | URL that is used for Webex API to send callbacks.  If not set events are received via websocket |
 | [webhookSecret] | <code>string</code> |  | If specified, inbound webhooks are authorized before being processed. Ignored if webhookUrl is not set. |
+| [maxStartupSpaces] | <code>number</code> | <code>100</code> | If specified, the maximum number of spaces with our bot that the framework will discover during startup.           Max value for this parameter is 1000.  Setting this emulates the legacy flint startup behavior, otherwise          bots are discovered "just in time" if they are messaged in existing spaces or added to new spaces, which is closer         to the way webex teams clients also work.  See the [Spawn Event docs](#"spawn") to discover how to handle them differently |
 | [messageFormat] | <code>string</code> | <code>&quot;text&quot;</code> | Default Webex message format to use with bot.say(). |
 | [initBotStorageData] | <code>object</code> | <code>{}</code> | Initial data for new bots to put into storage. |
 | [id] | <code>string</code> | <code>&quot;random&quot;</code> | The id this instance of Framework uses. |
@@ -1505,22 +1514,26 @@ Bot Spawned.
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
 | id | <code>string</code> | Framework UUID |
-| addedBy | <code>string</code> | ID of user who added bot to space if available Bots are typically spawned in one of two ways 1) When the framework first starts it looks for spaces that     our bot is already part of.  When discovered a new bot is spawned 2) After the framework has started, if a user adds our bot to a space    a membership:created event occurs which also spawns a bot In the latter case, we pass the actorId associated with the membership:created event.  This allows bots to do something with info about the user who added them when they are first spawned. |
+| addedBy | <code>string</code> | ID of user who added bot to space if available. Bots are typically spawned in one of three ways: 1) When the framework first starts it can look for up to     options.maxStartupSpaces spaces that     our bot is already part of.  When discovered a new bot is spawned.    No addedBy parameter will be passed in this case and the     `framework.initialized` variable will be false. 2) After the framework has started if a user sends    a message to a bot in an existing space that was not discovered during startup,    a bot object is spawned for the "just in time" discovered space.  Developers    should never assume that all possible spaces were discovered during     the framework's startup.    No addedBy parameter will be passed in this case and the     framework.initialized variable will be true. 3) After the framework has started, if a user adds our bot to a new space    a membership:created event occurs which also spawns a bot.  The     framework will inlcude the addedBy parameter and framework.initialized    will be true.   A best practice In these cases, is to include application    logic for the bot to "introduce itself" and/or do something with the    information about the user who created the bot's membership |
 
 **Example**  
 ```js
 // DM the user who added bot to a group space
 framework.on('spawn', function(bot, flintId, addedBy) {
-  if (!framework.initialized) {
+    if (!addedById) {
      // don't say anything here or your bot's spaces will get
      // spammed every time your server is restarted
-     framework.debug(`While starting up our bot was found '+
-       in a space called: ${bot.room.title}`);
+     framework.debug(`Framework spawned a bot object in existing
+        space: ${bot.room.title}`);
   } else {
     if ((bot.room.type === 'group') && (addedBy)) {
-      bot.dm(addedBy, 'I see you added me to the the space '  + bot.room.title + ',
-        but I'm not allowed in group spaces.  We can talk here if you like.');
+      bot.dm(addedBy, `I see you added me to the the space "${bot.room.title}", ` +
+        `but I am not allowed in group spaces.  We can talk here if you like.`);
       bot.exit();
+    } else {
+      bot.say(`Thanks for adding me to this space.  Here is what I can do...`);
+    }
+  }
 });
 ```
 <a name="event_despawn"></a>
@@ -1551,7 +1564,7 @@ Bot Despawned.
     * [.config](#MongoStore+config) : <code>object</code>
     * [.initialize()](#MongoStore+initialize) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.getName()](#MongoStore+getName) ⇒ <code>string</code>
-    * [.initStorage(id, frameworkInitialized, initBotStorageData)](#MongoStore+initStorage) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.initStorage(id, initBotStorageData)](#MongoStore+initStorage) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.store(id, key, value)](#MongoStore+store) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
     * [.recall(id, [key])](#MongoStore+recall) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
     * [.forget(id, [key])](#MongoStore+forget) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
@@ -1626,7 +1639,7 @@ Get the storage adaptor's name
 **Returns**: <code>string</code> - - storage adaptor name  
 <a name="MongoStore+initStorage"></a>
 
-### mongoStore.initStorage(id, frameworkInitialized, initBotStorageData) ⇒ <code>Promise.&lt;Object&gt;</code>
+### mongoStore.initStorage(id, initBotStorageData) ⇒ <code>Promise.&lt;Object&gt;</code>
 Called by the framework, when a bot is spawned,
 this function reads in any existng bot configuration from the DB
 or creates the default one if none is found
@@ -1639,7 +1652,6 @@ In general bot developers should not need to call this method
 | Param | Type | Description |
 | --- | --- | --- |
 | id | <code>String</code> | Room/Conversation/Context ID |
-| frameworkInitialized | <code>boolean</code> | false during framework startup |
 | initBotStorageData | <code>object</code> | data to initialize a new bot with |
 
 <a name="MongoStore+store"></a>
