@@ -1,3 +1,6 @@
+## v 0.7.1
+* Bug fixes to ensure bot.store() fully completes write to persistent store before returning
+
 ## v 0.7.0
 * Webex list APIs such as /rooms and /memberships do not perform well for applications that belong in over 1000 spaces.   In order to support popular bots the framework will now do "late spawning" of bots that existed in spaces before the server started, but were not discovered until after the framework completed its initialization.
 * Added `maxStartupSpaces` parameter to framework options to set the number of bot objects to "pre-spawn".   The default is 100.  This is similar to how Webex Teams clients work when starting getting only the 100 or so "most recent" spaces and then discovering other spaces "on the fly" as messages are sent to them.
