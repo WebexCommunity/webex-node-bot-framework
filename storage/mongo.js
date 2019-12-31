@@ -244,6 +244,7 @@ class MongoStore {
       }
       return this.botStoreCollection.replaceOne(
         { _id: id }, this.memStore[id], { upsert: true })
+        .then(() => when(value))
         .catch((e) => {
           return when.reject(new Error(`Failed DB storeConfig update spaceId: "${id}": ${e.message}`));
         });
@@ -348,7 +349,7 @@ class MongoStore {
       return when.reject(new Error(`Failed to forget ${key}.  Invalid bot object.`));
     }
 
-    if ((!((this.config.singleInstance) || (skipDbWrites))) && (typeof key !== 'undefined')) {
+    if (!((this.config.singleInstance) || (skipDbWrites))) {
       return this.botStoreCollection.findOne({ _id: id })
         .then((remoteConfig) => {
           this.memStore[id] = remoteConfig;
