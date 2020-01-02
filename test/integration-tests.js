@@ -44,10 +44,10 @@ describe('#framework', () => {
   after(() => common.stopFramework('shutdown framework', framework));
 
   // Test app interactions in a user created test space
-  require('./as-user/user-created-room-tests.js');
+  require('./common/user-created-room-tests.js');
 
   // Test app interactions in a bot created test space
-  require('./as-user/bot-created-room-tests.js');
+  require('./common/bot-created-room-tests.js');
 
   // Test app membership functions
   require('./common/bot-membership-tests.js');

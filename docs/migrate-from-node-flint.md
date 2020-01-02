@@ -37,6 +37,24 @@ Naming the new Framework object `flint`, allows existing `flint.hears()` and `fl
 ## Missing functionality
 Not all of the functionality in flint has been migrated to the new framework.  Apps that rely on any of the following may wish to postpone their migration (or look to implement these features some other way):
 
+* Flint exposed many functions that were primiarly thin wrappers around functionality that is natively exposed via the webex SDK.  Since we wish to promote the understanding and use of the SDK these have mostly been removed. The following flint fucntions are NOT exposed by our famework:
+  * parseFile(message) -- to access files simply GET the URL(s) in the attachment field of a message.
+  * getRooms() -- call framework.webex.rooms.list()
+  * getRoom(roomId) -- call framework.webex.rooms.get(roomId)
+  * getTeams() -- call framework.webex.teams.list()
+  * getTeam(teamId) -- call framework.webex.teams.get(teamId)
+  * getTeamRooms(teamId) -- call framework.webex.rooms.get({teamId: teamId})
+  * getPerson(personId) -- call webex.people.get(personId);
+  * getMessage(messageId) -- call webex.messages.get(messageId)
+  * getFiles(messageId) -- call webex.messages.get(messageId) to get message and then to access files simply GET the URL(s) in the attachment field of a message.
+  * getMembership(membershipId) -- call webex.memberships.get(membershipId)
+  * getMemberships(roomId) -- call webex.memberships.list({ roomId: roomId })
+  * getTeamMembership(teamMembershipId) -- call webex.teamMembership.get(teamMembershipId)
+  * getTeamMemberships(teamId) -- call webex.teamMemberships.list({ teamId: teamId })
+  * getWebhook(webhookId) -- call webex.webhooks.get(webhookId)
+  * getWebhooks() -- call webex.webhooks.list()
+  * getAttachmentAction(attachmentActionId) -- call webex.attachmentActions.get(attachmentActionId);
+
 * Retry logic for pagination and rate limiting.  The philosopy behind the framework is to encourage developers to leverage the Webex SDK (exposed as an element in the frameowrk and bot objects), natively when needed.   When appropriate applications should inspect the reponse headers for pagination and rate limiting (HTTP 429 Response Code) as needed.  `framework.start()` will fail when the framework was passed a config object that includes any of the following options:
    * @property {number} [maxPageItems=50] - Max results that the paginator uses.
    * @property {number} [maxConcurrent=3] - Max concurrent sessions to the Webex API

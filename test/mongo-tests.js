@@ -91,7 +91,7 @@ describe('#framework', () => {
   after(() => common.stopFramework('shutdown framework', framework));
 
   // Test bot interactions in a bot created test space
-  require('./as-bot/bot-created-room-tests.js');
+  require('./common/bot-created-room-tests.js');
 
   // Test bot functions for direct messaging
   // These only work if the test bot and test user already have a direct space
