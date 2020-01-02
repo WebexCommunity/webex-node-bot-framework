@@ -29,8 +29,8 @@ module.exports = {
     });
 
     framework.start()
-      .catch(() => {
-        console.error('Framework initialization failed, abandon all tests!');
+      .catch((e) => {
+        console.error(`Framework initialization failed: ${e.message}, abandon all tests!`);
         process.exit(-1);
       });
     // While we wait for framework, lets validate the user
@@ -188,8 +188,16 @@ module.exports = {
   },
 
   userSendMessage: function (testName, framework, userWebex, bot, eventsData, hearsInfo, markdown, files) {
+    // unless instructed otherwise we add a mention when our bot is 
+    // not running with a user token
+    let isMention = false;
+    if (framework.isBotAccount) {
+      markdown = `<@personId:${bot.person.id}> ${markdown}`;
+      isMention = true;
+    }
+
     // Check the markdown to see if there is an at-mention in the message
-    let isMention = (_.toLower(markdown).indexOf('<@PersonId') > -1);
+    //let isMention = (_.toLower(markdown).indexOf('<@PersonId') > -1);
 
     const heard = new Promise((resolve) => {
       //      if (!hearsInfo.priority) { 

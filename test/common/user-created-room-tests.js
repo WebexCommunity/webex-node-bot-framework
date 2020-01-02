@@ -7,7 +7,6 @@ let User_Test_Space_Title = common.User_Test_Space_Title;
 let assert = common.assert;
 let validator = common.validator;
 let when = common.when;
-let _ = common._;
 
 describe('User Created Rooms Tests', () => {
   let userCreatedTestRoom, bot;
@@ -84,7 +83,7 @@ describe('User Created Rooms Tests', () => {
         phrase: 'hi'
       };
       return common.userSendMessage(testName, framework, userWebex, bot,
-        eventsData, hearsInfo, `<@personId:${bot.person.id}> hi`)
+        eventsData, hearsInfo, `hi`)
         .then((m) => {
           hearsHi = hearsInfo.functionVar;
           message = m;
@@ -105,8 +104,7 @@ describe('User Created Rooms Tests', () => {
       });
 
       return common.userSendMessage(testName, framework, userWebex, bot,
-        eventsData, hearsInfo,
-        `<@personId:${bot.person.id}> Here is a file for ya`,
+        eventsData, hearsInfo, `Here is a file for ya`,
         process.env.HOSTED_FILE)
         .then((m) => {
           message = m;
@@ -125,7 +123,7 @@ describe('User Created Rooms Tests', () => {
 
       return common.userSendMessage(testName, framework, userWebex, bot,
         eventsData, hearsInfo,
-        `<@personId:${bot.person.id}>Here is a whole mess of stuff for ya`)
+        `Here is a whole mess of stuff for ya`)
         .then((m) => {
           hearsAnything = hearsInfo.functionVar;
           message = m;
@@ -143,7 +141,7 @@ describe('User Created Rooms Tests', () => {
 
       return common.userSendMessage(testName, framework, userWebex, bot,
         eventsData, hearsInfo,
-        `<@personId:${bot.person.id}>Here is a Some Stuff for ya`)
+        `Here is a Some Stuff for ya`)
         .then((m) => {
           hearsSomeStuff = hearsInfo.functionVar;
           message = m;

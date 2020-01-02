@@ -1,7 +1,8 @@
 ## Overview
 
-The framework provides developers with some basic scaffolding to quickly get a bot up and running.  Once a framework object is created with a configuration that includes a bot token, calling the framework.start() method kicks of the setup of this scaffolding.   The framework registers for all Webex Teams events, and discovers any existing Webex Teams spaces that the bot is already a member of.  A bot object is created for each space.  When all existing bot objects are created the framework generates an `initialized` event signalling that it is ready to begin "listening" for user input.
+The framework provides developers with some basic scaffolding to quickly get a bot up and running.  Once a framework object is created with a configuration that includes a bot token, calling the framework.start() method kicks of the setup of this scaffolding.   The framework registers for all Webex Teams events, and may discover existing Webex Teams spaces that the bot is already a member of.  
 
+A `bot` object is created for each space, and the framework generates a `spawn` event each time it finds a new one.  When all existing bot objects are created the framework generates an `initialized` event signalling that it is ready to begin "listening" for user input.
 
 
 ```js
@@ -10,7 +11,7 @@ var framework = new Framework(config);
 framework.start();
 
 // An initialized event means your webhooks are all registered and the 
-// framework has created a bot object for all the spaces your bot is in
+// framework has created bot objects for the spaces your bot was found in
 framework.on("initialized", function () {
   framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
 });
@@ -36,10 +37,10 @@ framework.on('spawn', function (bot, id, addedBy) {
 Most of the framework's functionality is based around the `framework.hears()` function. This
 defines the phrase or pattern the bot is listening for and what actions to take
 when that phrase or pattern is matched. The `framework.hears()` function gets a callback
-than includes two objects. The bot object, and the trigger object, and the id of the framework.
+that includes three objects: the bot object, and the trigger object, and the id of the framework.
 
-The bot object is a specific instance of the Bot class associated with the Webex Teams space that triggered the framework.hears call.  
-The trigger object provides details about the person and room and message, that caused the framework.hears function to be triggered.
+The bot object is a specific instance of the `bot` class associated with the Webex Teams space that triggered the `framework.hears()` call.  
+The `trigger` object provides details about the message that was sent, and the person who sent it, which caused the `framework.hears()` function to be triggered.
 
 A simple example of a framework.hears() function setup:
 
