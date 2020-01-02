@@ -1,5 +1,8 @@
+## v 1.0.1
+* Bug fix. Bot membership deletes in spaces that were never spawned are ignored.   (It's too late to spawn a bot when we can't get any room details)
+
 ## v 1.0.0
-* Removed all "pass through" functions that flint used to support.   Developers are now encouraged to call the native webex SDK methods instead
+* Removed all "pass through" functions that flint used to support.   Developnpers are now encouraged to call the native webex SDK methods instead
 * Added "late spawning" logic to membership and room:updated events as well as message events.
 * Removed the "work in progress" message from the readme.   While there are still things on the todo list we want to enocurage developers to start using this framework.
 
