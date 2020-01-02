@@ -59,7 +59,7 @@ describe('User Created Room to create a Test Bot', () => {
 
       if (typeof framework.initBotStorageData === 'object') {
       } else {
-        debug('Skipping init storage test as not initial storage was found');
+        framework.debug('Skipping init storage test as not initial storage was found');
         return when(true);
       }
 
@@ -68,7 +68,7 @@ describe('User Created Room to create a Test Bot', () => {
         initValues.push({ key: entry[0], value: entry[1] });
       }
       if (storagePromises.length === 0) {
-        debug('No initial config set, no values checked');
+        framework.debug('No initial config set, no values checked');
         return Promise.resolve(true);
       }
 
@@ -327,7 +327,8 @@ describe('User Created Room to create a Test Bot', () => {
           phrase: 'hi'
         };
         return common.userSendMessage(testName, framework, userWebex, bot,
-          eventsData, hearsInfo, `<@personId:${bot.person.id}> hi`)
+//          eventsData, hearsInfo, `<@personId:${bot.person.id}> hi`)
+          eventsData, hearsInfo, `hi`)
           .then((m) => {
             hearsHi = hearsInfo.functionVar;
             message = m;
@@ -349,7 +350,8 @@ describe('User Created Room to create a Test Bot', () => {
 
         return common.userSendMessage(testName, framework, userWebex, bot,
           eventsData, hearsInfo,
-          `<@personId:${bot.person.id}> Here is a file for ya`,
+//          `<@personId:${bot.person.id}> Here is a file for ya`,
+          `Here is a file for ya`,
           process.env.HOSTED_FILE)
           .then((m) => {
             message = m;
@@ -368,7 +370,8 @@ describe('User Created Room to create a Test Bot', () => {
 
         return common.userSendMessage(testName, framework, userWebex, bot,
           eventsData, hearsInfo,
-          `<@personId:${bot.person.id}>Here is a whole mess of stuff for ya`)
+//          `<@personId:${bot.person.id}>Here is a whole mess of stuff for ya`)
+          `Here is a whole mess of stuff for ya`)
           .then((m) => {
             hearsAnything = hearsInfo.functionVar;
             message = m;
@@ -386,7 +389,8 @@ describe('User Created Room to create a Test Bot', () => {
 
         return common.userSendMessage(testName, framework, userWebex, bot,
           eventsData, hearsInfo,
-          `<@personId:${bot.person.id}>Here is a Some Stuff for ya`)
+          //`<@personId:${bot.person.id}>Here is a Some Stuff for ya`)
+          `Here is a Some Stuff for ya`)
           .then((m) => {
             hearsSomeStuff = hearsInfo.functionVar;
             message = m;

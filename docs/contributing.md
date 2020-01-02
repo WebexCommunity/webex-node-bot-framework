@@ -16,7 +16,7 @@ npm run build
 
 #### Test
 
-Before submitting a pull request, please validate that all tests work and are augmented as necessary, to test your new functionality.   It is reccomended that you familiarize yourself with the tests BEFORE beginning any feature related work.
+Before submitting a pull request, please validate that all tests work and are augmented as necessary, to test your new functionality.   It is reccomended that you familiarize yourself with the tests BEFORE begining any feature related work.
 
 The tests require the following environment variables which will be read in from a .env file if one is available.
 | Variable| Value | Purpose                    |
@@ -35,7 +35,7 @@ npm run test
 
 The test suite includes direct message tests.  These will run ONLY if an existing one-one space exists between the test bot and test user.  To run these tests, manually create this 1-1 space.
 
-It is also possible to run the tests by instantiating the framework with an authorized user token (as an integration would do).  At this time the framework is not optimized for use as an integration, however the tests are provided as a convenience.  These tests are similar but the user does not at-mention the bot.   
+It is also possible to run the tests by instantiating the framework with an authorized user token (as an integration would do).  At this time the framework does not proivide any integration specific functionality (such as authorization or token management), but the framework CAN be used with these types of tokens.  These tests are similar but the user does not at-mention the bot.   
 
 To run the user tests set the following environment variables:
 | Variable| Value | Purpose                    |
@@ -54,3 +54,8 @@ npm run test-as-user
 # Support this Project
 
 Find this project useful? Help suppport the continued development by submitting issues, feature requests, or code. 
+
+For details on areas that may still require attention,please see the [To Do List](./todo.md)
+
+
+

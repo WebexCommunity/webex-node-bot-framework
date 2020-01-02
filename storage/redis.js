@@ -10,7 +10,7 @@ const jsonStringify = when.lift(JSON.stringify);
 
 module.exports = exports = function (connectionUrl) {
   const redis = Redis.createClient({ url: connectionUrl });
-  const name = 'redis'
+  const name = 'redis';
 
   return {
 
