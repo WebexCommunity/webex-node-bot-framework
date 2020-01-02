@@ -68,7 +68,7 @@ describe('#framework', () => {
 
   // Test bot functions for direct messaging
   // These only work if the test bot and test user already have a direct space
-  it.only('creates a bot just in time after message', () => {
+  it('creates a bot just in time after message', () => {
     // Wait for the hears event associated with the input text
     const heard = new Promise((resolve) => {
       framework.hears(/^hi.*/igm, (b, t) => {

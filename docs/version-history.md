@@ -1,3 +1,8 @@
+## v 1.0.0
+* Removed all "pass through" functions that flint used to support.   Developers are now encouraged to call the native webex SDK methods instead
+* Added "late spawning" logic to membership and room:updated events as well as message events.
+* Removed the "work in progress" message from the readme.   While there are still things on the todo list we want to enocurage developers to start using this framework.
+
 ## v 0.7.1
 * Bug fixes to ensure bot.store() fully completes write to persistent store before returning
 

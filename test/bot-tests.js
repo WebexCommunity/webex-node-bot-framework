@@ -103,15 +103,11 @@ describe('#framework', () => {
   //Stop framework to shut down the event listeners
   after(() => common.stopFramework('shutdown framework', framework));
 
-  // Run some basic validation against the framework methods
-  // Could probably get rid of these if they are used internally by the other tests
-  require('./common/framework-functions.js');
-
   // Test bot interactions in a user created test space
-  require('./as-bot/user-created-room-tests.js');
+  require('./common/user-created-room-tests.js');
 
   // Test bot interactions in a bot created test space
-  require('./as-bot/bot-created-room-tests.js');
+  require('./common/bot-created-room-tests.js');
 
   // Test bot's membership functions
   require('./common/bot-membership-tests.js');

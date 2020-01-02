@@ -2,13 +2,12 @@
 
 ### Webex Teams Bot Framework for Node JS
 
-**Warning** - *This project is still in its initial development, so use at your own risk.  For details on areas that may still require attention before the project is fully complete please see the* [To Do List](./docs/ToDo.MD)
-
-This project is inspired by, and provides an alternate implementation of, the awesome [node-flint](https://github.com/flint-bot/flint/) framework by [Nick Marus](https://github.com/nmarus).  The framework makes it easy to quickly develop a Webex Teams bot, abstracting away some of the complexity of Webex For Developers interfaces, such as registering for events and calling REST APIs. A bot developer can use the framework to spark their imagination and focus primarily on how the bot will interact with users in Webex Teams.
+This project is inspired by, and provides an alternate implementation of, the awesome [node-flint](https://github.com/flint-bot/flint/) framework by [Nick Marus](https://github.com/nmarus).  The framework makes it easy to quickly develop a Webex Teams bot, abstracting away some of the complexity of Webex For Developers interfaces, such as registering for events and calling REST APIs. A bot developer can use the framework to focus primarily on how the bot will interact with users in Webex Teams, by writing "handlers" for various message or membership events in spaces where the bot has been added.
 
 The primary change in this implementation is that it is based on the [webex-jssdk](https://webex.github.io/webex-js-sdk) which continues to be supported as new features and functionality are added to Webex.  
 
-For developers who are familiar with flint, or who wish to port existing bots built on node-flint to the webex-node-bot-framework, this implementation is NOT backwards compatible.  Please see [Differences from original flint framework](./docs/migrate-from-node-flint.md)
+For developers who are familiar with flint, or who wish to port existing bots built on node-flint to the webex-node-bot-framework, this implementation is NOT backwards compatible.  Please see [Migrating from the original flint framework](./docs/migrate-from-node-flint.md)
+
 
 ## [Version History](./docs/version-history.md)
 
@@ -130,8 +129,9 @@ process.on('SIGINT', function() {
 
 ## Overview
 
-The framework provides developers with some basic scaffolding to quickly get a bot up and running.  Once a framework object is created with a configuration that includes a bot token, calling the framework.start() method kicks of the setup of this scaffolding.   The framework registers for all Webex Teams events, and discovers any existing Webex Teams spaces that the bot is already a member of.  A bot object is created for each space.  When all existing bot objects are created the framework generates an `initialized` event signalling that it is ready to begin "listening" for user input.
+The framework provides developers with some basic scaffolding to quickly get a bot up and running.  Once a framework object is created with a configuration that includes a bot token, calling the framework.start() method kicks of the setup of this scaffolding.   The framework registers for all Webex Teams events, and may discover existing Webex Teams spaces that the bot is already a member of.  
 
+A `bot` object is created for each space, and the framework generates a `spawn` event each time it finds a new one.  When all existing bot objects are created the framework generates an `initialized` event signalling that it is ready to begin "listening" for user input.
 
 
 ```js
@@ -140,7 +140,7 @@ var framework = new Framework(config);
 framework.start();
 
 // An initialized event means your webhooks are all registered and the 
-// framework has created a bot object for all the spaces your bot is in
+// framework has created bot objects for the spaces your bot was found in
 framework.on("initialized", function () {
   framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
 });
@@ -166,10 +166,10 @@ framework.on('spawn', function (bot, id, addedBy) {
 Most of the framework's functionality is based around the `framework.hears()` function. This
 defines the phrase or pattern the bot is listening for and what actions to take
 when that phrase or pattern is matched. The `framework.hears()` function gets a callback
-than includes two objects. The bot object, and the trigger object, and the id of the framework.
+that includes three objects: the bot object, and the trigger object, and the id of the framework.
 
-The bot object is a specific instance of the Bot class associated with the Webex Teams space that triggered the framework.hears call.  
-The trigger object provides details about the person and room and message, that caused the framework.hears function to be triggered.
+The bot object is a specific instance of the `bot` class associated with the Webex Teams space that triggered the `framework.hears()` call.  
+The `trigger` object provides details about the message that was sent, and the person who sent it, which caused the `framework.hears()` function to be triggered.
 
 A simple example of a framework.hears() function setup:
 
@@ -309,6 +309,9 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 <dt><a href="#event_roomUnocked">"roomUnocked"</a></dt>
 <dd><p>Room Unocked event.</p>
 </dd>
+<dt><a href="#event_roomRenamed">"roomRenamed"</a></dt>
+<dd><p>Room Renamed event.</p>
+</dd>
 <dt><a href="#event_memberEnters">"memberEnters"</a></dt>
 <dd><p>Member Enter Room event.</p>
 </dd>
@@ -325,7 +328,7 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 <dd><p>Member Removed as Moderator.</p>
 </dd>
 <dt><a href="#event_memberExits">"memberExits"</a></dt>
-<dd><p>Meber Exits Room.</p>
+<dd><p>Member Exits Room.</p>
 </dd>
 <dt><a href="#event_mentioned">"mentioned"</a></dt>
 <dd><p>Bot Mentioned.</p>
@@ -369,9 +372,6 @@ symbol and the word. With bot accounts, this behaves a bit differently.
     * [.stop()](#Framework+stop) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.start()](#Framework+start) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.restart()](#Framework+restart) ⇒ <code>Promise.&lt;Boolean&gt;</code>
-    * [.getMessage(messageId)](#Framework+getMessage) ⇒ <code>Promise.&lt;Message&gt;</code>
-    * [.getFiles(messageId)](#Framework+getFiles) ⇒ <code>Promise.&lt;Array&gt;</code>
-    * [.getAttachmentAction(attachmentActionId)](#Framework+getAttachmentAction) ⇒ <code>Promise.&lt;AttachmentAction&gt;</code>
     * [.hears(phrase, action, [helpText], [preference])](#Framework+hears) ⇒ <code>String</code>
     * [.clearHears(id)](#Framework+clearHears) ⇒ <code>null</code>
     * [.showHelp([header], [footer])](#Framework+showHelp) ⇒ <code>String</code>
@@ -466,39 +466,6 @@ Restart Framework.
 ```js
 framework.restart();
 ```
-<a name="Framework+getMessage"></a>
-
-### framework.getMessage(messageId) ⇒ <code>Promise.&lt;Message&gt;</code>
-Get Message Object by ID
-
-**Kind**: instance method of [<code>Framework</code>](#Framework)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| messageId | <code>String</code> | Message ID from Webex API. |
-
-<a name="Framework+getFiles"></a>
-
-### framework.getFiles(messageId) ⇒ <code>Promise.&lt;Array&gt;</code>
-Get Files from Message Object by ID
-
-**Kind**: instance method of [<code>Framework</code>](#Framework)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| messageId | <code>String</code> | Message ID from Webex API. |
-
-<a name="Framework+getAttachmentAction"></a>
-
-### framework.getAttachmentAction(attachmentActionId) ⇒ <code>Promise.&lt;AttachmentAction&gt;</code>
-Get Attachement Action by ID
-
-**Kind**: instance method of [<code>Framework</code>](#Framework)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| attachmentActionId | <code>String</code> | attachmentActionID from Webex API. |
-
 <a name="Framework+hears"></a>
 
 ### framework.hears(phrase, action, [helpText], [preference]) ⇒ <code>String</code>
@@ -1378,6 +1345,19 @@ Room Unocked event.
 | bot | <code>object</code> | Bot Object |
 | id | <code>string</code> | Framework UUID |
 
+<a name="event_roomRenamed"></a>
+
+## "roomRenamed"
+Room Renamed event.
+
+**Kind**: event emitted  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| bot | <code>object</code> | Bot Object |
+| id | <code>string</code> | Framework UUID |
+
 <a name="event_memberEnters"></a>
 
 ## "memberEnters"
@@ -1449,7 +1429,7 @@ Member Removed as Moderator.
 <a name="event_memberExits"></a>
 
 ## "memberExits"
-Meber Exits Room.
+Member Exits Room.
 
 **Kind**: event emitted  
 **Properties**
