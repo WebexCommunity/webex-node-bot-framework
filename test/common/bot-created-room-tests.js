@@ -147,6 +147,63 @@ describe('User Created Room to create a Test Bot', () => {
         });
     });
 
+    it('sets elements without waiting', () => {
+      let testName = 'sets elements without waiting';
+      bot = userCreatedRoomBot;
+      testString = 'testStringVal';
+      testObject = { key1: 'val1', key2: 'val2' };
+      let storagePromises = [];
+
+      storagePromises.push(bot.store('testString', testString));
+      storagePromises.push(bot.store('testObject', testObject));
+      return when.all(storagePromises)
+        .then(() => {
+          storagePromises = [];
+          storagePromises.push(bot.recall('testString'));
+          storagePromises.push(bot.recall('testObject'));
+          return when.all(storagePromises);
+        })
+        .then((storedValues) => {
+          assert(((typeof storedValues === 'object') && (storedValues.length === 2)),
+            'bot.recall tests did not resolve promises as expected!');
+          for (result of storedValues) {
+            if (typeof result === 'string') {
+              assert((result === testString),
+                `${testName}: Expected bot.recall('testString') to return ${testString}, got ${result}`);
+            } else if (typeof result === 'object') {
+              assert((validator.objIsEqual(result, testObject)),
+                `${testName}: Expected bot.recall('testObject') to return ${testObject}, got ${result}`);
+            } else {
+              return when.reject(new Error('Got unexecpted return value in bot.recall tests'));
+            }
+          }
+          storagePromises = [];
+          storagePromises.push(bot.forget('testString'));
+          storagePromises.push(bot.forget('testObject'));
+          return when.all(storagePromises);
+        })
+        .catch((e) => {
+          console.error(`testname failed: ${e.message}`);
+          return when.reject(e);
+        });
+    });
+
+    it('checks for forgotten testString', () => {
+      let element = 'testString';
+      let testName = `check for non existent storage element ${element}`;
+      bot = userCreatedRoomBot;
+
+      return bot.recall(element)
+        .then((result) => {
+          let msg = `${testName} got a result of ${result} for bot.recall('${element}').  Expected a reject`;
+          return when.reject(new Error(msg));
+        })
+        .catch((e) => {
+          framework.debug(`Got expected reject: ${e.message}, for bot.recall('${element}') test.`);
+          return when(true);
+        });
+    });
+
     it('checks for forgotten testObject', () => {
       let element = 'testObject';
       let testName = `check for non existent storage element ${element}`;
