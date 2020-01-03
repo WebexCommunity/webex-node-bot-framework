@@ -242,9 +242,10 @@ class MongoStore {
       if (skipDbWrites) {
         return when(this.memStore[id][key]);
       }
-      return this.botStoreCollection.replaceOne(
-        { _id: id }, this.memStore[id], { upsert: true })
-        .then(() => when(value))
+      let update = {};
+      update[key] = value;
+      return this.botStoreCollection.updateOne(
+        { _id: id }, { $set: update }, { upsert: true })
         .catch((e) => {
           return when.reject(new Error(`Failed DB storeConfig update spaceId: "${id}": ${e.message}`));
         });
@@ -367,6 +368,22 @@ class MongoStore {
       if (key in this.memStore[id]) {
         val = _.cloneDeep(this.memStore[id][key]);
         delete this.memStore[id][key];
+        if (skipDbWrites) {
+          return when(val);
+        } else {
+          let update = {};
+          update[key] = "";
+          return this.botStoreCollection.updateOne(
+            { _id: id }, { $unset: update }, { upsert: true, w: 1 })
+            .then((mongoResponse) => {
+              debug('Mongo response from updating store config in bot.forget():');
+              debug(mongoResponse);
+              return when(val);
+            })
+            .catch((e) => {
+              return when(new Error(`Failed DB storeConfig update spaceId: "${id}": ${e.message}`));
+            });
+        }
       } else {
         return when.reject(new Error(`Failed to find ${key} in forget() for spaceId "${id}"`));
       }
@@ -384,20 +401,6 @@ class MongoStore {
             return when(new Error(`Failed DB storeConfig delete for spaceId: "${id}": ${e.message}`));
           });
       }
-    }
-    if (skipDbWrites) {
-      return when(val);
-    } else {
-      return this.botStoreCollection.replaceOne(
-        { _id: id }, this.memStore[id], { upsert: true, w: 1 })
-        .then((mongoResponse) => {
-          debug('Mongo response from updating store config in bot.forget():');
-          debug(mongoResponse);
-          return when(val);
-        })
-        .catch((e) => {
-          return when(new Error(`Failed DB storeConfig update spaceId: "${id}": ${e.message}`));
-        });
     }
   }
 

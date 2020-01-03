@@ -1,3 +1,8 @@
+## v 1.0.2
+* Fixed some race conditions caused by problems when events happen very fast, for example the memberships and message events when a one-on-one space is created.  Sometimes the flint.hears() handler could be called before the flint.spawn() handler finished processing.
+* Mongo now uses updateOne to modify just the one field in a bot.store() call.  Previously it updated the whole document with replaceOne().  This prevents one element from being stored if bot.store() is called from another handler before the first previous one returns.
+* flint.spawn() could be called multiple times on room creation.  It now checks if a spawn is in progress for a room and ignores subsequent requests.
+
 ## v 1.0.1
 * Bug fix. Bot membership deletes in spaces that were never spawned are ignored.   (It's too late to spawn a bot when we can't get any room details)
 
