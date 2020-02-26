@@ -244,7 +244,7 @@ The [MongoStore](#MongoStore) (and potentially other stores that use a persisten
 
 See [MongoStore](#MongoStore), for details on how to configure this storage adaptor.
 
-The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
+The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./docs/contributing.md)!
 
 
 ## Bot Accounts
