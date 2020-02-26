@@ -1,9 +1,9 @@
 #### Buttons and Cards Template Using Express
-The framework supports a bot.sendCard function for sending a Webex Teams card to a space.
+The framework supports a bot.sendCard function for sending [Buttons and Cards](https://developer.webex.com/docs/api/guides/cards).
 
-The input to a sendCard is simply the card JSON, which can be copied from the [Webex For Developer Card Designer](https://developer.webex.com/buttons-and-cards-designer), as well as a fallback message to be rendered on clients that don't support Buttons and Cards.
+The input to a sendCard is simply the card JSON, which can be copied from the [Webex For Developers Card Designer](https://developer.webex.com/buttons-and-cards-designer), and fallback message to be rendered on clients that don't support Buttons and Cards.
 
-If the card sent include an Action.Submit button, the framework will generate an `attachmentAction` event whenever a user clicks on it.  Application can process these events by implementation a `framework.on('attachmentAction')` handler.  The parameters passed to this hander will include the bot object for the space where the button was pushed along with a trigger that includes an attachmentAction object as described in the [Buttons and Cards Guide](https://developer.webex.com/docs/api/guides/cards/working-with-cards)
+If the card that is sent includes an Action.Submit button, the framework will generate an `attachmentAction` event whenever a user clicks on it.  Applications can process these events by implementing a `framework.on('attachmentAction')` handler.  The parameters passed to this hander will include the bot object for the space where the button was pushed along with a trigger that includes an attachmentAction object as described in the [Buttons and Cards Guide](https://developer.webex.com/docs/api/guides/cards/working-with-cards)
 
 ```js
 var Framework = require('webex-node-bot-framework');
@@ -19,8 +19,6 @@ var config = {
   token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u',
   port: 80
 };
-
-var cardBody = require('./input-card.json');
 
 // init framework
 var framework = new Framework(config);
@@ -61,107 +59,102 @@ process.on('SIGINT', function() {
   });
 });
 
-// define the contents of an adaptive card
-let cardBody = [
-  {
-    "contentType": "application/vnd.microsoft.card.adaptive",
-    "content": {
-      "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-      "type": "AdaptiveCard",
-      "version": "1.0",
-      "body": [
+// define the contents of an adaptive card to collect some user input
+let cardBody = {
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.0",
+  "body": [
+    {
+      "type": "ColumnSet",
+      "columns": [
         {
-          "type": "ColumnSet",
-          "columns": [
+          "type": "Column",
+          "width": 2,
+          "items": [
             {
-              "type": "Column",
-              "width": 2,
-              "items": [
-                {
-                  "type": "TextBlock",
-                  "text": "Tell us about yourself",
-                  "weight": "bolder",
-                  "size": "medium"
-                },
-                {
-                  "type": "TextBlock",
-                  "text": "We just need a few more details to get you booked for the trip of a lifetime!",
-                  "isSubtle": true,
-                  "wrap": true
-                },
-                {
-                  "type": "TextBlock",
-                  "text": "Don't worry, we'll never share or sell your information.",
-                  "isSubtle": true,
-                  "wrap": true,
-                  "size": "small"
-                },
-                {
-                  "type": "TextBlock",
-                  "text": "Your name",
-                  "wrap": true
-                },
-                {
-                  "type": "Input.Text",
-                  "id": "Name",
-                  "placeholder": "John Andersen"
-                },
-                {
-                  "type": "TextBlock",
-                  "text": "Your website",
-                  "wrap": true
-                },
-                {
-                  "type": "Input.Text",
-                  "id" : "Url",
-                  "placeholder": "https://example.com"
-                },
-                {
-                  "type": "TextBlock",
-                  "text": "Your email",
-                  "wrap": true
-                },
-                {
-                  "type": "Input.Text",
-                  "id": "Email",
-                  "placeholder": "john.andersen@example.com",
-                  "style": "email"
-                },
-                {
-                  "type": "TextBlock",
-                  "text": "Phone Number"
-                },
-                {
-                  "type": "Input.Text",
-                  "id": "Tel",
-                  "placeholder": "+1 408 526 7209",
-                  "style": "tel"
-                }
-              ]
+              "type": "TextBlock",
+              "text": "Tell us about yourself",
+              "weight": "bolder",
+              "size": "medium"
             },
             {
-              "type": "Column",
-              "width": 1,
-              "items": [
-                {
-                  "type": "Image",
-                  "url": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Diver_Silhouette%2C_Great_Barrier_Reef.jpg",
-                  "size": "auto"
-                }
-              ]
+              "type": "TextBlock",
+              "text": "We just need a few more details to get you booked for the trip of a lifetime!",
+              "isSubtle": true,
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "text": "Don't worry, we'll never share or sell your information.",
+              "isSubtle": true,
+              "wrap": true,
+              "size": "small"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Your name",
+              "wrap": true
+            },
+            {
+              "type": "Input.Text",
+              "id": "Name",
+              "placeholder": "John Andersen"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Your website",
+              "wrap": true
+            },
+            {
+              "type": "Input.Text",
+              "id" : "Url",
+              "placeholder": "https://example.com"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Your email",
+              "wrap": true
+            },
+            {
+              "type": "Input.Text",
+              "id": "Email",
+              "placeholder": "john.andersen@example.com",
+              "style": "email"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Phone Number"
+            },
+            {
+              "type": "Input.Text",
+              "id": "Tel",
+              "placeholder": "+1 408 526 7209",
+              "style": "tel"
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": 1,
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Diver_Silhouette%2C_Great_Barrier_Reef.jpg",
+              "size": "auto"
             }
           ]
         }
-      ],
-      "actions": [
-        {
-          "type": "Action.Submit",
-          "title": "Submit"
-        }
       ]
     }
-  }
-];
+  ],
+  "actions": [
+    {
+      "type": "Action.Submit",
+      "title": "Submit"
+    }
+  ]
+};
 ```
 [**Express Example**](./example1.md)
 
