@@ -1,3 +1,6 @@
+## v 1.0.4
+* Don't do any validation of the attachments field in bot.sendCard as this blocks any detailed validation errors that the Webex platform might return
+
 ## v 1.0.3
 * Documentation typo cleanup
 

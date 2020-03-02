@@ -1,6 +1,6 @@
 {
   "name": "webex-node-bot-framework",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Webex Teams Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
