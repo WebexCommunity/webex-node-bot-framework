@@ -8,6 +8,8 @@ The primary change in this implementation is that it is based on the [webex-jssd
 
 For developers who are familiar with flint, or who wish to port existing bots built on node-flint to the webex-node-bot-framework, this implementation is NOT backwards compatible.  Please see [Migrating from the original flint framework](./docs/migrate-from-node-flint.md)
 
+Feel free to join the ["Webex Node Bot Framework" space on Webex Teams](https://eurl.io/#BJ7gmlSeU) to ask questions and share tips on how to leverage this framework.
+
 
 ## [Version History](./docs/version-history.md)
 
@@ -411,7 +413,7 @@ Options Object
 | token | <code>string</code> |  | Webex Token. |
 | [webhookUrl] | <code>string</code> |  | URL that is used for Webex API to send callbacks.  If not set events are received via websocket |
 | [webhookSecret] | <code>string</code> |  | If specified, inbound webhooks are authorized before being processed. Ignored if webhookUrl is not set. |
-| [maxStartupSpaces] | <code>number</code> | <code>100</code> | If specified, the maximum number of spaces with our bot that the framework will discover during startup.           Max value for this parameter is 1000.  Setting this emulates the legacy flint startup behavior, otherwise          bots are discovered "just in time" if they are messaged in existing spaces or added to new spaces, which is closer         to the way webex teams clients also work.  See the [Spawn Event docs](#"spawn") to discover how to handle them differently |
+| [maxStartupSpaces] | <code>number</code> |  | If specified, the maximum number of spaces with our bot that the framework will discover during startup.           If not specified the framework will attempt to discover all the spaces the framework's identity is in and "spawn" a bot object for all of         them before emitting an "initiatialized" event.  For popular bots that belog to hundreds or thousands of spaces, this can result         in long startup times. Setting this to a number (ie: 100) will limit the number of bots spawned before initialization.         Bots that are driven by external events and rely on logic that checks if an appropriate bot object exists before sending a notification          should not modify the default.  Bots that are driven primarily by webex user commands to the bot may         set this to 0 or any positive number to facilitate a faster startup.  After initialization new bot objects are created ("spawned")         when the bot is added to a new space or, if the framework receives events in existing spaces that it did not discover during initialization.         In the case of these "late discoveries", bots objects are spawned "just in time".  This behavior is similar to the way         the webex teams clients work.  See the [Spawn Event docs](#"spawn") to discover how to handle the different types of spawn events. |
 | [messageFormat] | <code>string</code> | <code>&quot;text&quot;</code> | Default Webex message format to use with bot.say(). |
 | [initBotStorageData] | <code>object</code> | <code>{}</code> | Initial data for new bots to put into storage. |
 | [id] | <code>string</code> | <code>&quot;random&quot;</code> | The id this instance of Framework uses. |
@@ -1499,17 +1501,19 @@ Bot Spawned.
 **Example**  
 ```js
 // DM the user who added bot to a group space
-framework.on('spawn', function(bot, flintId, addedBy) {
+framework.on('spawn', function(bot, flintId, addedById) {
     if (!addedById) {
      // don't say anything here or your bot's spaces will get
      // spammed every time your server is restarted
      framework.debug(`Framework spawned a bot object in existing
         space: ${bot.room.title}`);
   } else {
-    if ((bot.room.type === 'group') && (addedBy)) {
-      bot.dm(addedBy, `I see you added me to the the space "${bot.room.title}", ` +
-        `but I am not allowed in group spaces.  We can talk here if you like.`);
-      bot.exit();
+    if ((bot.room.type === 'group') && (addedById)) {
+      // In this example we imagine our bot is only allowed in 1-1 spaces
+      // our bot creates a 1-1 with the addedBy user, and leaves the group space
+      bot.dm(addedById, `I see you added me to the the space "${bot.room.title}", ` +
+        `but I am not allowed in group spaces.  ` +
+        `We can talk here if you like.`).then(() => bot.exit());
     } else {
       bot.say(`Thanks for adding me to this space.  Here is what I can do...`);
     }
