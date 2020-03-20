@@ -413,7 +413,7 @@ Options Object
 | token | <code>string</code> |  | Webex Token. |
 | [webhookUrl] | <code>string</code> |  | URL that is used for Webex API to send callbacks.  If not set events are received via websocket |
 | [webhookSecret] | <code>string</code> |  | If specified, inbound webhooks are authorized before being processed. Ignored if webhookUrl is not set. |
-| [maxStartupSpaces] | <code>number</code> |  | If specified, the maximum number of spaces with our bot that the framework will discover during startup.           If not specified the framework will attempt to discover all the spaces the framework's identity is in and create ("spawn") for all of         them before emitting an "initiatialized mesage".  For popular bots that belog to hundreds or thousands of spaces, this can result         in long startup times by default. Setting this to a number (ie: 100) will limit the number of bots spawned bfore initialization.         Bots that are driven by external events and rely on logic that checks if an appropriate bot object exists before sending a notification          should not modify the default.  Bots that are driven primarily by webex user commands to the bot may         set this to 0 or any positive number to faciliate a faster startup.  After initialization new bot objects are created ("spawned")         when the bot is added to a new space or if the framework receives messages from existing spaces that it did not discover during initialization.         In the case of these "late discoveries", bots objects are spawned "just in time".  This behavior is similar to the way         the webex teams clients also works.  See the [Spawn Event docs](#"spawn") to discover how to handle the different types of spawn events. |
+| [maxStartupSpaces] | <code>number</code> |  | If specified, the maximum number of spaces with our bot that the framework will discover during startup.           If not specified the framework will attempt to discover all the spaces the framework's identity is in and "spawn" a bot object for all of         them before emitting an "initiatialized" event.  For popular bots that belog to hundreds or thousands of spaces, this can result         in long startup times. Setting this to a number (ie: 100) will limit the number of bots spawned before initialization.         Bots that are driven by external events and rely on logic that checks if an appropriate bot object exists before sending a notification          should not modify the default.  Bots that are driven primarily by webex user commands to the bot may         set this to 0 or any positive number to facilitate a faster startup.  After initialization new bot objects are created ("spawned")         when the bot is added to a new space or, if the framework receives events in existing spaces that it did not discover during initialization.         In the case of these "late discoveries", bots objects are spawned "just in time".  This behavior is similar to the way         the webex teams clients work.  See the [Spawn Event docs](#"spawn") to discover how to handle the different types of spawn events. |
 | [messageFormat] | <code>string</code> | <code>&quot;text&quot;</code> | Default Webex message format to use with bot.say(). |
 | [initBotStorageData] | <code>object</code> | <code>{}</code> | Initial data for new bots to put into storage. |
 | [id] | <code>string</code> | <code>&quot;random&quot;</code> | The id this instance of Framework uses. |
@@ -1501,17 +1501,19 @@ Bot Spawned.
 **Example**  
 ```js
 // DM the user who added bot to a group space
-framework.on('spawn', function(bot, flintId, addedBy) {
+framework.on('spawn', function(bot, flintId, addedById) {
     if (!addedById) {
      // don't say anything here or your bot's spaces will get
      // spammed every time your server is restarted
      framework.debug(`Framework spawned a bot object in existing
         space: ${bot.room.title}`);
   } else {
-    if ((bot.room.type === 'group') && (addedBy)) {
-      bot.dm(addedBy, `I see you added me to the the space "${bot.room.title}", ` +
-        `but I am not allowed in group spaces.  We can talk here if you like.`);
-      bot.exit();
+    if ((bot.room.type === 'group') && (addedById)) {
+      // In this example we imagine our bot is only allowed in 1-1 spaces
+      // our bot creates a 1-1 with the addedBy user, and leaves the group space
+      bot.dm(addedById, `I see you added me to the the space "${bot.room.title}", ` +
+        `but I am not allowed in group spaces.  ` +
+        `We can talk here if you like.`).then(() => bot.exit());
     } else {
       bot.say(`Thanks for adding me to this space.  Here is what I can do...`);
     }

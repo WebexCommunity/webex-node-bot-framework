@@ -1,3 +1,8 @@
+## v 1.1.0
+* Modified `maxStartupSpaces` parameter behavior.   When not set the framework will attempt to discover all the spaces the bot (or framework's user), generating a bot object and emitting a "spawn" event for each one before emitting an "initialized" event. Developers may set this object to any integer greater than zero to speed up start time, but this should only be used in cases where the bot logic is primarily driven by commands from Webex users, as opposed to event notification bots which may rely on logic to determine if a bot object exists before sending the appropriate event.
+*  This is a change in behavior from when this parameter was introduced in v0.7.0, where the default value was 100.  This change was made so that developers must explicilty choose not to spawn all bot objects during intialization.
+
+ 
 ## v 1.0.5
 * Fix in webhook cleanup logic on framework.stop()
  
