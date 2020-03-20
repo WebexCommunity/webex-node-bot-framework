@@ -8,6 +8,8 @@ The primary change in this implementation is that it is based on the [webex-jssd
 
 For developers who are familiar with flint, or who wish to port existing bots built on node-flint to the webex-node-bot-framework, this implementation is NOT backwards compatible.  Please see [Migrating from the original flint framework](./docs/migrate-from-node-flint.md)
 
+Feel free to join the ["Webex Node Bot Framework" space on Webex Teams](https://eurl.io/#BJ7gmlSeU) to ask questions and share tips on how to leverage this framework.
+
 
 ## [Version History](./docs/version-history.md)
 
