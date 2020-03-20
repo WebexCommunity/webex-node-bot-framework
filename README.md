@@ -8,6 +8,8 @@ The primary change in this implementation is that it is based on the [webex-jssd
 
 For developers who are familiar with flint, or who wish to port existing bots built on node-flint to the webex-node-bot-framework, this implementation is NOT backwards compatible.  Please see [Migrating from the original flint framework](./docs/migrate-from-node-flint.md)
 
+Feel free to join the ["Webex Node Bot Framework" space on Webex Teams](https://eurl.io/#BJ7gmlSeU) to ask questions and share tips on how to leverage this framework.
+
 
 ## [Version History](./docs/version-history.md)
 
@@ -244,7 +246,7 @@ The [MongoStore](#MongoStore) (and potentially other stores that use a persisten
 
 See [MongoStore](#MongoStore), for details on how to configure this storage adaptor.
 
-The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./docs/contributing.md)!
+The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
 
 
 ## Bot Accounts
@@ -411,7 +413,7 @@ Options Object
 | token | <code>string</code> |  | Webex Token. |
 | [webhookUrl] | <code>string</code> |  | URL that is used for Webex API to send callbacks.  If not set events are received via websocket |
 | [webhookSecret] | <code>string</code> |  | If specified, inbound webhooks are authorized before being processed. Ignored if webhookUrl is not set. |
-| [maxStartupSpaces] | <code>number</code> | <code>100</code> | If specified, the maximum number of spaces with our bot that the framework will discover during startup.           Max value for this parameter is 1000.  Setting this emulates the legacy flint startup behavior, otherwise          bots are discovered "just in time" if they are messaged in existing spaces or added to new spaces, which is closer         to the way webex teams clients also work.  See the [Spawn Event docs](#"spawn") to discover how to handle them differently |
+| [maxStartupSpaces] | <code>number</code> |  | If specified, the maximum number of spaces with our bot that the framework will discover during startup.           If not specified the framework will attempt to discover all the spaces the framework's identity is in and create ("spawn") for all of         them before emitting an "initiatialized mesage".  For popular bots that belog to hundreds or thousands of spaces, this can result         in long startup times by default. Setting this to a number (ie: 100) will limit the number of bots spawned bfore initialization.         Bots that are driven by external events and rely on logic that checks if an appropriate bot object exists before sending a notification          should not modify the default.  Bots that are driven primarily by webex user commands to the bot may         set this to 0 or any positive number to faciliate a faster startup.  After initialization new bot objects are created ("spawned")         when the bot is added to a new space or if the framework receives messages from existing spaces that it did not discover during initialization.         In the case of these "late discoveries", bots objects are spawned "just in time".  This behavior is similar to the way         the webex teams clients also works.  See the [Spawn Event docs](#"spawn") to discover how to handle the different types of spawn events. |
 | [messageFormat] | <code>string</code> | <code>&quot;text&quot;</code> | Default Webex message format to use with bot.say(). |
 | [initBotStorageData] | <code>object</code> | <code>{}</code> | Initial data for new bots to put into storage. |
 | [id] | <code>string</code> | <code>&quot;random&quot;</code> | The id this instance of Framework uses. |
