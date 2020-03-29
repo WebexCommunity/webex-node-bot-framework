@@ -9,8 +9,6 @@ cat installation.md >> ${README}
 cat example1.md >> ${README}
 cat overview.md >> ${README}
 
-${DOCTOC} --github --notitle --maxlevel 4 ${README}
-
 echo -e "\n# Framework Reference\n\n" >> ${README}
 
 ${JSDOC} ../lib/framework.js ../lib/bot.js >> ${README}
@@ -20,3 +18,6 @@ echo -e "\n# Storage Driver Reference\n\n" >> ${README}
 ${JSDOC} ../storage/mongo.js >> ${README}
 
 cat license.md >> ${README}
+
+${DOCTOC} --github --notitle --maxlevel 4 ${README}
+
