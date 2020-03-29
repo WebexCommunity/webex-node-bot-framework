@@ -19,5 +19,5 @@ ${JSDOC} ../storage/mongo.js >> ${README}
 
 cat license.md >> ${README}
 
-${DOCTOC} --github --notitle --maxlevel 4 ${README}
+${DOCTOC} --github --notitle --maxlevel 2 ${README}
 

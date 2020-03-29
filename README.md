@@ -21,9 +21,6 @@ Feel free to join the ["Webex Node Bot Framework" space on Webex Teams](https://
 
 
   - [Installation](#installation)
-      - [Via Git](#via-git)
-      - [Via NPM](#via-npm)
-      - [Example Template Using Express](#example-template-using-express)
   - [Overview](#overview)
   - [Authentication](#authentication)
   - [Storage](#storage)
@@ -33,45 +30,7 @@ Feel free to join the ["Webex Node Bot Framework" space on Webex Teams](https://
   - [Objects](#objects)
   - [Events](#events)
   - [Framework](#framework)
-    - [new Framework(options)](#new-frameworkoptions)
-    - [framework.options : <code>object</code>](#frameworkoptions--codeobjectcode)
-    - [framework.setWebexToken(token) ⇒ <code>Promise.&lt;String&gt;</code>](#frameworksetwebextokentoken-%E2%87%92-codepromiseltstringgtcode)
-    - [framework.stop() ⇒ <code>Promise.&lt;Boolean&gt;</code>](#frameworkstop-%E2%87%92-codepromiseltbooleangtcode)
-    - [framework.start() ⇒ <code>Promise.&lt;Boolean&gt;</code>](#frameworkstart-%E2%87%92-codepromiseltbooleangtcode)
-    - [framework.restart() ⇒ <code>Promise.&lt;Boolean&gt;</code>](#frameworkrestart-%E2%87%92-codepromiseltbooleangtcode)
-    - [framework.hears(phrase, action, [helpText], [preference]) ⇒ <code>String</code>](#frameworkhearsphrase-action-helptext-preference-%E2%87%92-codestringcode)
-    - [framework.clearHears(id) ⇒ <code>null</code>](#frameworkclearhearsid-%E2%87%92-codenullcode)
-    - [framework.showHelp([header], [footer]) ⇒ <code>String</code>](#frameworkshowhelpheader-footer-%E2%87%92-codestringcode)
-    - [framework.setAuthorizer(Action) ⇒ <code>Boolean</code>](#frameworksetauthorizeraction-%E2%87%92-codebooleancode)
-    - [framework.clearAuthorizer() ⇒ <code>null</code>](#frameworkclearauthorizer-%E2%87%92-codenullcode)
-    - [framework.storageDriver(Driver) ⇒ <code>Promise.&lt;Boolean&gt;</code>](#frameworkstoragedriverdriver-%E2%87%92-codepromiseltbooleangtcode)
-    - [framework.use(path) ⇒ <code>Boolean</code>](#frameworkusepath-%E2%87%92-codebooleancode)
   - [Bot](#bot)
-    - [new Bot(framework, options, webex)](#new-botframework-options-webex)
-    - [bot.exit() ⇒ <code>Promise.&lt;Boolean&gt;</code>](#botexit-%E2%87%92-codepromiseltbooleangtcode)
-    - [bot.add(email(s), [moderator]) ⇒ <code>Promise.&lt;Array&gt;</code>](#botaddemails-moderator-%E2%87%92-codepromiseltarraygtcode)
-    - [bot.remove(email(s)) ⇒ <code>Promise.&lt;Array&gt;</code>](#botremoveemails-%E2%87%92-codepromiseltarraygtcode)
-    - [bot.getModerators() ⇒ <code>Promise.&lt;Array&gt;</code>](#botgetmoderators-%E2%87%92-codepromiseltarraygtcode)
-    - [bot.newRoom(name, emails, isTeam) ⇒ <code>Promise.&lt;Bot&gt;</code>](#botnewroomname-emails-isteam-%E2%87%92-codepromiseltbotgtcode)
-    - [bot.newTeamRoom(name, emails) ⇒ <code>Promise.&lt;Bot&gt;</code>](#botnewteamroomname-emails-%E2%87%92-codepromiseltbotgtcode)
-    - [bot.moderateRoom() ⇒ <code>Promise.&lt;Bot&gt;</code>](#botmoderateroom-%E2%87%92-codepromiseltbotgtcode)
-    - [bot.unmoderateRoom() ⇒ <code>Promise.&lt;Bot&gt;</code>](#botunmoderateroom-%E2%87%92-codepromiseltbotgtcode)
-    - [bot.moderatorSet(email(s)) ⇒ <code>Promise.&lt;Bot&gt;</code>](#botmoderatorsetemails-%E2%87%92-codepromiseltbotgtcode)
-    - [bot.moderatorClear(email(s)) ⇒ <code>Promise.&lt;Bot&gt;</code>](#botmoderatorclearemails-%E2%87%92-codepromiseltbotgtcode)
-    - [bot.implode() ⇒ <code>Promise.&lt;Boolean&gt;</code>](#botimplode-%E2%87%92-codepromiseltbooleangtcode)
-    - [bot.say([format], message) ⇒ <code>Promise.&lt;Message&gt;</code>](#botsayformat-message-%E2%87%92-codepromiseltmessagegtcode)
-    - [bot.reply(replyTo, message, [format]) ⇒ <code>Promise.&lt;Message&gt;</code>](#botreplyreplyto-message-format-%E2%87%92-codepromiseltmessagegtcode)
-    - [bot.dm(person, [format], message) ⇒ <code>Promise.&lt;Message&gt;</code>](#botdmperson-format-message-%E2%87%92-codepromiseltmessagegtcode)
-    - [bot.sendCard(cardJson, fallbackText) ⇒ <code>Promise.&lt;Message&gt;</code>](#botsendcardcardjson-fallbacktext-%E2%87%92-codepromiseltmessagegtcode)
-    - [bot.uploadStream(filename, stream) ⇒ <code>Promise.&lt;Message&gt;</code>](#botuploadstreamfilename-stream-%E2%87%92-codepromiseltmessagegtcode)
-    - [bot.messageStreamRoom(roomId, message) ⇒ <code>Promise.&lt;Message&gt;</code>](#botmessagestreamroomroomid-message-%E2%87%92-codepromiseltmessagegtcode)
-    - [bot.upload(filepath) ⇒ <code>Promise.&lt;Message&gt;</code>](#botuploadfilepath-%E2%87%92-codepromiseltmessagegtcode)
-    - [bot.censor(messageId) ⇒ <code>Promise.&lt;Message&gt;</code>](#botcensormessageid-%E2%87%92-codepromiseltmessagegtcode)
-    - [bot.roomRename(title) ⇒ <code>Promise.&lt;Room&gt;</code>](#botroomrenametitle-%E2%87%92-codepromiseltroomgtcode)
-    - [bot.getMessages(count) ⇒ <code>Promise.&lt;Array&gt;</code>](#botgetmessagescount-%E2%87%92-codepromiseltarraygtcode)
-    - [bot.store(key, value) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>](#botstorekey-value-%E2%87%92-codepromiseltstringgtcode-%5C-codepromiseltnumbergtcode-%5C-codepromiseltbooleangtcode-%5C-codepromiseltarraygtcode-%5C-codepromiseltobjectgtcode)
-    - [bot.recall([key]) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>](#botrecallkey-%E2%87%92-codepromiseltstringgtcode-%5C-codepromiseltnumbergtcode-%5C-codepromiseltbooleangtcode-%5C-codepromiseltarraygtcode-%5C-codepromiseltobjectgtcode)
-    - [bot.forget([key]) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>](#botforgetkey-%E2%87%92-codepromiseltstringgtcode-%5C-codepromiseltnumbergtcode-%5C-codepromiseltbooleangtcode-%5C-codepromiseltarraygtcode-%5C-codepromiseltobjectgtcode)
   - [Trigger : <code>object</code>](#trigger--codeobjectcode)
   - ["log"](#log)
   - ["stop"](#stop)
@@ -93,16 +52,7 @@ Feel free to join the ["Webex Node Bot Framework" space on Webex Teams](https://
   - ["despawn"](#despawn)
 - [Storage Driver Reference](#storage-driver-reference)
   - [MongoStore](#mongostore)
-    - [new MongoStore(config)](#new-mongostoreconfig)
-    - [mongoStore.config : <code>object</code>](#mongostoreconfig--codeobjectcode)
-    - [mongoStore.initialize() ⇒ <code>Promise.&lt;Boolean&gt;</code>](#mongostoreinitialize-%E2%87%92-codepromiseltbooleangtcode)
-    - [mongoStore.getName() ⇒ <code>string</code>](#mongostoregetname-%E2%87%92-codestringcode)
-    - [mongoStore.initStorage(id, initBotStorageData) ⇒ <code>Promise.&lt;Object&gt;</code>](#mongostoreinitstorageid-initbotstoragedata-%E2%87%92-codepromiseltobjectgtcode)
-    - [mongoStore.store(id, key, value) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>](#mongostorestoreid-key-value-%E2%87%92-codepromiseltstringgtcode-%5C-codepromiseltnumbergtcode-%5C-codepromiseltbooleangtcode-%5C-codepromiseltarraygtcode-%5C-codepromiseltobjectgtcode)
-    - [mongoStore.recall(id, [key]) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>](#mongostorerecallid-key-%E2%87%92-codepromiseltstringgtcode-%5C-codepromiseltnumbergtcode-%5C-codepromiseltbooleangtcode-%5C-codepromiseltarraygtcode-%5C-codepromiseltobjectgtcode)
-    - [mongoStore.forget(id, [key]) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>](#mongostoreforgetid-key-%E2%87%92-codepromiseltstringgtcode-%5C-codepromiseltnumbergtcode-%5C-codepromiseltbooleangtcode-%5C-codepromiseltarraygtcode-%5C-codepromiseltobjectgtcode)
-    - [mongoStore.writeMetric(bot, appData, actor) ⇒ <code>Promise.&lt;Object&gt;</code>](#mongostorewritemetricbot-appdata-actor-%E2%87%92-codepromiseltobjectgtcode)
-  - [License](#license)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 ## Installation
@@ -1775,7 +1725,7 @@ This method is exposed as bot.writeMetric(appData, actor);
 | appData | <code>object</code> | app specific metric data. |
 | actor | <code>object</code> \| <code>string</code> | user that triggered the metric activity |
 
-## License
+# License
 
 The MIT License (MIT)
 
