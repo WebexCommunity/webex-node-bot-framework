@@ -6,7 +6,6 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-const assert = require('assert');
 console.log('Starting bot-tests...');
 
 // Initialize the framework and user objects once for all the tests
@@ -27,6 +26,7 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
       process.exit(-1);
     }
   }
+  frameworkOptions.restrictedToEmailDomains = 'gmail.com';
   framework = new Framework(frameworkOptions);
   userWebex = new Webex({ credentials: process.env.USER_API_TOKEN });
 } else {
@@ -45,7 +45,6 @@ common.setFramework(framework);
 common.setUser(userWebex);
 
 require('./common/invalid-config-tests.js');
-return;
 
 // Start up an instance of framework that we will use across multiple tests
 describe('#framework', () => {
