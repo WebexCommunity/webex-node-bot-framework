@@ -6,13 +6,14 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-console.log('Starting bot-tests...');
+console.log('Starting membership-rules-tests...');
 
 // Initialize the framework and user objects once for all the tests
-let framework, userWebex;
+let framework;
 require('dotenv').config();
 if ((typeof process.env.BOT_API_TOKEN === 'string') &&
-  (typeof process.env.USER_API_TOKEN === 'string') &&
+  (typeof process.env.VALID_USER_API_TOKEN === 'string') &&
+  (typeof process.env.DISALLOWED_USER_API_TOKEN === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
   frameworkOptions = { token: process.env.BOT_API_TOKEN };
   if (typeof process.env.INIT_STORAGE === 'string') {
@@ -26,12 +27,15 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
       process.exit(-1);
     }
   }
+  frameworkOptions.restrictToEmailDomains = 'gmail.com';
   framework = new Framework(frameworkOptions);
-  userWebex = new Webex({ credentials: process.env.USER_API_TOKEN });
+  validUserWebex = new Webex({ credentials: process.env.VALID_USER_API_TOKEN });
+  disallowedUserWebex = new Webex({ credentials: process.env.DISALLOWED_USER_API_TOKEN });
 } else {
   console.error('Missing required environment variables:\n' +
     '- BOT_API_TOKEN -- token associatd with an existing bot\n' +
-    '- USER_API_TOKEN -- token associated with an existing user\n' +
+    '- VALID_USER_API_TOKEN -- token associated with an existing user with an allowed domain\n' +
+    '- DISSALOWED_USER_API_TOKEN -- valid token associated with an existing user with an allowed domain\n' +
     '- HOSTED_FILE -- url to a file that can be attached to test messages\n' +
     'The tests will create a new space with the bot and the user');
   process.exit(-1);
@@ -41,30 +45,32 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
 // shared by multiple tests
 var common = require("./common/common");
 common.setFramework(framework);
-common.setUser(userWebex);
+common.setUser(validUserWebex);
 
 //require('./common/invalid-config-tests.js');
 
 // Start up an instance of framework that we will use across multiple tests
 describe('#framework', () => {
-  // Validate that framework starts and that we have a valid user
-  before(() => common.initFramework('framework init', framework, userWebex));
+  // Validate that the invalid user token is good
+  before(() => disallowedUserWebex.people.get('me')
+    .then((person) => {
+      common.setDisallowedUser(disallowedUserWebex, person);
+    })
+    .catch((e) => {
+      console.error(`Could not initialize user with DISSALOWED_USER_API_TOKEN: ${e.message}`);
+      return(e);
+    }));
+
+  // Validate that framework starts and that we have a valid users
+  before(() => common.initFramework('framework init', framework, validUserWebex));
 
   //Stop framework to shut down the event listeners
   after(() => common.stopFramework('shutdown framework', framework));
 
-  // Test bot interactions in a user created test space
-  require('./common/user-created-room-tests.js');
-
   // Test bot interactions in a bot created test space
-  require('./common/bot-created-room-tests.js');
+  require('./common/bot-membership-rules-tests.js');
 
   // Test bot's membership functions
-  require('./common/bot-membership-tests.js');
-
-  // Test bot functions for direct messaging
-  // These only work if the test bot and test user already have a direct space
-  require('./common/bot-direct-message-tests.js');
 });
 
 // gracefully shutdown (ctrl-c)
