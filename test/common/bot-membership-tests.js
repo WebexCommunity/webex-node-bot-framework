@@ -59,7 +59,7 @@ describe('User Created Room to create a Test Bot', () => {
       return common.botCreateRoom(testName, framework, userCreatedRoomBot, eventsData)
         .then((b) => {
           botCreatedRoomBot = b;
-          botCreatedTestRoom, b.room;
+          botCreatedTestRoom = b.room;
           return when(botCreatedRoomBot);
         });
     });
