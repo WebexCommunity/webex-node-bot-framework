@@ -80,6 +80,20 @@ module.exports = {
     }
   },
 
+  userSendsMessageAndBotMayRespond: function (testData, framework, user, bot, eventsData) {
+    it(`user says ${testData.msg}`, () => {
+      let testName = `user says ${testData.msg}`;
+      let hearsInfo = {
+        phrase: testData.msgText
+      };
+      return common.userSendMessage(testName, framework, user, bot,
+        eventsData, hearsInfo, testData.msgText)
+        .then((m) => {
+          hearsFunction = hearsInfo.functionVar;
+          message = m;
+        });
+    });
+  },
 
   addBotToSpace: function (testName, framework, userCreatedTestRoom, eventsData) {
     let membership;
@@ -128,18 +142,18 @@ module.exports = {
 
   botAddUsersToSpace: function (testName, framework, bot, userEmails, eventsData) {
     let areMembershipRuleViolations = false;
-    for (let i=0; i<userEmails.length; i++) {
+    for (let i = 0; i < userEmails.length; i++) {
       if (userEmails[i] === this.disallowedUserPerson.emails[0]) {
         areMembershipRuleViolations = true;
-        break;        
+        break;
       }
     }
 
     let eventPromises = [];
     if ((bot.active) && (!areMembershipRuleViolations)) {
-      eventPromises = this.registerMembershipHandlers(testName, framework, eventsData); 
+      eventPromises = this.registerMembershipHandlers(testName, framework, bot, eventsData);
     } else {
-      eventPromises = this.registerMembershipEventsForDectivatedBot(testName, framework, eventsData); 
+      eventPromises = this.registerMembershipEventsForDectivatedBot(testName, framework, eventsData);
     }
 
     // Add the users to the space with the bot
@@ -165,9 +179,9 @@ module.exports = {
 
     let eventPromises = [];
     if ((!bot.active) && (isDisallowedUser)) {
-      eventPromises = this.registerMembershipDeletedEventsForDectivatedBot(testName, framework, eventsData); 
+      eventPromises = this.registerMembershipDeletedEventsForDectivatedBot(testName, framework, eventsData);
     } else {
-      eventPromises = this.registerMembershipDeletedHandlers(testName, framework, eventsData); 
+      eventPromises = this.registerMembershipDeletedHandlers(testName, framework, bot, eventsData);
     }
 
     // Add the users to the space with the bot
@@ -188,7 +202,7 @@ module.exports = {
       });
   },
 
-  registerMembershipHandlers: function(testName, framework, eventsData) {
+  registerMembershipHandlers: function (testName, framework, bot, eventsData) {
     let eventPromises = [];
     // These events should occur with a new membership
     eventPromises.push(new Promise((resolve) => {
@@ -200,11 +214,11 @@ module.exports = {
     eventPromises.push(new Promise((resolve) => {
       bot.memberEntersHandler(testName, eventsData, resolve);
     }));
-    
+
     return(eventPromises);
   },
 
-  registerMembershipEventsForDectivatedBot: function(testName, framework, eventsData) {
+  registerMembershipEventsForDectivatedBot: function (testName, framework, eventsData) {
     let eventPromises = [];
     // These events should occur with a new membership that violates a memebership rule
     eventPromises.push(new Promise((resolve) => {
@@ -226,6 +240,38 @@ module.exports = {
     }));
 
     return(eventPromises);
+  },
+
+  registerMembershipHandlers: function (testName, framework, bot, eventsData) {
+    let eventPromises = [];
+    // These events should occur with a new membership
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
+    }));
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMemberEntersHandler(testName, framework, eventsData, resolve);
+    }));
+    eventPromises.push(new Promise((resolve) => {
+      bot.memberEntersHandler(testName, eventsData, resolve);
+    }));
+
+    return (eventPromises);
+  },
+
+  registerMembershipDeletedHandlers: function (testName, framework, bot, eventsData) {
+    let eventPromises = [];
+    // Framework always gets the membership change event
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
+    }));
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMemberExitsHandler(testName, framework, eventsData, resolve);
+    }));
+    eventPromises.push(new Promise((resolve) => {
+      bot.memberExitsHandler(testName, eventsData, resolve);
+    }));
+
+    return (eventPromises);
   },
 
   registerMembershipDeletedEventsForDectivatedBot: function(testName, framework, eventsData) {
@@ -350,6 +396,46 @@ module.exports = {
         return when.all(eventPromises);
       })
       .then(() => when(message))
+      .catch((e) => {
+        console.error(`${testName} failed: ${e.message}`);
+        return Promise.reject(e);
+      });
+  },
+
+  botRespondsToTrigger: function (testName, framework, bot, eventsData) {
+    if (!eventsData.trigger) {
+      if (bot.active) {
+        // This can occur if the previous tests failed
+        return new Error(`${testName} didn\'t run.  No trigger to respond to`);
+      } else {
+        framework.debug(`${testName}: no trigger to respond to...expected when bot is in disabled state.`);
+        return when(true);
+      }
+    }
+    // Builds the response based on the trigger
+    let trigger = eventsData.trigger;
+    botReply = `I heard the entry from ${trigger.person.displayName}:\n`;
+    botReply += (trigger.message.text) ? `* text: ${trigger.message.text}\n` : '';
+    botReply += (trigger.message.html) ? `* html: ${trigger.message.html}\n` : '';
+    framework.debug(botReply);
+
+    // Wait for the events associated with a new message before completing test..
+    messageCreatedEvent = new Promise((resolve) => {
+      this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+    });
+
+    return bot.say(botReply)
+      .then((m) => {
+        message = m;
+        assert(validator.isMessage(message),
+          `${testName}: create message did not return a valid message`);
+        return when.all([messageCreatedEvent]);
+      })
+      .then(() => {
+        assert(validator.objIsEqual(message, eventsData.message),
+          `${testName}: message returned by API did not match the one from the messageCreated event`);
+        return when(true);
+      })
       .catch((e) => {
         console.error(`${testName} failed: ${e.message}`);
         return Promise.reject(e);
@@ -692,22 +778,22 @@ module.exports = {
           'id returned in framework.on("mentioned") is not the one expected');
         promiseResolveFunction(true);
       });
-    },
+    };
 
-      activeBot.messageHandler = function (testName, eventsData, promiseResolveFunction) {
-        activeBot.once('message', (bot, trigger, id) => {
-          this.framework.debug(`Bot message event occurred in test ${testName}`);
-          assert(validator.isBot(bot),
-            'message event did not include a valid bot');
-          assert((bot.id === activeBot.id),
-            'bot returned in bot.on("message") is not the one expected');
-          assert(validator.isTrigger(trigger),
-            'message event did not include a valid trigger');
-          assert((id === activeBot.id),
-            'id returned in framework.on("message") is not the one expected');
-          promiseResolveFunction(true);
-        });
-      };
+    activeBot.messageHandler = function (testName, eventsData, promiseResolveFunction) {
+      activeBot.once('message', (bot, trigger, id) => {
+        this.framework.debug(`Bot message event occurred in test ${testName}`);
+        assert(validator.isBot(bot),
+          'message event did not include a valid bot');
+        assert((bot.id === activeBot.id),
+          'bot returned in bot.on("message") is not the one expected');
+        assert(validator.isTrigger(trigger),
+          'message event did not include a valid trigger');
+        assert((id === activeBot.id),
+          'id returned in framework.on("message") is not the one expected');
+        promiseResolveFunction(true);
+      });
+    };
 
     activeBot.filesHandler = function (testName, eventsData, promiseResolveFunction) {
       activeBot.once('files', (bot, trigger, id) => {

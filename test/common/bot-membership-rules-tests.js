@@ -47,9 +47,9 @@ describe('User Created Room to create a Test Bot', () => {
       });
   });
 
-  describe('Bot Membership Tests', () => {
+  describe('Bot Creates Room and Adds Memeber', () => {
     let botCreatedTestRoom, botCreatedRoomBot;
-    let testName = 'Bot Membership Tests';
+    let testName = 'Bot Creates Room and Adds Member';
     let eventsData = {};
     // Create a room as user to have test bot which will create other rooms
     before(() => {
@@ -94,105 +94,42 @@ describe('User Created Room to create a Test Bot', () => {
         });
     });
 
-    describe('Add allowed user to space with bot and interact with it', () => {
-      let triggers = [];
-      let messages = [];
+    describe('Bot adds allowed user to space who iteracts with bot', () => {
+      // Define the messages we want to try sending to the bot
+      let testMessages = [
+        {msgText: 'hi'}
+      ];
 
-      // Setup the promises for the events that come from user input that mentions a bot
-      beforeEach(() => {
-        testName = 'Bot performs membership actions';
-        membership = {};
-        eventsData = {bot: botCreatedRoomBot};
-        bot = botCreatedRoomBot;
-      });
-
-      it('adds the allowed user to the room', () => {
+      before(() => {
         testName = 'adds an allowed user to the room';
         return common.botAddUsersToSpace(testName, framework, botCreatedRoomBot,
           [common.userInfo.emails[0]], eventsData);
       });
 
-      describe('#send messages while the bot is active', () => {
-        // Setup the promises for the events that come from user input that mentions a bot
-        beforeEach(() => {
-          testName = 'User posts message to bot created room';
-          message = {};
-          eventsData = {bot: bot};
-        });
-
-        afterEach(() => {
-          messages.push(eventsData.message);
-          triggers.push(eventsData.trigger);
-          assert(validator.objIsEqual(message, eventsData.message),
-            'message returned by API did not match the one from the messageCreated event');
-
-        });
-
-        it('hears the user say hi', () => {
-          let testName = 'hears the user say hi';
-          let hearsInfo = {
-            phrase: 'hi'
-          };
-          return common.userSendMessage(testName, framework, userWebex, bot,
-            eventsData, hearsInfo, `hi`)
-            .then((m) => {
-              hearsHi = hearsInfo.functionVar;
-              message = m;
-            });
-        });
-
+      after(() => {
+        testName = "removes allowed user from the room";
+        return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
+          common.userInfo.emails[0], eventsData);
       });
 
-      describe('#bot respond using triggers from previous test', () => {
-        let trigger, message;
-        // Setup the promises for the events that come from user input that mentions a bot
-        beforeEach(() => {
-          testName = 'Bot posts message to room';
-          message = {};
-          eventsData = {bot: bot};
-          framework.messageFormat = 'markdown';
 
-          // Wait for the events associated with a new message before completing test..
-          messageCreatedEvent = new Promise((resolve) => {
-            common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
-          });
+      // loop through message tests..
+      testMessages.forEach((testData) => {
+        eventsData = {bot: botCreatedRoomBot};
+
+        it(`user says ${testData.msgText}`, () => {
+          let testName = `user says ${testData.msgText}`;
+          let hearsInfo = {
+            phrase: testData.msgText
+          };
+          return common.userSendMessage(testName, framework, userWebex,
+            botCreatedRoomBot, eventsData, hearsInfo, testData.msgText, testData.msgFiles);
         });
 
-        // Build a message with the trigger
-        beforeEach(() => {
-          trigger = triggers.shift();
-          userMessage = messages.shift();
-          if (trigger) {
-            message = `I heard the entry from ${trigger.person.displayName}:\n`;
-            message += (trigger.message.text) ? `* text: ${trigger.message.text}\n` : '';
-            message += (trigger.message.html) ? `* html: ${trigger.message.html}\n` : '';
-            framework.debug(message);
-          } else {
-            message = '';
-          }
-        });
-
-        it('responds to the first trigger', () => {
-          if (!message) {
-            // This can occur if the previous tests failed
-            return new Error('Test didn\'t run.  No trigger to respond to');
-          }
-          return bot.say(message)
-            .then((m) => {
-              message = m;
-              assert(validator.isMessage(message),
-                'create message did not return a valid message');
-              return when.all([messageCreatedEvent]);
-            })
-            .then(() => {
-              assert(validator.objIsEqual(message, eventsData.message),
-                'message returned by API did not match the one from the messageCreated event');
-              return when(true);
-            })
-            .catch((e) => {
-              console.error(`${testName} failed: ${e.message}`);
-              return Promise.reject(e);
-            });
+        it(`bot responds to ${testData.msgText}`, () => {
+          let testName = `bot responds to ${testData.msgText}`;
+          return common.botRespondsToTrigger(testName, framework,
+            botCreatedRoomBot, eventsData);
         });
 
       });
@@ -203,23 +140,44 @@ describe('User Created Room to create a Test Bot', () => {
         before(() => {
           testName = 'adds a disallowed user to the room';
           return common.botAddUsersToSpace(testName, framework, botCreatedRoomBot,
-            [common.disallowedUserPerson.emails[0]], eventsData);
+            [common.disallowedUserPerson.emails[0]], eventsData)
+            .then(() => {
+              assert((!botCreatedRoomBot.active), 
+                "After adding dissallowed user, bot did move to inactive state.");
+            });
         });
 
         after(() => {
           testName = "removes a disallowed user from the room";
           return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
-            common.disallowedUserPerson.emails[0], eventsData);
-
+            common.disallowedUserPerson.emails[0], eventsData)
+            .then(() => {
+              assert(botCreatedRoomBot.active, 
+                "After removing dissallowed user, bot did not return to active state.");
+            });
         });
 
-        it('user say hi after bot was deactivated', () => {
-          let testName = 'user say hi after bot was deactivated';
-          let hearsInfo = {
-            phrase: 'hi'
-          };
-          return common.userSendMessage(testName, framework, userWebex, botCreatedRoomBot,
-            eventsData, hearsInfo, `hi`);
+        // loop through message tests..
+        testMessages.forEach((testData) => {
+
+          it(`user says "${testData.msgText}" to disallowed bot`, () => {
+            let testName = `user says ${testData.msgText} to disallowed bot`;
+            eventsData = {bot: botCreatedRoomBot};
+            let hearsInfo = {
+              phrase: testData.msgText
+            };
+            framework.debug(`${testName} test starting...`);
+            return common.userSendMessage(testName, framework, userWebex,
+              botCreatedRoomBot, eventsData, hearsInfo, testData.msgText, testData.msgFiles);
+          });
+
+          it(`bot shouldn't respond to ${testData.msgText}`, () => {
+            let testName = `bot shouldn't respond to "${testData.msgText}"`;
+            framework.debug(`${testName} test starting...`);
+            return common.botRespondsToTrigger(testName, framework,
+              botCreatedRoomBot, eventsData);
+          });
+
         });
 
       });
