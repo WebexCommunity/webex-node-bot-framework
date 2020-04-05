@@ -97,7 +97,12 @@ describe('User Created Room to create a Test Bot', () => {
     describe('Bot adds allowed user to space who iteracts with bot', () => {
       // Define the messages we want to try sending to the bot
       let testMessages = [
-        {msgText: 'hi'}
+        {msgText: 'hi', hearsInfo: {phrase: 'hi'}},
+        {
+          msgText: `Here is a file for ya`, 
+          msgFiles: process.env.HOSTED_FILE,
+          hearsInfo: {phrase: /.*file.*/igm}
+        }
       ];
 
       before(() => {
@@ -119,11 +124,9 @@ describe('User Created Room to create a Test Bot', () => {
 
         it(`user says ${testData.msgText}`, () => {
           let testName = `user says ${testData.msgText}`;
-          let hearsInfo = {
-            phrase: testData.msgText
-          };
           return common.userSendMessage(testName, framework, userWebex,
-            botCreatedRoomBot, eventsData, hearsInfo, testData.msgText, testData.msgFiles);
+            botCreatedRoomBot, eventsData, testData.hearsInfo, 
+            testData.msgText, testData.msgFiles);
         });
 
         it(`bot responds to ${testData.msgText}`, () => {
@@ -133,6 +136,15 @@ describe('User Created Room to create a Test Bot', () => {
         });
 
       });
+
+      it(`Removes the framework.hears() handlers setup in previous ` +
+        `${(testMessages.length + 1) * 2} tests`, () => {
+        testMessages.forEach((testData) => {
+          framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
+          framework.clearHears(testData.hearsInfo.functionId);
+        });
+      });    
+
 
       describe('Adds and removes a disallowed user to the space', () => {
 
@@ -145,6 +157,14 @@ describe('User Created Room to create a Test Bot', () => {
               assert((!botCreatedRoomBot.active), 
                 "After adding dissallowed user, bot did move to inactive state.");
             });
+        });
+
+        after(() => {
+          testName = "cleans up the hears handlers from these tests";
+          testMessages.forEach((testData) => {
+            framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
+            framework.clearHears(testData.hearsInfo.functionId);
+          });
         });
 
         after(() => {
@@ -163,12 +183,10 @@ describe('User Created Room to create a Test Bot', () => {
           it(`user says "${testData.msgText}" to disallowed bot`, () => {
             let testName = `user says ${testData.msgText} to disallowed bot`;
             eventsData = {bot: botCreatedRoomBot};
-            let hearsInfo = {
-              phrase: testData.msgText
-            };
             framework.debug(`${testName} test starting...`);
             return common.userSendMessage(testName, framework, userWebex,
-              botCreatedRoomBot, eventsData, hearsInfo, testData.msgText, testData.msgFiles);
+              botCreatedRoomBot, eventsData, 
+              testData.hearsInfo, testData.msgText, testData.msgFiles);
           });
 
           it(`bot shouldn't respond to ${testData.msgText}`, () => {

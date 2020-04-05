@@ -1,5 +1,9 @@
-const Framework = require('../../lib/framework');
+const Framework = require('../lib/framework');
 const assert = require('assert');
+
+console.log('********************************');
+console.log('* Invalid configuration tests...');
+console.log('********************************\n');
 
 // Validate that framwork.start() fails with invalid configs
 describe('#framework invalid config tests', () => {

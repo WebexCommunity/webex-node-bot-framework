@@ -10,7 +10,10 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-console.log('Starting late-discovery-tests...');
+
+console.log('**********************************************');
+console.log('* Framework tests with late space discovery...');
+console.log('**********************************************\n');
 
 // Initialize the framework and user objects once for all the tests
 let framework, userWebex;
