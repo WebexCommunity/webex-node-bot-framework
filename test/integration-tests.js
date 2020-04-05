@@ -6,7 +6,10 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-console.log('Starting integration-tests...');
+
+console.log('************************************');
+console.log('* Framework tests with user token...');
+console.log('************************************\n');
 
 // Initialize the framework and user objects once for all the tests
 // TODO support another Env variable for emails of users to add to a space in order to test framework batch APIs

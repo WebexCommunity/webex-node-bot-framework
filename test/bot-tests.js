@@ -6,7 +6,10 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-console.log('Starting bot-tests...');
+
+console.log('***********************************');
+console.log('* Framework tests with bot token...');
+console.log('***********************************\n');
 
 // Initialize the framework and user objects once for all the tests
 let framework, userWebex;

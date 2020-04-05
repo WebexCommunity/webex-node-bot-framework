@@ -89,7 +89,7 @@ module.exports = {
       return common.userSendMessage(testName, framework, user, bot,
         eventsData, hearsInfo, testData.msgText)
         .then((m) => {
-          hearsFunction = hearsInfo.functionVar;
+          hearsFunction = hearsInfo.functionId;
           message = m;
         });
     });
@@ -381,7 +381,7 @@ module.exports = {
     // Set up handlers for the message events
     let eventPromises = [];
     if (bot.active) {
-      eventPromises = this.registerMessageHandlers(testName, isMention, framework, bot, hearsInfo, eventsData);
+      eventPromises = this.registerMessageHandlers(testName, isMention, framework, bot, hearsInfo, msgObj, eventsData);
     } else {
       eventPromises = this.getInActiveBotEventArray(testName, isMention, framework, msgObj, eventsData);
     }
@@ -442,12 +442,12 @@ module.exports = {
       });
   },
 
-  registerMessageHandlers: function (testName, isMention, framework, bot, hearsInfo, eventsData) {
+  registerMessageHandlers: function (testName, isMention, framework, bot, hearsInfo, msg, eventsData) {
     let eventPromises = [];
 
     // Register the framework.hears handler..
     eventPromises.push(new Promise((resolve) => {
-      hearsInfo.functionVar = framework.hears(hearsInfo.phrase, (b, t) => {
+      hearsInfo.functionId = framework.hears(hearsInfo.phrase, (b, t) => {
         assert((b.id === bot.id),
           'bot returned in fint.hears("hi") is not the one expected');
         assert(validator.objIsEqual(t, eventsData.trigger),
@@ -467,6 +467,14 @@ module.exports = {
       }));
       eventPromises.push(new Promise((resolve) => {
         bot.mentionedHandler(testName, eventsData, resolve);
+      }));
+    }
+    if ("files" in msg) {
+      eventPromises.push(new Promise((resolve) => {
+        this.frameworkFilesHandler(testName, framework, eventsData, resolve);
+      }));
+      eventPromises.push(new Promise((resolve) => {
+        bot.filesHandler(testName, eventsData, resolve);
       }));
     }
     eventPromises.push(new Promise((resolve) => {

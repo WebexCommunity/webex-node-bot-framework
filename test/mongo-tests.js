@@ -6,7 +6,9 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-console.log('Starting bot-tests...');
+console.log('******************************************');
+console.log('* Framework mongo storage adapter tests...');
+console.log('******************************************\n');
 
 require('dotenv').config();
 

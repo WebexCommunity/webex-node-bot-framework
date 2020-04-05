@@ -6,7 +6,11 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-console.log('Starting membership-rules-tests...');
+
+console.log('************************************');
+console.log('* Framework mebership rules tests...');
+console.log('************************************\n');
+
 
 // Initialize the framework and user objects once for all the tests
 let framework;
@@ -68,7 +72,12 @@ describe('#framework', () => {
   after(() => common.stopFramework('shutdown framework', framework));
 
   // Test bot interactions in a bot created test space
-  require('./common/bot-membership-rules-tests.js');
+  // That does and doesn't include dissallowed members
+  //require('./common/bot-membership-rules-tests.js');
+
+  // Test bot interactions in a user created test space
+  // With no disallowed members -- make sure nothing breaks in this mode
+  require('./common/bot-created-room-tests.js');
 
   // Test bot's membership functions
 });
