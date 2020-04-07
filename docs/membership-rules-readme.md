@@ -42,34 +42,36 @@ framework.on('spawn', (bot, id, addedBy, newlyAllowed) => {
 // or if the restrictedToEmailDomains parameter is set and a dissallowed users is added to an existing space
 // In this case the framework generates a "despawn" event with the newlyDisllowed parameter set to true 
 framework.on('despawn', (bot, id, actorId, disallowedMember) => {
-  if (actorId && disallowedMember) {
-    if (newlyAllowed) {
-      // We can't use bot.say here since our bot object has been despawned
-      // Use webex SDK instead..
-      const msg = `${disallowedMember.displayName} does not belong to a domain that ` +
-        `I am authorized to work with.  Will ignore any further input.`);
-      bot.framework.webex.messages.create({
-        roomId: bot.room.id
-        markdown: msg
-      })
-      // Print any additional instructions here...
-    } else {
-      // don't say anything here or your bot's spaces will get 
-      // spammed every time your server is restarted
-      framework.debug(`Framework created an object for an existing bot in a space called: ${bot.room.title}`);
-    }
-  } else {
-    // addedBy is the ID of the user who just added our bot to a new space, 
-    // Say hello, and tell users what you do!
-    bot.say('Hi there, you can say hello to me.  Don\'t forget you need to mention me in a group space!');
+  if (disallowedMember) {
+    // We can't use bot.say here since our bot object has been despawned
+    // Use webex SDK instead..
+    const msg = `${disallowedMember.displayName} does not belong to a domain that ` +
+      `I am authorized to work with.  Will ignore any further input.`;
+    bot.framework.webex.messages.create({
+      roomId: bot.room.id,
+      markdown: msg
+    });
+    // Print any additional instructions here...
   }
 });
 
-// The framework generates a log event whenever a bot is added to a disallowed space,
-// it detects events occuring in a dissallowed space 
-// or an existing spaces "allowed" status changes.
-// Capture these in our application logs
-framework.on("log", (message) => {
-
+// membershipRulesAction are "log events" that tell us if membershipRules were invoked
+framework.on('membershipRulesAction', (type, event, bot, id, ...args) => {
+  framework.debug(`Framework membershipRulesAction of type ${type} occurred in space "${bot.room.id}".`);
+  // TODO -- could add some type and event validation
+  switch (type) {
+    case ('state-change'):
+      framework.debug(`Membership Rules forced a "${event}" event`);
+      break;
+    case ('event-swallowed'):
+      framework.debug(`Membership Rules swallowed a "${event}" event`);
+      break;
+    case ('hears-swallowed'):
+      framework.debug(`Membership Rules swallowed a "${event}" event`);
+      break;
+    default:
+      assert(true === false, `Got unexpected membershipsRules type: ${type}`);
+      break;
+  }
 });
 ```
