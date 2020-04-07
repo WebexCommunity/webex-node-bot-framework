@@ -52,7 +52,7 @@ framework.on('despawn', (bot, id, actorId, disallowedMember) => {
       roomId: bot.room.id,
       markdown: msg
     }).finally(() => {
-      bot.framework.webex.membership.remove(myMembership);
+      bot.framework.webex.memberships.remove(myMembership);
     });
   }
 });
@@ -74,6 +74,7 @@ framework.on('membershipRulesAction', (type, event, bot, id, ...args) => {
       framework.debug(`Membership Rules swallowed a "${event}" event`);
       break;
     case ('hears-swallowed'):
+      let trigger = args[0];
       framework.debug(`Membership Rules swallowed a call to a frameowrk.hears("${trigger.phrase}") handler`);
       break;
     default:
