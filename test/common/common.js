@@ -16,12 +16,14 @@ module.exports = {
   setUser: function (w) {
     this.userWebex = w;
   },
-  setDisallowedUser: function (d, p) {
-    this.disallowedUser = d;
+  setDisallowedUser: function (d) {
+    this.disallowedUserSDK = d;
+  },
+  setDisallowedUserPerson: function (p) {
     this.disallowedUserPerson = p;
   },
   getDisallowedUser: function () {
-    return (this.dissallowedUserInfo);
+    return (this.disallowedUserSDK);
   },
 
   // Common Tasks used by tests
@@ -215,7 +217,7 @@ module.exports = {
       bot.memberEntersHandler(testName, eventsData, resolve);
     }));
 
-    return(eventPromises);
+    return (eventPromises);
   },
 
   registerMembershipEventsForDectivatedBot: function (testName, framework, eventsData) {
@@ -239,7 +241,7 @@ module.exports = {
         ['despawn', 'memberEnters'], eventsData, true, resolve);
     }));
 
-    return(eventPromises);
+    return (eventPromises);
   },
 
   registerMembershipHandlers: function (testName, framework, bot, eventsData) {
@@ -274,7 +276,7 @@ module.exports = {
     return (eventPromises);
   },
 
-  registerMembershipDeletedEventsForDectivatedBot: function(testName, framework, eventsData) {
+  registerMembershipDeletedEventsForDectivatedBot: function (testName, framework, eventsData) {
     let eventPromises = [];
     // Framework always gets the membership change event
     eventPromises.push(new Promise((resolve) => {
@@ -290,10 +292,10 @@ module.exports = {
       this.frameworkMembershipRulesEventHandler(testName, framework,
         ['spawn', 'memberExits'], eventsData, true, resolve);
     }));
-    
-    return(eventPromises);
+
+    return (eventPromises);
   },
- 
+
   botLeaveRoom: function (testName, framework, bot, roomToLeave, eventsData) {
     const membershipDeleted = new Promise((resolve) => {
       this.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
@@ -381,9 +383,26 @@ module.exports = {
     // Set up handlers for the message events
     let eventPromises = [];
     if (bot.active) {
-      eventPromises = this.registerMessageHandlers(testName, isMention, framework, bot, hearsInfo, msgObj, eventsData);
+      eventPromises = this.registerMessageHandlers(testName, isMention, framework, bot, msgObj, eventsData);
     } else {
       eventPromises = this.getInActiveBotEventArray(testName, isMention, framework, msgObj, eventsData);
+    }
+
+    // Register the framework.hears handler for this message.  We want this 
+    // ven in the case of dissalowed bots so we can capture the "swallowed-hears"
+    let calledHearsPromise = new Promise((resolve) => {
+      hearsInfo.functionId = framework.hears(hearsInfo.phrase, (b, t) => {
+        assert((b.id === bot.id),
+          'bot returned in fint.hears("hi") is not the one expected');
+        assert(validator.objIsEqual(t, eventsData.trigger),
+          'trigger returned in framework.hears("hi") was not as expected');
+        framework.debug('Bot heard message "hi" that user posted');
+        resolve(true);
+      }), hearsInfo.helpString, hearsInfo.priority;
+    });
+    if (bot.active) {
+      // Wait for it to be called if our bot is active
+      eventPromises.push(calledHearsPromise);
     }
 
     // kick it off with a message
@@ -402,7 +421,10 @@ module.exports = {
       });
   },
 
-  botRespondsToTrigger: function (testName, framework, bot, eventsData) {
+  botRespondsToTrigger: function (testName, framework, bot, eventsData, shouldBeAllowed) {
+    if ((shouldBeAllowed !== undefined) && (shouldBeAllowed) && (bot.active)) {
+      return new Error(`${testName} failed.  Expected bot to be in disallowed state but it wasn't.`);
+    }
     if (!eventsData.trigger) {
       if (bot.active) {
         // This can occur if the previous tests failed
@@ -442,20 +464,8 @@ module.exports = {
       });
   },
 
-  registerMessageHandlers: function (testName, isMention, framework, bot, hearsInfo, msg, eventsData) {
+  registerMessageHandlers: function (testName, isMention, framework, bot, msg, eventsData) {
     let eventPromises = [];
-
-    // Register the framework.hears handler..
-    eventPromises.push(new Promise((resolve) => {
-      hearsInfo.functionId = framework.hears(hearsInfo.phrase, (b, t) => {
-        assert((b.id === bot.id),
-          'bot returned in fint.hears("hi") is not the one expected');
-        assert(validator.objIsEqual(t, eventsData.trigger),
-          'trigger returned in framework.hears("hi") was not as expected');
-        framework.debug('Bot heard message "hi" that user posted');
-        resolve(true);
-      }), hearsInfo.helpString, hearsInfo.priority;
-    }));
 
     // Wait for the events associated with a new message before completing test..
     eventPromises.push(new Promise((resolve) => {

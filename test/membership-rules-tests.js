@@ -1,4 +1,4 @@
-/* bot-tests.js
+/* membership-rules-tests.js
  *
  * A set of tests to validate framework functionality
  * when framework is created using a bot token
@@ -50,6 +50,7 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
 var common = require("./common/common");
 common.setFramework(framework);
 common.setUser(validUserWebex);
+common.setDisallowedUser(disallowedUserWebex);
 
 //require('./common/invalid-config-tests.js');
 
@@ -58,7 +59,7 @@ describe('#framework', () => {
   // Validate that the invalid user token is good
   before(() => disallowedUserWebex.people.get('me')
     .then((person) => {
-      common.setDisallowedUser(disallowedUserWebex, person);
+      common.setDisallowedUserPerson(person);
     })
     .catch((e) => {
       console.error(`Could not initialize user with DISSALOWED_USER_API_TOKEN: ${e.message}`);
@@ -73,11 +74,11 @@ describe('#framework', () => {
 
   // Test bot interactions in a bot created test space
   // That does and doesn't include dissallowed members
-  //require('./common/bot-membership-rules-tests.js');
+  require('./common/bot-membership-rules-tests.js');
 
   // Test bot interactions in a user created test space
   // With no disallowed members -- make sure nothing breaks in this mode
-  require('./common/bot-created-room-tests.js');
+  //require('./common/bot-created-room-tests.js');
 
   // Test bot's membership functions
 });

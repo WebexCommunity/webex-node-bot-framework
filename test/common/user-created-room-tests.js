@@ -33,13 +33,13 @@ describe('User Created Rooms Tests', () => {
       return validator.isBot(b);
     }));
 
-  // remove the hears handlers we set up for these tests
-  after(() => {
-    framework.clearHears(hearsHi);
-    framework.clearHears(hearsFile);
-    framework.clearHears(hearsAnything);
-    framework.clearHears(hearsSomeStuff);
-  });
+  // // remove the hears handlers we set up for these tests
+  // after(() => {
+  //   framework.clearHears(hearsHi);
+  //   framework.clearHears(hearsFile);
+  //   framework.clearHears(hearsAnything);
+  //   framework.clearHears(hearsSomeStuff);
+  // });
 
   // Bot leaves rooms
   after(() => {
@@ -68,12 +68,12 @@ describe('User Created Rooms Tests', () => {
       {
         msgText: `Here is a file for ya`,
         msgFiles: process.env.HOSTED_FILE,
-        hearsInfo: {phrase: /.*file.*/igm}
+        hearsInfo: {phrase: /.*file.*/im}
       },
       {
         msgText: `Here is a whole mess of stuff for ya`,
         hearsInfo: {
-          phrase: /.*/igm,
+          phrase: /.*/im,
           helpString: '',
           priority: 99
         }
@@ -81,7 +81,7 @@ describe('User Created Rooms Tests', () => {
       {
         msgText: `Here is a Some Stuff for ya`,
         hearsInfo: {
-          phrase: /.*Some Stuf.*/igm,
+          phrase: /.*Some Stuf.*/im,
           helpString: '',
           priority: 2 // lower number == higher priority
         }
