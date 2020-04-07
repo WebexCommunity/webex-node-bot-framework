@@ -71,6 +71,8 @@ framework.on('membershipRulesAction', (type, event, bot, id, ...args) => {
       break;
     case ('event-swallowed'):
       // event could be any event that you could write a bot handler for
+      // args array will contain any additional params (other than bot and id)
+      // that would have been passed to that handler
       framework.debug(`Membership Rules swallowed a "${event}" event`);
       break;
     case ('hears-swallowed'):
@@ -78,7 +80,7 @@ framework.on('membershipRulesAction', (type, event, bot, id, ...args) => {
       framework.debug(`Membership Rules swallowed a call to a frameowrk.hears("${trigger.phrase}") handler`);
       break;
     default:
-      assert(true === false, `Got unexpected membershipsRules type: ${type}`);
+      console.error(`Got unexpected membershipsRules type: ${type}`);
       break;
   }
 }); 
