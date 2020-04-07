@@ -6,7 +6,7 @@ Some bots may be designed to only work with a particular set of users.   The fra
 
 In many cases developers may build bots that are meant to be used only by employees of their company (or possibly of several companies).   Setting the framework config's  `restrictToEmailDomains` parameter to a comma separated list of email domains instructs the framework to essentially ignore any spaces where the membership list includes users who's email addresses are not in the restricted domain list.
 
-When a bot is first added to a space, the framework will examine the membership list.   If any members are not in the restricted domain list it will by default send a message "Sorry, my use is not allowed for all the members in this space".   (Note that this message can be customized by setting the `unauthorizedDomainUserEnters` parameter).   No framework events will be sent to the application when the room is in this state occurs and it will automatically respond to any messages to the by with a message "Sorry, because my use is not allowed for all the members in this space I am ignoring any input". (Note that this message can be customized by setting the `unauthorizedDomainStateMessageResponse` parameter) 
+When a bot is first added to a space, the framework will examine the membership list.   If any members are not in the restricted domain list it will by default send a message "Sorry, my use is not allowed for all the members in this space".   (Note that this message can be customized by setting the `unauthorizedDomainUserEnters` parameter).   No framework events will be sent to the application when the room is in this state occurs and it will automatically respond to any messages to the bot with a message "Sorry, because my use is not allowed for all the members in this space I am ignoring any input". (Note that this message can be customized by setting the `unauthorizedDomainStateMessageResponse` parameter) 
 
 On subsequent membership changes, the framework will re-examine the membership list.   If a previously unauthorized space is now populated solely by users whose domains are in the `restrictedToEmailDomains` list, a "spawn" event will be generated.  The parameters for this spawn event will include a null `actorId`, and an additional `disallowedMember` parameter with the details of the user who just left.  When this occurs the framework will generate a message that says "I am now allowed to interact with all the members in this space and will no longer ignore any input.". (Note that this message can be customized by setting the `unauthorizedDomainUserExitsResponse` parameter).
 
@@ -14,7 +14,7 @@ Once a space has been disallowed the framework will stop generating any events r
 
 Conversely, if the new member has joined a previously allowed space, but the new member is not authorized, the framework will generate a "despawn" event.  THe parameters for this event will include the `actorId` set to the ID of the user who added the new user and a new `disallowedMember` parameter, which is the membership of the dissalowed user, will also be sent.
 
-Developers can look for the presence of the `disallowedMember` parameters in their spawn and despawn handlers to have their bot send a custom message to the space when these events occur, ie:
+Developers can look for the presence of the `disallowedMember` parameters in their spawn and despawn handlers to have their bot send a custom message to the space when these events occur.   Alternately developers may choose to simply have their bot leave spaces once a dissalowed member enters.   This is also possible by customizing the despawn logic.
 
 ```js
 // A spawn event is generated when the framework finds a space with your bot in it
@@ -43,35 +43,42 @@ framework.on('spawn', (bot, id, addedBy, newlyAllowed) => {
 // In this case the framework generates a "despawn" event with the newlyDisllowed parameter set to true 
 framework.on('despawn', (bot, id, actorId, disallowedMember) => {
   if (disallowedMember) {
+    myMembership = bot.membership;
     // We can't use bot.say here since our bot object has been despawned
     // Use webex SDK instead..
-    const msg = `${disallowedMember.displayName} does not belong to a domain that ` +
-      `I am authorized to work with.  Will ignore any further input.`;
+    const msg = `Yikes!  I'm not allowed to be in spaces with ${disallowedMember.displayName}` +
+      `I'm outta here!`;
     bot.framework.webex.messages.create({
       roomId: bot.room.id,
       markdown: msg
+    }).finally(() => {
+      bot.framework.webex.membership.remove(myMembership);
     });
-    // Print any additional instructions here...
   }
 });
 
 // membershipRulesAction are "log events" that tell us if membershipRules were invoked
+// there is no NEED to implement a handler for this, but it can be useful to log info
+// about how the membership rules are impacting your app or to override the default
+// membership rules when certain events occur
 framework.on('membershipRulesAction', (type, event, bot, id, ...args) => {
   framework.debug(`Framework membershipRulesAction of type ${type} occurred in space "${bot.room.id}".`);
-  // TODO -- could add some type and event validation
+  
   switch (type) {
     case ('state-change'):
+      // event could be "spawn" or "despawn"
       framework.debug(`Membership Rules forced a "${event}" event`);
       break;
     case ('event-swallowed'):
+      // event could be any event that you could write a bot handler for
       framework.debug(`Membership Rules swallowed a "${event}" event`);
       break;
     case ('hears-swallowed'):
-      framework.debug(`Membership Rules swallowed a "${event}" event`);
+      framework.debug(`Membership Rules swallowed a call to a frameowrk.hears("${trigger.phrase}") handler`);
       break;
     default:
       assert(true === false, `Got unexpected membershipsRules type: ${type}`);
       break;
   }
-});
-```
+}); 
+``` 
