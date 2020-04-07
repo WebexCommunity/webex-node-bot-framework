@@ -360,7 +360,7 @@ describe('User Created Room to create a Test Bot', () => {
         {
           msgText: `Here is a file for ya`,
           msgFiles: process.env.HOSTED_FILE,
-          hearsInfo: {phrase: /.*file.*/igm}
+          hearsInfo: {phrase: /.*file.*/im}
         },
         {
           msgText: `Here is a whole mess of stuff for ya`,
