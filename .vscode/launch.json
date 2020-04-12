@@ -4,18 +4,26 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-  {
-    "type": "node",
-    "request": "launch",
-    "name": "Launch Program",
-    "program": "${workspaceFolder}/example1.js"
-  },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Example1",
+      "program": "${workspaceFolder}/example1.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Membership Rules Demo",
+      "program": "${workspaceFolder}/docs/demo-membership-rules.js"
+    },
     {
       "type": "node",
       "request": "launch",
       "name": "Mocha Tests",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "env": {"DEBUG":"framework"},
+      "env": {
+        "DEBUG": "framework"
+      },
       "cwd": "${workspaceRoot}",
       "args": [
         "--exit",
