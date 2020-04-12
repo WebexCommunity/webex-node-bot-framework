@@ -18,6 +18,8 @@ require('dotenv').config();
 if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   (typeof process.env.VALID_USER_API_TOKEN === 'string') &&
   (typeof process.env.DISALLOWED_USER_API_TOKEN === 'string') &&
+  (typeof process.env.ANOTHER_DISALLOWED_USERS_EMAIL === 'string') &&
+  (typeof process.env.ALLOWED_DOMAINS === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
   frameworkOptions = { token: process.env.BOT_API_TOKEN };
   if (typeof process.env.INIT_STORAGE === 'string') {
@@ -31,15 +33,17 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
       process.exit(-1);
     }
   }
-  frameworkOptions.restrictToEmailDomains = 'gmail.com';
+  frameworkOptions.restrictToEmailDomains = process.env.ALLOWED_DOMAINS;
   framework = new Framework(frameworkOptions);
   validUserWebex = new Webex({ credentials: process.env.VALID_USER_API_TOKEN });
   disallowedUserWebex = new Webex({ credentials: process.env.DISALLOWED_USER_API_TOKEN });
 } else {
   console.error('Missing required environment variables:\n' +
+    '- ALLOWED_DOMAINS -- comma seperated list of allowed domain names\n' +
     '- BOT_API_TOKEN -- token associatd with an existing bot\n' +
     '- VALID_USER_API_TOKEN -- token associated with an existing user with an allowed domain\n' +
     '- DISSALOWED_USER_API_TOKEN -- valid token associated with an existing user with an allowed domain\n' +
+    '- ANOTHER_DISALLOWED_USERS_EMAIL -- different disallowed existing users email\n' + 
     '- HOSTED_FILE -- url to a file that can be attached to test messages\n' +
     'The tests will create a new space with the bot and the user');
   process.exit(-1);
