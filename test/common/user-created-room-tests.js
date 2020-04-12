@@ -11,11 +11,8 @@ let when = common.when;
 describe('User Created Rooms Tests', () => {
   let userCreatedTestRoom, bot;
   let testName = 'Default Test Name';
-  let message, eventsData = {};
-  let triggers = [], messages = [];
+  let eventsData = {};
   let messageCreatedEvent;
-  let hearsHi, hearsFile, hearsAnything, hearsSomeStuff;
-
 
   // Create a room as user to run tests in
   before(() => userWebex.rooms.create({title: User_Test_Space_Title})
