@@ -316,10 +316,8 @@ describe('User Created Room to create a Test Bot', () => {
   describe('Bot Created Rooms Tests', () => {
     let botCreatedRoomBot;
     let testName = 'Default Test Name';
-    let message, eventsData = {};
-    let triggers = [], messages = [];
+    let eventsData = {};
     let messageCreatedEvent;
-    let hearsHi, hearsFile, hearsAnything, hearsSomeStuff;
     // Create a room as user to have test bot which will create other rooms
     before(() => {
       let testName = 'bot.newRoom() with user as member test';
@@ -485,6 +483,8 @@ describe('User Created Room to create a Test Bot', () => {
     });
 
     describe('bot.reply', () => {
+      let messageId = '';
+
       it('sends a message and then replies to it', () => {
         let testName = 'bot sends a message and then a reply';
         let message = {};
@@ -499,6 +499,7 @@ describe('User Created Room to create a Test Bot', () => {
         return botCreatedRoomBot.say('This is the parent message')
           .then((m) => {
             message = m;
+            messageId = m.id;
             assert(validator.isMessage(message),
               `${testName} did not return a valid message`);
             return when(messageCreatedEvent);
@@ -535,19 +536,205 @@ describe('User Created Room to create a Test Bot', () => {
               `${testName} did not return a valid message`);
             assert((typeof m.parentId === 'string'),
               `${testName} did not return a message with a parentId`);
+            return bot.reply(messageId,
+              'This is **another** reply, using an ID instead of an message object');
+          })
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
             framework.messageFormat = 'text';
             return bot.reply(message,
               'This is **the final** reply, with the format set explicitly', 'markdown');
           })
-          .then(() => when(framework.messageFormat = messageFormat))
+          .then((m) => {
+            message = m;
+            // Message ID is not set to a non top level message
+            messageId = m.id;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            framework.messageFormat = 'text';
+            // Reset the default message formate before finishing
+            return when(framework.messageFormat = messageFormat);
+          })
           .catch((e) => {
             console.error(`${testName} failed: ${e.message}`);
             return Promise.reject(e);
           });
       });
 
+      it('Tries to send a reply with a non-top level replyTo ID', () => {
+        testName = 'Tries to send a reply with a non-top level replyTo ID';
+        return botCreatedRoomBot.reply(messageId,
+          'This is **should fail** as the replyTo ID is already a thread')
+          .then(() => when.reject(new Error('bot.reply with invalid ID did not fail!')))
+          .catch((e) => {
+            framework.debug(`${testName} failed as expected: ${e.message}`);
+            return when(true);
+          });
+      });
 
     });
+
+    describe('Other Bot message functions', () => {
+      let message;
+      let filename = './test/flint.jpg';
+
+      it('sends a local file', () => {
+        let testName = 'sends a local file';
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.sayWithLocalFile('Here is a local file', filename)
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.files === 'object'),
+              `${testName} did not return a message with a file attachment`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return when(true);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+
+      it('sends a local file with no message', () => {
+        let testName = 'sends a local file with no message';
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.sayWithLocalFile('', filename)
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.files === 'object'),
+              `${testName} did not return a message with a file attachment`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return when(true);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+
+      it('sends a local file with a null message', () => {
+        let testName = 'sends a local file with a null message';
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.sayWithLocalFile(null, filename)
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.files === 'object'),
+              `${testName} did not return a message with a file attachment`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return when(true);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+
+      it('sends a non available local file', () => {
+        let testName = 'sends a non available local file';
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.sayWithLocalFile('This file doesn\'t exist', 'foo.jpg')
+          .then(() => when.reject(new Error('bot.sendWithFile with invalid file did not fail!')))
+          .catch((e) => {
+            framework.debug(`${testName} failed as expected: ${e.message}`);
+            return when(true);
+          });
+      });
+
+      it('uploads a stream', () => {
+        let testName = 'uploads a stream';
+        let fs = require('fs');
+        let filename = './test/flint.jpg';
+        let stream = fs.createReadStream(filename);
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.uploadStream(stream)
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.files === 'object'),
+              `${testName} did not return a message with a file attachment`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return when(true);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+
+      it('censors the previous message', () => {
+        let testName = 'censors the previous message';
+
+        // Wait for the events associated with a new message before completing test..
+        messageDeletedEvent = new Promise((resolve) => {
+          common.frameworkMessageDeletedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.censor(message.id)
+          .then(() => {
+            return when(messageDeletedEvent);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+    });
   });
+
+
 
 });
