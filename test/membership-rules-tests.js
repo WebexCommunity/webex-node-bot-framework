@@ -33,7 +33,7 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
       process.exit(-1);
     }
   }
-  frameworkOptions.restrictToEmailDomains = process.env.ALLOWED_DOMAINS;
+  frameworkOptions.restrictedToEmailDomains = process.env.ALLOWED_DOMAINS;
   framework = new Framework(frameworkOptions);
   validUserWebex = new Webex({ credentials: process.env.VALID_USER_API_TOKEN });
   disallowedUserWebex = new Webex({ credentials: process.env.DISALLOWED_USER_API_TOKEN });
