@@ -147,6 +147,9 @@ module.exports = {
     for (let i = 0; i < userEmails.length; i++) {
       if (userEmails[i] === this.disallowedUserPerson.emails[0]) {
         areMembershipRuleViolations = true;
+        // First dissalowed user found should cause despawn
+        // We will validate this in the despawn handerl
+        eventsData.disallowedUserEmail = userEmails[i];
         break;
       }
     }
@@ -164,9 +167,6 @@ module.exports = {
         // Todo update this to check each email
         assert((emails.length === userEmails.length),
           `bot.add did not add all the requested users in test "${testName}`);
-        if (areMembershipRuleViolations) {
-          eventsData.disallowedUserEmail = this.disallowedUserPerson.emails[0];
-        }
         // Wait for all the event handlers to fire
         return when.all(eventPromises);
       })
@@ -176,12 +176,14 @@ module.exports = {
       });
   },
 
-  botRemoveUserFromSpace: function (testName, framework, bot, userEmail, eventsData) {
-    let isDisallowedUser = (userEmail === this.disallowedUserPerson.emails[0]);
-
+  botRemoveUserFromSpace: function (testName, framework, bot, userEmail, eventsData,
+    numDisallowedUsersInSpace, isDisallowedUser) {
     let eventPromises = [];
-    if ((!bot.active) && (isDisallowedUser)) {
-      eventPromises = this.registerMembershipDeletedEventsForDectivatedBot(testName, framework, eventsData);
+
+    if (!bot.active) {
+      assert(numDisallowedUsersInSpace, 
+        `botRemoveUserFromSpace() error: ${testName} set numDisallowedUsersInSpace to ${numDisallowedUsersInSpace}`);
+      eventPromises = this.registerMembershipDeletedEventsWhenDisallowedUserExits(testName, framework, eventsData, numDisallowedUsersInSpace);
     } else {
       eventPromises = this.registerMembershipDeletedHandlers(testName, framework, bot, eventsData);
     }
@@ -234,11 +236,14 @@ module.exports = {
     eventPromises.push(new Promise((resolve) => {
       this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
     }));
-    // Finally, we will get some membership-rules events, a "swallowed" memberEnters
+    // Finally, we will get some membership-rules events, 
+    // at least one "swallowed" memberEnters
     // and a message about the "disallowed" despawning
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(testName, framework,
-        ['despawn', 'memberEnters'], eventsData, true, resolve);
+        ['despawn', 'memberEnters'], eventsData,
+        false, /* don't error on unexpected swallowed events */
+        resolve);
     }));
 
     return (eventPromises);
@@ -276,26 +281,33 @@ module.exports = {
     return (eventPromises);
   },
 
-  registerMembershipDeletedEventsForDectivatedBot: function (testName, framework, eventsData) {
+  registerMembershipDeletedEventsWhenDisallowedUserExits: function (testName, framework, eventsData, numDisallowedUsersInSpace) {
     let eventPromises = [];
     // Framework always gets the membership change event
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
     }));
-    // Disallowed member leaving will "re-spawn" the bot
-    eventPromises.push(new Promise((resolve) => {
-      this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
-    }));
-    // Finally, we will get some membership-rules events, a "swallowed" memberExits
-    // and a message about the re-spawning
-    eventPromises.push(new Promise((resolve) => {
-      this.frameworkMembershipRulesEventHandler(testName, framework,
-        ['spawn', 'memberExits'], eventsData, true, resolve);
-    }));
+    if (numDisallowedUsersInSpace === 1) { 
+      // Last disallowed member leaving will "re-spawn" the bot
+      eventPromises.push(new Promise((resolve) => {
+        this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
+      }));
+      // Finally, we will get some membership-rules events, a "swallowed" memberExits
+      // and a message about the re-spawning
+      eventPromises.push(new Promise((resolve) => {
+        this.frameworkMembershipRulesEventHandler(testName, framework,
+          ['spawn', 'memberExits'], eventsData, true, resolve);
+      }));
+    } else {
+      // If not last disallowed user there is no membership-rules spawn event
+      eventPromises.push(new Promise((resolve) => {
+        this.frameworkMembershipRulesEventHandler(testName, framework,
+          ['memberExits'], eventsData, true, resolve);
+      }));
+    }
 
     return (eventPromises);
   },
-
   botLeaveRoom: function (testName, framework, bot, roomToLeave, eventsData) {
     const membershipDeleted = new Promise((resolve) => {
       this.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
@@ -590,6 +602,15 @@ module.exports = {
     });
   },
 
+  frameworkMessageDeletedEventHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    this.framework.once('messageDeleted', (message, id) => {
+      framework.debug(`Framework messageDeleted event occurred in test ${testName}`);
+      eventsData.message = message;
+      promiseResolveFunction(assert((id === framework.id),
+        'id returned in framework.on("messageDeleted") is not the one expected'));
+    });
+  },
+
   frameworkMentionedHandler: function (testName, framework, eventsData, promiseResolveFunction) {
     this.framework.once('mentioned', (bot, trigger, id) => {
       framework.debug(`Framework mentioned event occurred in test ${testName}`);
@@ -737,8 +758,8 @@ module.exports = {
           break;
       }
       var index = expectedEvents.indexOf(event);
-      if ((failOnUnexpectedEvents) && (index < 0)) {
-        assert((false === true), `membershipRulesAction handler got an unepected ${event} swallowed`);
+      if (index < 0) {
+        assert((false === failOnUnexpectedEvents), `membershipRulesAction handler got an unexpected ${event} swallowed`);
       } else {
         expectedEvents.splice(index, 1);
       }

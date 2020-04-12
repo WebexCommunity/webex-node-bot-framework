@@ -16,7 +16,7 @@ describe('User Created Room to create a Test Bot', () => {
   let testMessages = [
     {msgText: 'hi', hearsInfo: {phrase: 'hi'}},
     {
-      msgText: `Here is a file for ya`, 
+      msgText: `Here is a file for ya`,
       msgFiles: process.env.HOSTED_FILE,
       hearsInfo: {phrase: /.*file.*/im}
     }
@@ -95,8 +95,6 @@ describe('User Created Room to create a Test Bot', () => {
           common.frameworkMembershipRulesEventHandler(testName, framework, ['despawn'], eventsData, false, resolve);
         });
       }
-
-
       return botCreatedRoomBot.implode()
         .then(() => when.all([membershipDeleted, stopped, despawned]))
         .catch((reason) => {
@@ -114,7 +112,9 @@ describe('User Created Room to create a Test Bot', () => {
       after(() => {
         testName = "removes allowed user from the room";
         return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
-          common.userInfo.emails[0], eventsData);
+          common.userInfo.emails[0], eventsData, 
+          0, /* numDisallowedUsersInSpace */
+          false, /* isDisallowedUser */);
       });
 
 
@@ -125,7 +125,7 @@ describe('User Created Room to create a Test Bot', () => {
         it(`user says ${testData.msgText}`, () => {
           let testName = `user says ${testData.msgText}`;
           return common.userSendMessage(testName, framework, userWebex,
-            botCreatedRoomBot, eventsData, testData.hearsInfo, 
+            botCreatedRoomBot, eventsData, testData.hearsInfo,
             testData.msgText, testData.msgFiles);
         });
 
@@ -138,30 +138,26 @@ describe('User Created Room to create a Test Bot', () => {
 
       });
 
-      it(`Removes the framework.hears() handlers setup in previous ` +
-      `${testMessages.length * 2} tests`, () => {
+      it(`Removes the framework.hears() handlers setup in previous ` + `${testMessages.length * 2} tests`, () => {
         testMessages.forEach((testData) => {
           framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
           framework.clearHears(testData.hearsInfo.functionId);
         });
-      });    
+      });
 
 
       describe('Adds and removes a disallowed user to the space', () => {
-
-        //it('adds the disallowed users', () => {
         before(() => {
           testName = 'adds a disallowed user to the room';
           return common.botAddUsersToSpace(testName, framework, botCreatedRoomBot,
             [common.disallowedUserPerson.emails[0]], eventsData)
             .then(() => {
-              assert((!botCreatedRoomBot.active), 
+              assert((!botCreatedRoomBot.active),
                 "After adding dissallowed user, bot did move to inactive state.");
             });
         });
 
-        after(`Removes the framework.hears() handlers setup in previous ` +
-        `${testMessages.length * 2} tests`, () => {
+        after(`Removes the framework.hears() handlers setup in previous ` + `${testMessages.length * 2} tests`, () => {
           testName = "cleans up the hears handlers from these tests";
           testMessages.forEach((testData) => {
             framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
@@ -172,11 +168,9 @@ describe('User Created Room to create a Test Bot', () => {
         after(() => {
           testName = "removes a disallowed user from the room";
           return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
-            common.disallowedUserPerson.emails[0], eventsData)
-            .then(() => {
-              assert(botCreatedRoomBot.active, 
-                "After removing dissallowed user, bot did not return to active state.");
-            });
+            common.disallowedUserPerson.emails[0], eventsData,
+            1, /* numDisallowedUsersInSpace */
+            true, /* isDisallowedUser */);
         });
 
         // loop through message tests..
@@ -187,58 +181,114 @@ describe('User Created Room to create a Test Bot', () => {
             eventsData = {bot: botCreatedRoomBot};
             framework.debug(`${testName} test starting...`);
             return common.userSendMessage(testName, framework, userWebex,
-              botCreatedRoomBot, eventsData, 
+              botCreatedRoomBot, eventsData,
               testData.hearsInfo, testData.msgText, testData.msgFiles);
           });
 
           it(`bot shouldn't respond to ${testData.msgText}`, () => {
             let testName = `bot shouldn't respond to "${testData.msgText}"`;
+            let shouldBeAllowed = false;
             framework.debug(`${testName} test starting...`);
             return common.botRespondsToTrigger(testName, framework,
-              botCreatedRoomBot, eventsData);
+              botCreatedRoomBot, eventsData, shouldBeAllowed);
           });
 
+        });
+
+        it(`validates that bot.say() fails in disallowed state`, () => {
+          botCreatedRoomBot.say('This message should never be seen')
+            .then(() => {
+              return when.reject('bot.say() should have failed but did not');
+            })
+            .catch((e) => {
+              framework.debug(`Got expected error response: ${e.message}`);
+              return when(true);
+            });
+        });
+
+        it(`validates that bot.reply() fails in disallowed state`, () => {
+          // Use the last posted message as the parent...
+          botCreatedRoomBot.reply(eventsData.message, 'This message should never be seen')
+            .then(() => {
+              return when.reject('bot.reply() should have failed but did not');
+            })
+            .catch((e) => {
+              framework.debug(`Got expected error response: ${e.message}`);
+              return when(true);
+            });
+        });
+
+        it(`validates that bot.sendCard() fails in disallowed state`, () => {
+          let cardJson = require('../common/input-card.json');
+          return botCreatedRoomBot.sendCard(cardJson, 'What is your name?')
+            .then(() => {
+              return when.reject('bot.sendCard() should have failed but did not');
+            })
+            .catch((e) => {
+              framework.debug(`Got expected error response: ${e.message}`);
+              return when(true);
+            });
+        });
+
+        it(`validates that bot.sayWithLocalFile() fails in disallowed state`, () => {
+          let filename = './test/flint.jpg';
+          return botCreatedRoomBot.sayWithLocalFile('This is a file', filename)
+            .then(() => {
+              return when.reject('bot.sayWithLocalFile() should have failed but did not');
+            })
+            .catch((e) => {
+              framework.debug(`Got expected error response: ${e.message}`);
+              return when(true);
+            });
+        });
+
+        it(`validates that bot.uploadStream() fails in disallowed state`, () => {
+          let fs = require('fs');
+          let filename = './test/flint.jpg';
+          let stream = fs.createReadStream(filename);
+          return botCreatedRoomBot.uploadStream(stream)
+            .then(() => {
+              return when.reject('bot.uploadStream() should have failed but did not');
+            })
+            .catch((e) => {
+              framework.debug(`Got expected error response: ${e.message}`);
+              return when(true);
+            });
+        });
+
+        it(`validates that bot.dn fails with disallowed user email`, () => {
+          return botCreatedRoomBot.dm(common.disallowedUserPerson.emails[0])
+            .then(() => {
+              return when.reject('bot.dm() should have failed but did not');
+            })
+            .catch((e) => {
+              framework.debug(`Got expected error response: ${e.message}`);
+              return when(true);
+            });
+        });
+
+        it(`validates that bot.dn fails with disallowed personId`, () => {
+          return botCreatedRoomBot.dm(common.disallowedUserPerson.id)
+            .then(() => {
+              return when.reject('bot.dm() should have failed but did not');
+            })
+            .catch((e) => {
+              framework.debug(`Got expected error response: ${e.message}`);
+              return when(true);
+            });
         });
 
       });
     });
 
-    describe('Bot adds allowed and disallowed user to space who iteract with bot', () => {
+    describe('Bot adds allowed and 2 disallowed users to space who iteract with bot', () => {
 
       before(() => {
         testName = 'adds an allowed user to the room';
         return common.botAddUsersToSpace(testName, framework, botCreatedRoomBot,
-          [common.userInfo.emails[0], common.disallowedUserPerson.emails[0]], eventsData);
+          [common.userInfo.emails[0], common.disallowedUserPerson.emails[0],
+            process.env.ANOTHER_DISALLOWED_USERS_EMAIL], eventsData);
       });
-
-      // loop through message tests from allowed user
-      testMessages.forEach((testData) => {
-        eventsData = {bot: botCreatedRoomBot};
-
-        it(`allowed user says ${testData.msgText}`, () => {
-          let testName = `allowed user says ${testData.msgText}`;
-          return common.userSendMessage(testName, framework, userWebex,
-            botCreatedRoomBot, eventsData, testData.hearsInfo, 
-            testData.msgText, testData.msgFiles);
-        });
-
-        it(`bot shouldn't respond to ${testData.msgText} from allowed user`, () => {
-          let testName = `bot shouldn't respond to ${testData.msgText} from allowed user`;
-          let shouldBeAllowed = false;
-          return common.botRespondsToTrigger(testName, framework,
-            botCreatedRoomBot, eventsData, shouldBeAllowed);
-        });
-
-      });
-
-      it(`Removes the framework.hears() handlers setup in previous ` +
-      `${testMessages.length * 2} tests`, () => {
-        testMessages.forEach((testData) => {
-          framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
-          framework.clearHears(testData.hearsInfo.functionId);
-        });
-      });    
-
 
       // loop through message tests from disallowed user
       testMessages.forEach((testData) => {
@@ -247,7 +297,7 @@ describe('User Created Room to create a Test Bot', () => {
         it(`allowed user says ${testData.msgText}`, () => {
           let testName = `allowed user says ${testData.msgText}`;
           return common.userSendMessage(testName, framework, disallowedUser,
-            botCreatedRoomBot, eventsData, testData.hearsInfo, 
+            botCreatedRoomBot, eventsData, testData.hearsInfo,
             testData.msgText, testData.msgFiles);
         });
 
@@ -260,22 +310,69 @@ describe('User Created Room to create a Test Bot', () => {
 
       });
 
-      it(`Removes the framework.hears() handlers setup in previous ` +
-      `${testMessages.length * 2} tests`, () => {
+      it(`Removes the framework.hears() handlers setup in previous ` + `${testMessages.length * 2} tests`, () => {
         testMessages.forEach((testData) => {
           framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
           framework.clearHears(testData.hearsInfo.functionId);
         });
-      });    
+      });
 
-      describe('Removes the disallowed user to the space', () => {
+      describe('Removes the first disallowed user to the space', () => {
 
         before(() => {
           testName = "removes a disallowed user from the room";
           return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
-            common.disallowedUserPerson.emails[0], eventsData)
+            process.env.ANOTHER_DISALLOWED_USERS_EMAIL, eventsData,
+            2, /* numDisallowedUsersInSpace */
+            true, /* isDisallowedUser */)
             .then(() => {
-              assert(botCreatedRoomBot.active, 
+              assert((!botCreatedRoomBot.active),
+                "After removing only the first dissallowed user, bot returned to active state.");
+            });
+        });
+
+        after(() => {
+          testName = "cleans up the hears handlers from these tests";
+          testMessages.forEach((testData) => {
+            framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
+            framework.clearHears(testData.hearsInfo.functionId);
+          });
+        });
+
+        // loop through message tests..
+        testMessages.forEach((testData) => {
+
+          it(`user says "${testData.msgText}" to disallowed bot`, () => {
+            let testName = `user says ${testData.msgText} to disallowed bot`;
+            eventsData = {bot: botCreatedRoomBot};
+            framework.debug(`${testName} test starting...`);
+            return common.userSendMessage(testName, framework, userWebex,
+              botCreatedRoomBot, eventsData,
+              testData.hearsInfo, testData.msgText, testData.msgFiles);
+          });
+
+          it(`bot should not respond to ${testData.msgText}`, () => {
+            let testName = `bot should not respond to "${testData.msgText}"`;
+            let shouldBeAllowed = false;
+            framework.debug(`${testName} test starting...`);
+            return common.botRespondsToTrigger(testName, framework,
+              botCreatedRoomBot, eventsData, shouldBeAllowed);
+          });
+
+        });
+
+      });
+
+      describe('Removes the last disallowed user to the space', () => {
+
+        before(() => {
+          testName = "removes a disallowed user from the room";
+          return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
+            common.disallowedUserPerson.emails[0], eventsData,
+            1, /* numDisallowedUsersInSpace */
+            true, /* isDisallowedUser */)
+            .then(() => {
+              assert(botCreatedRoomBot.active,
                 "After removing dissallowed user, bot did not return to active state.");
             });
         });
@@ -296,7 +393,7 @@ describe('User Created Room to create a Test Bot', () => {
             eventsData = {bot: botCreatedRoomBot};
             framework.debug(`${testName} test starting...`);
             return common.userSendMessage(testName, framework, userWebex,
-              botCreatedRoomBot, eventsData, 
+              botCreatedRoomBot, eventsData,
               testData.hearsInfo, testData.msgText, testData.msgFiles);
           });
 
