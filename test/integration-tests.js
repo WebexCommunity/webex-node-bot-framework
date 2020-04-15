@@ -14,14 +14,14 @@ let framework, userWebex;
 // Read in environment variables
 require('dotenv').config();
 environmentEvaluated = true;
-if ((typeof process.env.AUTHORIZED_FLINT_USER_API_TOKEN === 'string') &&
+if ((typeof process.env.AUTHORIZED_USER_API_TOKEN === 'string') &&
   (typeof process.env.USER_API_TOKEN === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
-  framework = new Framework({ token: process.env.AUTHORIZED_FLINT_USER_API_TOKEN });
+  framework = new Framework({ token: process.env.AUTHORIZED_USER_API_TOKEN });
   userWebex = new Webex({ credentials: process.env.USER_API_TOKEN });
 } else {
   console.error('Missing required evnvironment variables:\n' +
-    '- AUTHORIZED_FLINT_USER_API_TOKEN -- token associatd with a user who authorized a framework based integrationt\n' +
+    '- AUTHORIZED_USER_API_TOKEN -- token associatd with a user who authorized a framework based integrationt\n' +
     '- USER_API_TOKEN -- token associated with an existing user that integration will interact with\n' +
     '- HOSTED_FILE -- url to a file that can be attached to test messages\n' +
     'The tests will create a new space with the bot and the user');
