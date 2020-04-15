@@ -246,7 +246,7 @@ The [MongoStore](#MongoStore) (and potentially other stores that use a persisten
 
 See [MongoStore](#MongoStore), for details on how to configure this storage adaptor.
 
-The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./docs/contributing.md)!
+The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
 
 
 ## Bot Accounts
@@ -413,6 +413,7 @@ Options Object
 | token | <code>string</code> |  | Webex Token. |
 | [webhookUrl] | <code>string</code> |  | URL that is used for Webex API to send callbacks.  If not set events are received via websocket |
 | [webhookSecret] | <code>string</code> |  | If specified, inbound webhooks are authorized before being processed. Ignored if webhookUrl is not set. |
+| [httpsProxy] | <code>string</code> |  | If specified the https proxy to route request to webex through.  Ie: "https://proxy.mycompany.com:8090" |
 | [maxStartupSpaces] | <code>number</code> |  | If specified, the maximum number of spaces with our bot that the framework will discover during startup.           If not specified the framework will attempt to discover all the spaces the framework's identity is in and "spawn" a bot object for all of         them before emitting an "initiatialized" event.  For popular bots that belog to hundreds or thousands of spaces, this can result         in long startup times. Setting this to a number (ie: 100) will limit the number of bots spawned before initialization.         Bots that are driven by external events and rely on logic that checks if an appropriate bot object exists before sending a notification          should not modify the default.  Bots that are driven primarily by webex user commands to the bot may         set this to 0 or any positive number to facilitate a faster startup.  After initialization new bot objects are created ("spawned")         when the bot is added to a new space or, if the framework receives events in existing spaces that it did not discover during initialization.         In the case of these "late discoveries", bots objects are spawned "just in time".  This behavior is similar to the way         the webex teams clients work.  See the [Spawn Event docs](#"spawn") to discover how to handle the different types of spawn events. |
 | [messageFormat] | <code>string</code> | <code>&quot;text&quot;</code> | Default Webex message format to use with bot.say(). |
 | [initBotStorageData] | <code>object</code> | <code>{}</code> | Initial data for new bots to put into storage. |

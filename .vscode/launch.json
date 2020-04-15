@@ -22,7 +22,7 @@
         "-u",
         "bdd",
         "--timeout",
-        "90000",
+        "40000",
         "--colors",
         "${workspaceFolder}/test/bot-tests.js"
       ],
