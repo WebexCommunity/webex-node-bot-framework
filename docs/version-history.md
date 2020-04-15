@@ -1,9 +1,12 @@
+## v 1.2.0
+* Added new config option `httpsProxy`.  When set the framework will use this to proxy requests to Webex
+* Slight change to cleanup logic when using websockets to try to elminate the "excessive device registrations" warning that can hit developers who are iteratively testing their apps
+
 ## v 1.1.0
 * Modified `maxStartupSpaces` configuration option behavior.   When not set the framework will attempt to discover all the spaces the bot (or framework's user) is in, generating a bot object and emitting a "spawn" event for each one before emitting an "initialized" event. Developers may set this config option to any integer greater than zero to speed up start time, but this should only be used in cases where the bot logic is primarily driven by commands from Webex users, as opposed to event notification bots which may rely on logic to determine if a bot object exists before sending the appropriate event.
 *  This is a change in behavior from when this parameter was introduced in v0.7.0, where the default value was 100.  This change was made so that developers must explicilty choose not to spawn all bot objects during intialization.
 * Updated startup logic to properly paginate through all the responses to the list memberships API call in order to discover all possible spaces.
 
- 
 ## v 1.0.5
 * Fix in webhook cleanup logic on framework.stop()
  
