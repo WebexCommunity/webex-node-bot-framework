@@ -1,3 +1,10 @@
+## v 2.0,0
+* Added [Membership Rules](./membership-rules-readme.md) configuration options restrict bot interactions to spaces that are exclusively populated by users with email domains specified in a restricted to domain list.   Beta Mode further restricts bot interaction to only spaces where specific named users are present.
+* Added bot.sayWithLocalFiles
+* Removed bot.upload(file) -- call sayWithLocalFile(null, filename) instaed
+* Removed bot.messageStreamRoom() -- call bot.webex.messages.create() with a message object that includes the roomId, the (optional) markdown or text message, and populate the files field with an array containing a single filestream, as described in the documentation for uploadStream
+* Removed bot.getMessages(count) -- call bot.webex.messages.list({roomId: bot.room.id, max: count})  -- note that this only works when the bot was created with a user token.
+
 ## v 1.2.0
 * Added new config option `httpsProxy`.  When set the framework will use this to proxy requests to Webex
 * Slight change to cleanup logic when using websockets to try to elminate the "excessive device registrations" warning that can hit developers who are iteratively testing their apps
