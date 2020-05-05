@@ -35,8 +35,8 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   }
   frameworkOptions.restrictedToEmailDomains = process.env.ALLOWED_DOMAINS;
   framework = new Framework(frameworkOptions);
-  validUserWebex = new Webex({ credentials: process.env.VALID_USER_API_TOKEN });
-  disallowedUserWebex = new Webex({ credentials: process.env.DISALLOWED_USER_API_TOKEN });
+  validUserWebex = Webex.init({ credentials: {access_token: process.env.VALID_USER_API_TOKEN }});
+  disallowedUserWebex = Webex.init({ credentials: {access_token: process.env.DISALLOWED_USER_API_TOKEN }});
 } else {
   console.error('Missing required environment variables:\n' +
     '- ALLOWED_DOMAINS -- comma seperated list of allowed domain names\n' +

@@ -48,6 +48,9 @@ module.exports = {
     // Now wait until framework is initialized
     return when.all([started, initialized])
       .then(() => {
+        if (framework.webex.config.defaultMercuryOptions) {
+          return Promise.reject(new Error(`Framework initialized but has a proxy config when none was set!`));
+        }
         assert(validator.isFramework(framework),
           'Framework did not initialize succesfully');
         framework.debug(`${framework.email} is in ${framework.bots.length} at the start of the tests.`);
@@ -143,22 +146,20 @@ module.exports = {
   },
 
   botAddUsersToSpace: function (testName, framework, bot, userEmails, eventsData) {
-    let areMembershipRuleViolations = false;
-    for (let i = 0; i < userEmails.length; i++) {
-      if (userEmails[i] === this.disallowedUserPerson.emails[0]) {
-        areMembershipRuleViolations = true;
-        // First dissalowed user found should cause despawn
-        // We will validate this in the despawn handerl
-        eventsData.disallowedUserEmail = userEmails[i];
-        break;
+    eventsData.disallowedUserEmail = [];
+    if (framework.options.restrictedToEmailDomains) {
+      for (let i = 0; i < userEmails.length; i++) {
+        if (this.isDisallowedEmailDomain(userEmails[i], framework.options.restrictedToEmailDomains)) {
+          eventsData.disallowedUserEmail.push(userEmails[i]);
+        }
       }
     }
 
     let eventPromises = [];
-    if ((bot.active) && (!areMembershipRuleViolations)) {
+    if ((bot.active) && (!eventsData.disallowedUserEmail.length)) {
       eventPromises = this.registerMembershipHandlers(testName, framework, bot, eventsData);
     } else {
-      eventPromises = this.registerMembershipEventsForDectivatedBot(testName, framework, eventsData);
+      eventPromises = this.registerMembershipEventsForDectivatedBot(testName, framework, eventsData.disallowedUserEmail, eventsData);
     }
 
     // Add the users to the space with the bot
@@ -174,6 +175,18 @@ module.exports = {
         console.error(`"${testName}" failed: ${e.message}`);
         return Promise.reject(e);
       });
+  },
+
+  isDisallowedEmailDomain(email, allowedDomainList) {
+    let domain = _.split(_.toLower(email), '@', 2)[1];
+    if ((domain === 'webex.bot') || (domain === 'sparkbot.io')) {
+      return false;  // ignore bots
+    }
+    if (-1 === allowedDomainList.indexOf(domain)) {
+      return true;
+    } else {
+      return false;
+    }
   },
 
   botRemoveUserFromSpace: function (testName, framework, bot, userEmail, eventsData,
@@ -222,7 +235,7 @@ module.exports = {
     return (eventPromises);
   },
 
-  registerMembershipEventsForDectivatedBot: function (testName, framework, eventsData) {
+  registerMembershipEventsForDectivatedBot: function (testName, framework, dissallowedEmails, eventsData) {
     let eventPromises = [];
     // These events should occur with a new membership that violates a memebership rule
     eventPromises.push(new Promise((resolve) => {
@@ -237,11 +250,18 @@ module.exports = {
       this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
     }));
     // Finally, we will get some membership-rules events, 
-    // at least one "swallowed" memberEnters
+    // and one "swallowed" memberEnters for each dissallowed user
+    let swallowedEvents = ['despawn']; 
+    if (dissallowedEmails.length){
+      for (let i=0; i<dissallowedEmails.length; i++) {
+        swallowedEvents.push('memberEnters');
+      }
+    }
+
     // and a message about the "disallowed" despawning
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(testName, framework,
-        ['despawn', 'memberEnters'], eventsData,
+        swallowedEvents, eventsData,
         false, /* don't error on unexpected swallowed events */
         resolve);
     }));
@@ -525,7 +545,9 @@ module.exports = {
     }
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(testName, framework,
-        swallowedEventsArray, eventsData, true, resolve);
+        swallowedEventsArray, eventsData, 
+        true, 
+        resolve);
     }));
 
     return eventPromises;
@@ -783,9 +805,15 @@ module.exports = {
       }
       if (membership) {
         // This despawn was caused by a dissalowed member add
-        assert(eventsData.disallowedUserEmail === membership.personEmail,
-          `${testName} failure processing "despawn": email of dissallowed ` +
-          `member did not match expected email`);
+        if (eventsData.disallowedUserEmail.length) {
+          assert((-1 !== eventsData.disallowedUserEmail.indexOf(membership.personEmail)),
+            `${testName} failure processing "despawn": email of dissallowed ` +
+          `member did not match any of the expected emails`);
+        } else {
+          assert(eventsData.disallowedUserEmail === membership.personEmail,
+            `${testName} failure processing "despawn": email of dissallowed ` +
+            `member did not match expected email`);
+        }
       }
 
       assert((id === framework.id),
