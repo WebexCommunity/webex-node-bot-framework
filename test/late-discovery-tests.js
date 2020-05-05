@@ -25,8 +25,8 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   // This is the key to these tests, we wont discover any spaces on 
   // startup, just when a message:created event occurs
   frameworkOptions.maxStartupSpaces = 0;
-  framework = new Framework(frameworkOptions);
-  userWebex = new Webex({ credentials: process.env.USER_API_TOKEN });
+  let userOptions = {credentials: {access_token: process.env.USER_API_TOKEN}};
+  userWebex = Webex.init(userOptions);
 } else {
   console.error('Missing required environment variables:\n' +
     '- BOT_API_TOKEN -- token associatd with an existing bot\n' +
