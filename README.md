@@ -943,9 +943,9 @@ if your application identity is not configured for EFT access
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| replyTo | <code>Object</code> |  | Message or attachmentAction object to send to reply to. |
-| message | <code>String</code> \| <code>Object</code> |  | Message to send to room. This can be a simple string, or a object for advanced use. |
-| [format] | <code>String</code> | <code>text</code> | Set message format. Valid options are 'text' or 'markdown'. |
+| replyTo | <code>String</code> \| <code>Object</code> |  | MessageId or message object or attachmentAction object to send to reply to. |
+| message | <code>String</code> \| <code>Object</code> |  | Message to send to room. This can be a simple string, or a message object for advanced use. |
+| [format] | <code>String</code> | <code>text</code> | Set message format. Valid options are 'text' or 'markdown'. Ignored if message is an object |
 
 **Example**  
 ```js
