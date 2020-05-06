@@ -1,3 +1,7 @@
+## v 1.2.2
+* Fixed bug in bot.reply so that it supports passing a message object as well as message text
+* Enhanced bot.reply so that it accepts a messageId in addition to message/attachmentAction objects as the replyTo parameter
+
 ## v 1.2.1
 * Modified how webex initialization config is formatted to work with latest SDK builds
 
