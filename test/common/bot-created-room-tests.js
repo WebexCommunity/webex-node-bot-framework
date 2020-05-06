@@ -668,6 +668,8 @@ describe('User Created Room to create a Test Bot', () => {
     });
 
     describe('bot.reply', () => {
+      let messageId = '';
+
       it('sends a message and then replies to it', () => {
         let testName = 'bot sends a message and then a reply';
         let message = {};
@@ -682,6 +684,7 @@ describe('User Created Room to create a Test Bot', () => {
         return botCreatedRoomBot.say('This is the parent message')
           .then((m) => {
             message = m;
+            messageId = m.id;
             assert(validator.isMessage(message),
               `${testName} did not return a valid message`);
             return when(messageCreatedEvent);
@@ -718,19 +721,103 @@ describe('User Created Room to create a Test Bot', () => {
               `${testName} did not return a valid message`);
             assert((typeof m.parentId === 'string'),
               `${testName} did not return a message with a parentId`);
+            return bot.reply(messageId,
+              'This is **another** reply, using an ID instead of an message object');
+          })
+          .then((m) => {
+            message = m;
+            newMessage = {
+              text: "This is a reply sent as a message object"
+            }; 
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message, newMessage);
+          })
+          .then((m) => {
+            message = m;
+            newMessage = {
+              markdown: "This is a **markdown** formatted reply sent as a message object"
+            }; 
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message, newMessage);
+          })
+          .then((m) => {
+            message = m;
+            newMessage = {
+              text: "This is a reply sent as a message object that includes a file attachment",
+              files: [process.env.HOSTED_FILE]
+            }; 
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message, newMessage);
+          })
+          .then((m) => {
+            message = m;
+            newMessage = {
+              text: "This is a reply sent as a message object that sets roomId and parentId"
+            }; 
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message, newMessage);
+          })
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
             framework.messageFormat = 'text';
             return bot.reply(message,
               'This is **the final** reply, with the format set explicitly', 'markdown');
           })
-          .then(() => when(framework.messageFormat = messageFormat))
+          .then((m) => {
+            message = m;
+            // Message ID is not set to a non top level message
+            messageId = m.id;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            framework.messageFormat = 'text';
+            // Reset the default message formate before finishing
+            return when(framework.messageFormat = messageFormat);
+          })
           .catch((e) => {
             console.error(`${testName} failed: ${e.message}`);
-            console.error('This test is of an EFT threaded reply feature, and your bot may not be configured for it.' +
-              '  If this is the only test that fails, do not worry about it.');
             return Promise.reject(e);
           });
       });
 
+      it('Tries to send a reply with a non-top level replyTo ID', () => {
+        testName = 'Tries to send a reply with a non-top level replyTo ID';
+        return botCreatedRoomBot.reply(messageId,
+          'This is **should fail** as the replyTo ID is already a thread')
+          .then(() => when.reject(new Error('bot.reply with invalid ID did not fail!')))
+          .catch((e) => {
+            framework.debug(`${testName} failed as expected: ${e.message}`);
+            return when(true);
+          });
+      });
+
+      it('Tries to send a reply with a non-valid replyTo ID', () => {
+        testName = 'Tries to send a reply with a non-valid level replyTo ID';
+        return botCreatedRoomBot.reply("Not a messageId!",
+          'This is **should fail** as the replyTo ID is invalide')
+          .then(() => when.reject(new Error('bot.reply with invalid ID did not fail!')))
+          .catch((e) => {
+            framework.debug(`${testName} failed as expected: ${e.message}`);
+            return when(true);
+          });
+      });
 
     });
   });
