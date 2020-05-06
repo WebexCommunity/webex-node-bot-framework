@@ -541,6 +541,51 @@ describe('User Created Room to create a Test Bot', () => {
           })
           .then((m) => {
             message = m;
+            newMessage = {
+              text: "This is a reply sent as a message object"
+            }; 
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message, newMessage);
+          })
+          .then((m) => {
+            message = m;
+            newMessage = {
+              markdown: "This is a **markdown** formatted reply sent as a message object"
+            }; 
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message, newMessage);
+          })
+          .then((m) => {
+            message = m;
+            newMessage = {
+              text: "This is a reply sent as a message object that includes a file attachment",
+              files: [process.env.HOSTED_FILE]
+            }; 
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message, newMessage);
+          })
+          .then((m) => {
+            message = m;
+            newMessage = {
+              text: "This is a reply sent as a message object that sets roomId and parentId"
+            }; 
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return bot.reply(message, newMessage);
+          })
+          .then((m) => {
+            message = m;
             assert(validator.isMessage(message),
               `${testName} did not return a valid message`);
             assert((typeof m.parentId === 'string'),
@@ -571,6 +616,17 @@ describe('User Created Room to create a Test Bot', () => {
         testName = 'Tries to send a reply with a non-top level replyTo ID';
         return botCreatedRoomBot.reply(messageId,
           'This is **should fail** as the replyTo ID is already a thread')
+          .then(() => when.reject(new Error('bot.reply with invalid ID did not fail!')))
+          .catch((e) => {
+            framework.debug(`${testName} failed as expected: ${e.message}`);
+            return when(true);
+          });
+      });
+
+      it('Tries to send a reply with a non-valid replyTo ID', () => {
+        testName = 'Tries to send a reply with a non-valid level replyTo ID';
+        return botCreatedRoomBot.reply("Not a messageId!",
+          'This is **should fail** as the replyTo ID is invalide')
           .then(() => when.reject(new Error('bot.reply with invalid ID did not fail!')))
           .catch((e) => {
             framework.debug(`${testName} failed as expected: ${e.message}`);
