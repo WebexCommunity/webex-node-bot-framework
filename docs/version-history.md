@@ -5,6 +5,10 @@
 * Removed bot.messageStreamRoom() -- call bot.webex.messages.create() with a message object that includes the roomId, the (optional) markdown or text message, and populate the files field with an array containing a single filestream, as described in the documentation for uploadStream
 * Removed bot.getMessages(count) -- call bot.webex.messages.list({roomId: bot.room.id, max: count})  -- note that this only works when the bot was created with a user token.
 
+## v 1.2.2
+* Fixed bug in bot.reply so that it supports passing a message object as well as message text
+* Enhanced bot.reply so that it accepts a messageId in addition to message/attachmentAction objects as the replyTo parameter
+
 ## v 1.2.1
 * Modified how webex initialization config is formatted to work with latest SDK builds
   
