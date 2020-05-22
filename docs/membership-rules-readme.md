@@ -1,20 +1,26 @@
 # Membership Rules
 
-Some bots may be designed to only work with a particular set of users.   The framework's membership rules configuration options provide some tools for managing some of these situations.
+Some bots may be designed to only work with a particular set of users.   The framework's membership rules configuration options provide tools for managing some of these situations.
 
 ## Email domain restrictions
 
 In many cases developers may build bots that are meant to be used only by employees of their company (or possibly of several companies).   Setting the framework config's  `restrictToEmailDomains` parameter to a comma separated list of email domains instructs the framework to essentially ignore any spaces where the membership list includes users who's email addresses are not in the restricted domain list.
 
-When a bot is first added to a space, the framework will examine the membership list.   If any members are not in the restricted domain list it will by default send a message "Sorry, my use is not allowed for all the members in this space".   (Note that this message can be customized by setting the `unauthorizedDomainUserEnters` parameter).   No framework events will be sent to the application when the room is in this state occurs and it will automatically respond to any messages to the bot with a message "Sorry, because my use is not allowed for all the members in this space I am ignoring any input". (Note that this message can be customized by setting the `unauthorizedDomainStateMessageResponse` parameter) 
+## How it works
 
-On subsequent membership changes, the framework will re-examine the membership list.   If a previously unauthorized space is now populated solely by users whose domains are in the `restrictedToEmailDomains` list, a "spawn" event will be generated.  The parameters for this spawn event will include a null `actorId`, and an additional `disallowedMember` parameter with the details of the user who just left.  When this occurs the framework will generate a message that says "I am now allowed to interact with all the members in this space and will no longer ignore any input.". (Note that this message can be customized by setting the `unauthorizedDomainUserExitsResponse` parameter).
+When a bot is first added to a space, the framework will examine the membership list.   If any members are not in the restricted domain list it will by default send a message "Sorry, my use is not allowed for all the members in this space".   (Note that this message can be customized by setting the `unauthorizedDomainUserEntersResponse` parameter).   No framework events will be sent to the application when the room is in this state occurs and it will automatically respond to any messages to the bot with a message "Sorry, because my use is not allowed for all the members in this space I am ignoring any input". (Note that this message can be customized by setting the `unauthorizedDomainStateMessageResponse` parameter) 
 
-Once a space has been disallowed the framework will stop generating any events related to that space.  It will generate a `membershipRulesAction` event when this occurs. Developers may choose to create a handler for the `membershipRulesAction` events to monitor when this occurs, but this is not necessary.  
+On subsequent membership changes, the framework will re-examine the membership list.   If a previously unauthorized space is now populated solely by users whose domains are in the `restrictedToEmailDomains` list, a framework `spawn` event will be generated, just like the one that occurs when the bot is added to a new space.  The parameters for this spawn event will include a null `actorId`, and an additional `disallowedMember` parameter with the details of the user who just left.  When this occurs the framework will generate a message that says "I am now allowed to interact with all the members in this space and will no longer ignore any input.". (Note that this message can be customized by setting the `unauthorizedDomainUserExitsResponse` parameter).
 
-Conversely, if the new member has joined a previously allowed space, but the new member is not authorized, the framework will generate a "despawn" event.  THe parameters for this event will include the `actorId` set to the ID of the user who added the new user and a new `disallowedMember` parameter, which is the membership of the dissalowed user, will also be sent.
+Conversely, if the new member has joined a previously allowed space, but the new member is not authorized, the framework will generate a `despawn` event.  THe parameters for this event will include the `actorId` set to the ID of the user who added the new user, and a new `disallowedMember` parameter, which is the membership of the disallowed user, will also be sent.
 
-Developers can look for the presence of the `disallowedMember` parameters in their `spawn` and `despawn` handlers to have their bot send a custom message to the space when these events occur.   Alternately developers may choose to simply have their bot leave spaces once a dissalowed member enters.   This is also possible by customizing the despawn logic, as follows
+Developers can look for the presence of the `disallowedMember` parameters in their `spawn` and `despawn` handlers to have their bot send a custom message to the space when these events occur.   Alternately developers may choose to simply have their bot leave spaces once a dissalowed member enters.   
+
+Once a space has been disallowed the framework will stop generating any of the "normal" framework events, like triggering a framework.hears() callback, related to that space.  It will generate a `membershipRulesAction` event when this occurs. Developers may choose to create a handler for the `membershipRulesAction` events to monitor when this occurs, but this is not necessary.  Its worth noting that implementing a handler for `membershipRulesAction` is also a way to further customize handling in these cases, by doing further checks, or building customized messages. 
+
+Apps that wish to generate custom membership rules messages in handlers for the `spawn`, `despawn` or `membershipRulesAction` events, may disable the framework's default messages by setting the `unauthorizedDomainUserEntersResponse`, `unauthorizedDomainStateMessageResponse` and `unauthorizedDomainUserExitsResponse` framework configuration parameters to empty strings.
+
+Here is a simple example of a `despawn` handler that provides a custom message:
 
 ```javascript
 // A despawn event is generated when a bot is removed from a space
@@ -167,3 +173,14 @@ process.on('SIGINT', function () {
 });
 
 ``` 
+
+## Membership rules framework configuration parameters
+
+This is the subset of the [Framework Configuration Parameters](../README.md#Framework+options) that pertain to membership rules:
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| [restrictedToEmailDomains] | <code>string</code> |  | Set to command seperated list of email domains the bot may interact with, ie "myco.com,mycom2.com".           For more details see the [Membership-Rules README](./doc/membership-rules-readme.md) |
+| [unauthorizedDomainUserEntersResponse] | <code>string</code> |  | Message from bot when it is added to a space with users whose emails do not match the          list specified (if any) in the `restrictedToEmailDomains` parameter.   Default messages is         "Sorry, my use is not allowed for all the members in this space. Will ignore any new messages to me.".         No message will be sent if this is set to an empty string. |
+| [unauthorizedDomainStateMessageResponse] | <code>string</code> |  | Message from bot when it is messaged in a space with users whose emails do not match the          list specified (if any) in the `restrictedToEmailDomains` parameter.   Default messages is         "Sorry, because my use is not allowed for all the members in this space I am ignoring any input.".         No message will be sent if this is set to an empty string. |
+| [unauthorizedDomainUserExitsResponse] | <code>string</code> |  | Message from bot when the last user from an unauthorized domain leaves the space.         The default messages is "I am now allowed to interact with all the members in this space and will no longer ignore any input.".         No message will be sent if this is set to an empty string. |
