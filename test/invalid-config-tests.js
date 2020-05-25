@@ -59,14 +59,14 @@ describe('#framework invalid config tests', () => {
   it('fails when options.restrictedToEmailDomains is not a list', () => {
     options = {};
     let expectedError = 'Error: Invalid domain name: big\n' +
-      'Unable to initiatilize with config param restrictedToEmailDomains: "big daddy"\n' +
+      'Unable to initiatilize with config param restrictedToEmailDomains: "big"\n' +
       'Please set to a comma seperated list of valid email domains, ie: "mycompany.com,othercompany.com"';
     options.token = process.env.BOT_API_TOKEN;
-    options.restrictedToEmailDomains = 'big daddy';
+    options.restrictedToEmailDomains = 'big';
     f = new Framework(options);
     return f.start()
       .then(() => {
-        return (Promise.reject(new Error('framework.start() should fail when options.requeueSize is set')));
+        return (Promise.reject(new Error('framework.start() should fail when options.restrictedToEmailsDomains is not a comma seperated list')));
       })
       .catch((e) => {
         assert(e.message === expectedError,
@@ -77,39 +77,57 @@ describe('#framework invalid config tests', () => {
 
   it('fails when options.restrictedToEmailDomains is not a domain', () => {
     options = {};
-    let expectedError = 'Error: Invalid domain name: big\n' +
-      'Unable to initiatilize with config param restrictedToEmailDomains: "big, daddy"\n' +
-      'Please set to a comma seperated list of valid email domains, ie: "mycompany.com,othercompany.com"';
-    options.token = process.env.BOT_API_TOKEN;
-    options.restrictedToEmailDomains = 'big, daddy';
-    f = new Framework(options);
-    return f.start()
-      .then(() => {
-        return (Promise.reject(new Error('framework.start() should fail when options.requeueSize is set')));
-      })
-      .catch((e) => {
-        assert(e.message === expectedError,
-          `Got unexpected error response: ${e.message}`);
-        return Promise.resolve(true);
-      });
-  });
-
-  it('fails when options.restrictedToEmailDomains is not a domain', () => {
-    options = {};
+    options.restrictedToEmailDomains = 'foo.com, bar. com';
     let expectedError = 'Error: Invalid domain name: bar.\n' +
-      'Unable to initiatilize with config param restrictedToEmailDomains: "foo.com,   bar. com"\n' +
+      'Unable to initiatilize with config param restrictedToEmailDomains: "foo.com, bar. com"\n' +
       'Please set to a comma seperated list of valid email domains, ie: "mycompany.com,othercompany.com"';
     options.token = process.env.BOT_API_TOKEN;
-    options.restrictedToEmailDomains = 'foo.com,   bar. com';
     f = new Framework(options);
     return f.start()
       .then(() => {
-        return (Promise.reject(new Error('framework.start() should fail when options.requeueSize is set')));
+        return (Promise.reject(new Error('framework.start() should fail when options.restrictedToEmailsDomains contains invalid domain names')));
       })
       .catch((e) => {
-        if (f.webex.config && f.webex.config.defaultMercuryOptions) {
-          return Promise.reject(new Error(`Got defaultMecuryOptions when no proxy was set!`));
-        }
+        assert(e.message === expectedError,
+          `Got unexpected error response: ${e.message}`);
+        return Promise.resolve(true);
+      });
+  });
+
+  it('fails when options.guideEmails has invalid emails', () => {
+    options = {};
+    options.guideEmails = 'me@co.com, me@co';
+    let expectedError = 'Error: Invalid email "me@co.com" in guideEmails parameter\n' +
+      'Unable to initiatilize with config param guideEmails: "me@co.com, me@co"\n' +
+      'Please set to a comma seperated list of valid webex user email addresses, ie: "fred@mycompany.com, jane@othercompany.com"';
+    options.token = process.env.BOT_API_TOKEN;
+    f = new Framework(options);
+    return f.start()
+      .then(() => {
+        return (Promise.reject(new Error('framework.start() should fail when options.guideEmails contains invalid emails')));
+      })
+      .catch((e) => {
+        console.log(e.message);
+        assert(e.message === expectedError,
+          `Got unexpected error response: ${e.message}`);
+        return Promise.resolve(true);
+      });
+  });
+
+  it('fails when options.guideEmails has no valid email', () => {
+    options = {};
+    options.guideEmails = 'bad';
+    let expectedError = 'Error: Invalid email "bad" in guideEmails parameter\n' +
+      'Unable to initiatilize with config param guideEmails: "bad"\n' +
+      'Please set to a comma seperated list of valid webex user email addresses, ie: "fred@mycompany.com, jane@othercompany.com"';
+    options.token = process.env.BOT_API_TOKEN;
+    f = new Framework(options);
+    return f.start()
+      .then(() => {
+        return (Promise.reject(new Error('framework.start() should fail when options.guideEmails is set but is empty')));
+      })
+      .catch((e) => {
+        console.log(e.message);
         assert(e.message === expectedError,
           `Got unexpected error response: ${e.message}`);
         return Promise.resolve(true);

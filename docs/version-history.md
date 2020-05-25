@@ -1,4 +1,4 @@
-## v 2.0,0
+## v 2.0.0
 * Added [Membership Rules](./membership-rules-readme.md) configuration options restrict bot interactions to spaces that are exclusively populated by users with email domains specified in a restricted to domain list.   Beta Mode further restricts bot interaction to only spaces where specific named users are present.
 * Added bot.sayWithLocalFiles
 * Removed bot.upload(file) -- call sayWithLocalFile(null, filename) instaed
