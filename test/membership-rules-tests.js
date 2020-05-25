@@ -1,4 +1,4 @@
-/* bot-tests.js
+/* membership-rules-tests.js
  *
  * A set of tests to validate framework functionality
  * when framework is created using a bot token
@@ -7,15 +7,19 @@
 const Framework = require('../lib/framework');
 const Webex = require('webex');
 
-console.log('***********************************');
-console.log('* Framework tests with bot token...');
-console.log('***********************************\n');
+console.log('************************************');
+console.log('* Framework mebership rules tests...');
+console.log('************************************\n');
+
 
 // Initialize the framework and user objects once for all the tests
-let framework, userWebex;
+let framework;
 require('dotenv').config();
 if ((typeof process.env.BOT_API_TOKEN === 'string') &&
-  (typeof process.env.USER_API_TOKEN === 'string') &&
+  (typeof process.env.VALID_USER_API_TOKEN === 'string') &&
+  (typeof process.env.DISALLOWED_USER_API_TOKEN === 'string') &&
+  (typeof process.env.ANOTHER_DISALLOWED_USERS_EMAIL === 'string') &&
+  (typeof process.env.ALLOWED_DOMAINS === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
   frameworkOptions = { token: process.env.BOT_API_TOKEN };
   if (typeof process.env.INIT_STORAGE === 'string') {
@@ -29,13 +33,17 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
       process.exit(-1);
     }
   }
+  frameworkOptions.restrictedToEmailDomains = process.env.ALLOWED_DOMAINS;
   framework = new Framework(frameworkOptions);
-  let userOptions = {credentials: {access_token: process.env.USER_API_TOKEN}};
-  userWebex = Webex.init(userOptions);
+  validUserWebex = Webex.init({ credentials: {access_token: process.env.VALID_USER_API_TOKEN }});
+  disallowedUserWebex = Webex.init({ credentials: {access_token: process.env.DISALLOWED_USER_API_TOKEN }});
 } else {
   console.error('Missing required environment variables:\n' +
+    '- ALLOWED_DOMAINS -- comma seperated list of allowed domain names\n' +
     '- BOT_API_TOKEN -- token associatd with an existing bot\n' +
-    '- USER_API_TOKEN -- token associated with an existing user\n' +
+    '- VALID_USER_API_TOKEN -- token associated with an existing user with an allowed domain\n' +
+    '- DISSALOWED_USER_API_TOKEN -- valid token associated with an existing user with an allowed domain\n' +
+    '- ANOTHER_DISALLOWED_USERS_EMAIL -- different disallowed existing users email\n' + 
     '- HOSTED_FILE -- url to a file that can be attached to test messages\n' +
     'The tests will create a new space with the bot and the user');
   process.exit(-1);
@@ -45,30 +53,38 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
 // shared by multiple tests
 var common = require("./common/common");
 common.setFramework(framework);
-common.setUser(userWebex);
+common.setUser(validUserWebex);
+common.setDisallowedUser(disallowedUserWebex);
 
 //require('./common/invalid-config-tests.js');
 
 // Start up an instance of framework that we will use across multiple tests
 describe('#framework', () => {
-  // Validate that framework starts and that we have a valid user
-  before(() => common.initFramework('framework init', framework, userWebex));
+  // Validate that the invalid user token is good
+  before(() => disallowedUserWebex.people.get('me')
+    .then((person) => {
+      common.setDisallowedUserPerson(person);
+    })
+    .catch((e) => {
+      console.error(`Could not initialize user with DISSALOWED_USER_API_TOKEN: ${e.message}`);
+      return(e);
+    }));
+
+  // Validate that framework starts and that we have a valid users
+  before(() => common.initFramework('framework init', framework, validUserWebex));
 
   //Stop framework to shut down the event listeners
   after(() => common.stopFramework('shutdown framework', framework));
 
-  // Test bot interactions in a user created test space
-  require('./common/user-created-room-tests.js');
-
   // Test bot interactions in a bot created test space
-  require('./common/bot-created-room-tests.js');
+  // That does and doesn't include dissallowed members
+  require('./common/bot-membership-rules-tests.js');
+
+  // Test bot interactions in a user created test space
+  // With no disallowed members -- make sure nothing breaks in this mode
+  //require('./common/bot-created-room-tests.js');
 
   // Test bot's membership functions
-  require('./common/bot-membership-tests.js');
-
-  // Test bot functions for direct messaging
-  // These only work if the test bot and test user already have a direct space
-  require('./common/bot-direct-message-tests.js');
 });
 
 // gracefully shutdown (ctrl-c)

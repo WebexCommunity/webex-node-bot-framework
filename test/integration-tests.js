@@ -6,7 +6,10 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-console.log('Starting integration-tests...');
+
+console.log('************************************');
+console.log('* Framework tests with user token...');
+console.log('************************************\n');
 
 // Initialize the framework and user objects once for all the tests
 // TODO support another Env variable for emails of users to add to a space in order to test framework batch APIs
@@ -18,7 +21,7 @@ if ((typeof process.env.AUTHORIZED_USER_API_TOKEN === 'string') &&
   (typeof process.env.USER_API_TOKEN === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
   framework = new Framework({ token: process.env.AUTHORIZED_USER_API_TOKEN });
-  userWebex = new Webex({ credentials: process.env.USER_API_TOKEN });
+  userWebex = Webex.init({ credentials: {access_token: process.env.USER_API_TOKEN }});
 } else {
   console.error('Missing required evnvironment variables:\n' +
     '- AUTHORIZED_USER_API_TOKEN -- token associatd with a user who authorized a framework based integrationt\n' +

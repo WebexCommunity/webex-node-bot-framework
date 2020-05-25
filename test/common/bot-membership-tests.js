@@ -2,7 +2,6 @@
 var common = require("../common/common");
 let framework = common.framework;
 let userWebex = common.userWebex;
-let Bot_Test_Space_Title = common.Bot_Test_Space_Title;
 let User_Test_Space_Title = common.User_Test_Space_Title;
 
 let assert = common.assert;
@@ -59,7 +58,7 @@ describe('User Created Room to create a Test Bot', () => {
       return common.botCreateRoom(testName, framework, userCreatedRoomBot, eventsData)
         .then((b) => {
           botCreatedRoomBot = b;
-          botCreatedTestRoom, b.room;
+          botCreatedTestRoom = b.room;
           return when(botCreatedRoomBot);
         });
     });

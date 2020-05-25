@@ -10,8 +10,11 @@ For developers who are familiar with flint, or who wish to port existing bots bu
 
 Feel free to join the ["Webex Node Bot Framework" space on Webex Teams](https://eurl.io/#BJ7gmlSeU) to ask questions and share tips on how to leverage this framework.
 
+## News
+* May, 2020 - Version 2 introduces a some new configuration options designed to help developers restrict access to their bot.   This can be helpful during the development phase (`guideEmails` parameter) or for production bots that should be restricted for use to users that have certain email domains (`restrictedToEmailDomains` parameter).   See [Membership-Rules README](./doc/membership-rules-readme.md)
 
-## [Version History](./docs/version-history.md)
+
+## [Full Version History](./docs/version-history.md)
 
 
 ## Contents
@@ -20,14 +23,39 @@ Feel free to join the ["Webex Node Bot Framework" space on Webex Teams](https://
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 
-- [Installation](#installation)
-    - [Via Git](#via-git)
-    - [Via NPM](#via-npm)
-    - [Example Template Using Express](#example-template-using-express)
-- [Overview](#overview)
-- [Authentication](#authentication)
-- [Storage](#storage)
-- [Bot Accounts](#bot-accounts)
+  - [Installation](#installation)
+  - [Overview](#overview)
+  - [Authentication](#authentication)
+  - [Storage](#storage)
+  - [Bot Accounts](#bot-accounts)
+- [Framework Reference](#framework-reference)
+  - [Classes](#classes)
+  - [Objects](#objects)
+  - [Events](#events)
+  - [Framework](#framework)
+  - [Bot](#bot)
+  - [Trigger : <code>object</code>](#trigger--codeobjectcode)
+  - ["log"](#log)
+  - ["stop"](#stop)
+  - ["start"](#start)
+  - ["initialized"](#initialized)
+  - ["roomLocked"](#roomlocked)
+  - ["roomUnocked"](#roomunocked)
+  - ["roomRenamed"](#roomrenamed)
+  - ["memberEnters"](#memberenters)
+  - ["botAddedAsModerator"](#botaddedasmoderator)
+  - ["botRemovedAsModerator"](#botremovedasmoderator)
+  - ["memberAddedAsModerator"](#memberaddedasmoderator)
+  - ["memberRemovedAsModerator"](#memberremovedasmoderator)
+  - ["memberExits"](#memberexits)
+  - ["mentioned"](#mentioned)
+  - ["message"](#message)
+  - ["files"](#files)
+  - ["spawn"](#spawn)
+  - ["despawn"](#despawn)
+- [Storage Driver Reference](#storage-driver-reference)
+  - [MongoStore](#mongostore)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 ## Installation
@@ -295,6 +323,9 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 <dl>
 <dt><a href="#event_log">"log"</a></dt>
 <dd><p>Framework log event.</p>
+<p>Applications may implement a framework.on(&quot;log&quot;) handler to process
+log messags from the framework, such as details about events that were
+not sent due to mebership rules.  See <a href="./doc/membership-rules-readme.md">Membership-Rules README</a></p>
 </dd>
 <dt><a href="#event_stop">"stop"</a></dt>
 <dd><p>Framework stop event.</p>
@@ -381,6 +412,8 @@ symbol and the word. With bot accounts, this behaves a bit differently.
     * [.clearAuthorizer()](#Framework+clearAuthorizer) ⇒ <code>null</code>
     * [.storageDriver(Driver)](#Framework+storageDriver) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.use(path)](#Framework+use) ⇒ <code>Boolean</code>
+    * [.checkMembershipRules()](#Framework+checkMembershipRules)
+    * [.myEmit()](#Framework+myEmit)
 
 <a name="new_Framework_new"></a>
 
@@ -420,6 +453,11 @@ Options Object
 | [id] | <code>string</code> | <code>&quot;random&quot;</code> | The id this instance of Framework uses. |
 | [webhookRequestJSONLocation] | <code>string</code> | <code>&quot;body&quot;</code> | The property under the Request to find the JSON contents. |
 | [removeWebhooksOnStart] | <code>Boolean</code> | <code>true</code> | If you wish to have the bot remove all account webhooks when starting. Ignored if webhookUrl is not set. |
+| [restrictedToEmailDomains] | <code>string</code> |  | Set to a comma seperated list of email domains the bot may interact with, ie "myco.com,myco2.com".           For more details see the [Membership-Rules README](./doc/membership-rules-readme.md) |
+| [guideEmails] | <code>string</code> |  | Set to a comma seperated list of Webex users emails who MUST be in a space in order for the bot to work, ie "user1@myco.com,user2@myco2.com".           For more details see the [Membership-Rules README](./doc/membership-rules-readme.md) |
+| [membershipRulesDisallowedResponse] | <code>string</code> |  | Message from bot when it detects it is in a space that does not conform to the membership rules          specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is         "Sorry, my use is not allowed for all the members in this space. Will ignore any new messages to me.".         No message will be sent if this is set to an empty string. |
+| [membershipRulesStateMessageResponse] | <code>string</code> |  | Message from bot when it is messaged in a space that does not conform to the membership rules         specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is         "Sorry, because my use is not allowed for all the members in this space I am ignoring any input.".         No message will be sent if this is set to an empty string. |
+| [membershipRulesAllowedResponse] | <code>string</code> |  | Message from bot when it detects that an the memberships of a space it is in have changed in         in order to conform with the membership rules specified by the The default messages is "I am now allowed to interact with all the members in this space and will no longer ignore any input.".         No message will be sent if this is set to an empty string. |
 
 <a name="Framework+setWebexToken"></a>
 
@@ -617,6 +655,19 @@ module.exports = function(framework) {
   });
 };
 ```
+<a name="Framework+checkMembershipRules"></a>
+
+### framework.checkMembershipRules()
+Private function to check for memembership rules in config
+
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
+<a name="Framework+myEmit"></a>
+
+### framework.myEmit()
+Private emit functions that check the membership rules
+before emitting and event
+
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
 <a name="Bot"></a>
 
 ## Bot
@@ -653,15 +704,13 @@ module.exports = function(framework) {
     * [.moderatorClear(email(s))](#Bot+moderatorClear) ⇒ [<code>Promise.&lt;Bot&gt;</code>](#Bot)
     * [.implode()](#Bot+implode) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.say([format], message)](#Bot+say) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.sayWithLocalFile(message, filename)](#Bot+sayWithLocalFile) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.reply(replyTo, message, [format])](#Bot+reply) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.dm(person, [format], message)](#Bot+dm) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.sendCard(cardJson, fallbackText)](#Bot+sendCard) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.uploadStream(filename, stream)](#Bot+uploadStream) ⇒ <code>Promise.&lt;Message&gt;</code>
-    * [.messageStreamRoom(roomId, message)](#Bot+messageStreamRoom) ⇒ <code>Promise.&lt;Message&gt;</code>
-    * [.upload(filepath)](#Bot+upload) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.censor(messageId)](#Bot+censor) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.roomRename(title)](#Bot+roomRename) ⇒ <code>Promise.&lt;Room&gt;</code>
-    * [.getMessages(count)](#Bot+getMessages) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.store(key, value)](#Bot+store) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
     * [.recall([key])](#Bot+recall) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
     * [.forget([key])](#Bot+forget) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
@@ -931,6 +980,25 @@ framework.hears('/card please', function(bot, trigger) {
     }]
    });
 ```
+<a name="Bot+sayWithLocalFile"></a>
+
+### bot.sayWithLocalFile(message, filename) ⇒ <code>Promise.&lt;Message&gt;</code>
+Send optional text message with a local file to room.
+
+**Kind**: instance method of [<code>Bot</code>](#Bot)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| message | <code>String</code> \| <code>Object</code> | Message to send to room. If null or empty string is ignored.  If set the default messageFormat is used |
+| filename | <code>String</code> | name of local file to send to space |
+
+**Example**  
+```js
+// Simple example
+framework.hears('/file', function(bot, trigger) {
+  bot.sayWithLocalFile('here is a file', './image.jpg);
+});
+```
 <a name="Bot+reply"></a>
 
 ### bot.reply(replyTo, message, [format]) ⇒ <code>Promise.&lt;Message&gt;</code>
@@ -1120,51 +1188,7 @@ framework.hears('/file', function(bot, trigger) {
   // create readable stream
   var stream = fs.createReadStream('/my/file/test.png');
 
-  bot.uploadStream(filename, stream);
-});
-```
-<a name="Bot+messageStreamRoom"></a>
-
-### bot.messageStreamRoom(roomId, message) ⇒ <code>Promise.&lt;Message&gt;</code>
-Streams message to a room.
-
-**Kind**: instance method of [<code>Bot</code>](#Bot)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| roomId | <code>String</code> | Webex Teams Room ID |
-| message | <code>Object</code> | Message Object |
-
-**Example**  
-```js
-var roomId = 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u';
-var text = 'Hello';
-var filename = 'test.png';
-var stream = fs.createReadStream(filename);
-var message = { 'text': text, 'filename': filename, 'stream': stream };
-bot.messageStreamRoom(roomId, message)
-  .then(function(message) {
-    console.log('Message sent: %s', message.txt);
-  })
-  .catch(function(err){
-    console.log(err);
-  });
-```
-<a name="Bot+upload"></a>
-
-### bot.upload(filepath) ⇒ <code>Promise.&lt;Message&gt;</code>
-Upload a file to room.
-
-**Kind**: instance method of [<code>Bot</code>](#Bot)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| filepath | <code>String</code> | File Path to upload |
-
-**Example**  
-```js
-framework.hears('/file', function(bot, trigger) {
-  bot.upload('test.png');
+  bot.uploadStream(stream);
 });
 ```
 <a name="Bot+censor"></a>
@@ -1195,31 +1219,6 @@ bot.roomRename('My Renamed Room')
   .then(function(err) {
     console.log(err.message)
   });
-```
-<a name="Bot+getMessages"></a>
-
-### bot.getMessages(count) ⇒ <code>Promise.&lt;Array&gt;</code>
-Get messages from room. Returned data has newest message at bottom.
-
-This function will not work when framework was created
-using a bot token, it requires an authorized user token
-
-**Kind**: instance method of [<code>Bot</code>](#Bot)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| count | <code>Integer</code> | - count of messages to return (max 10) |
-
-**Example**  
-```js
-bot.getMessages(5).then(function(messages) {
-  messages.forEach(function(message) {
-    // display message text
-    if(message.text) {
-      console.log(message.text);
-    }
-  });
-});
 ```
 <a name="Bot+store"></a>
 
@@ -1278,6 +1277,10 @@ Trigger Object
 
 ## "log"
 Framework log event.
+
+Applications may implement a framework.on("log") handler to process
+log messags from the framework, such as details about events that were
+not sent due to mebership rules.  See [Membership-Rules README](./doc/membership-rules-readme.md)
 
 **Kind**: event emitted  
 **Properties**
@@ -1700,7 +1703,7 @@ This method is exposed as bot.writeMetric(appData, actor);
 | appData | <code>object</code> | app specific metric data. |
 | actor | <code>object</code> \| <code>string</code> | user that triggered the metric activity |
 
-## License
+# License
 
 The MIT License (MIT)
 
