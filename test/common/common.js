@@ -100,18 +100,27 @@ module.exports = {
     });
   },
 
-  addBotToSpace: function (testName, framework, userCreatedTestRoom, eventsData) {
-    let membership;
+  addBotToSpace: function (testName, framework, userCreatedTestRoom, eventsData, shouldFail, userSDK) {
+    let spawnEvents = [];
     // Wait for the events associated with a new membership before completing test..
-    const membershipEvent = new Promise((resolve) => {
-      this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
-    });
-    const spawned = new Promise((resolve) => {
-      this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
-    });
+    if (shouldFail) {
+      spawnEvents = this.registerMembershipEventsForDectivatedBot(testName, framework, '', eventsData);
+    } else {
+      spawnEvents.push(new Promise((resolve) => {
+        this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
+      }));
+      spawnEvents.push(new Promise((resolve) => {
+        this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
+      }));
+    }
+
+    let theUser = this.userWebex;
+    if (userSDK) {
+      theUser = userSDK;
+    }
 
     // Add the bot to our user created space
-    return this.userWebex.memberships.create({
+    return theUser.memberships.create({
       roomId: userCreatedTestRoom.id,
       personId: framework.person.id
     })
@@ -121,19 +130,21 @@ module.exports = {
           'create memebership did not return a valid membership');
       })
       // Wait for framework's membershipCreated event
-      .then(() => when(membershipEvent)
+      .then(() => when.all(spawnEvents)
         .then(() => {
           assert((eventsData.membership.id === membership.id),
             'Membership from framework event does not match the one returned by API');
-          return when(spawned);
-        })
-        // Wait for framework's spawned event
-        .then(() => {
+          //   // What am I doing here?
+          //   return null;
+          // } else {
           userCreatedRoomBot = eventsData.bot;
           this.createBotEventHandlers(userCreatedRoomBot);
-          assert(_.find(framework.bots, bot => bot.room.id === userCreatedRoomBot.room.id),
-            'After spawn new bot is not in framework\'s bot array');
+          if (!shouldFail) {
+            assert(_.find(framework.bots, bot => bot.room.id === userCreatedRoomBot.room.id),
+              'After spawn new bot is not in framework\'s bot array');
+          }
           return userCreatedRoomBot;
+          //          }
         })
         .catch((e) => {
           console.error(`Bot spawn test failed: ${e.message}`);
@@ -147,6 +158,7 @@ module.exports = {
 
   botAddUsersToSpace: function (testName, framework, bot, userEmails, eventsData) {
     eventsData.disallowedUserEmail = [];
+    let guideAdded = false;
     if (framework.options.restrictedToEmailDomains) {
       for (let i = 0; i < userEmails.length; i++) {
         if (this.isDisallowedEmailDomain(userEmails[i], framework.options.restrictedToEmailDomains)) {
@@ -154,10 +166,20 @@ module.exports = {
         }
       }
     }
+    if (framework.options.guideEmails) {
+      let guides = userEmails.filter(e => {
+        return (-1 != framework.guideEmails.indexOf(_.toLower(e)));
+      });
+      if (guides.length) {
+        guideAdded = true;
+      }        
+    }
 
     let eventPromises = [];
     if ((bot.active) && (!eventsData.disallowedUserEmail.length)) {
       eventPromises = this.registerMembershipHandlers(testName, framework, bot, eventsData);
+    } else if ((!bot.active) && (guideAdded)) {
+      eventPromises = this.registerMembershipEventsForGuideAdded(testName, framework, eventsData.disallowedUserEmail, eventsData);
     } else {
       eventPromises = this.registerMembershipEventsForDectivatedBot(testName, framework, eventsData.disallowedUserEmail, eventsData);
     }
@@ -192,11 +214,20 @@ module.exports = {
   botRemoveUserFromSpace: function (testName, framework, bot, userEmail, eventsData,
     numDisallowedUsersInSpace, isDisallowedUser) {
     let eventPromises = [];
+    let guideRemoved = false;
+    if ((framework.options.guideEmails) &&
+        (-1 != framework.guideEmails.indexOf(_.toLower(userEmail)))) {
+      guideRemoved = true;
+    }
+
 
     if (!bot.active) {
       assert(numDisallowedUsersInSpace, 
         `botRemoveUserFromSpace() error: ${testName} set numDisallowedUsersInSpace to ${numDisallowedUsersInSpace}`);
       eventPromises = this.registerMembershipDeletedEventsWhenDisallowedUserExits(testName, framework, eventsData, numDisallowedUsersInSpace);
+    } else if (guideRemoved) {
+      // A currently uncovered test case is removing one guide when another is still present
+      eventPromises = this.registerGuideRemovedFromSpaceEvents(testName, framework, eventsData, numDisallowedUsersInSpace);
     } else {
       eventPromises = this.registerMembershipDeletedHandlers(testName, framework, bot, eventsData);
     }
@@ -235,25 +266,56 @@ module.exports = {
     return (eventPromises);
   },
 
-  registerMembershipEventsForDectivatedBot: function (testName, framework, dissallowedEmails, eventsData) {
+  registerMembershipEventsForGuideAdded: function (testName, framework, disallowedEmails, eventsData) {
     let eventPromises = [];
+    let swallowedEvents;
+    // These events should occur with a new membership that adds a guide to a previously unguided space
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
+    }));
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
+    }));
+
+    swallowedEvents = ['spawn']; 
+
+    // TODO figure out what membershipRulesActions will be generated
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMembershipRulesEventHandler(testName, framework,
+        swallowedEvents, eventsData,
+        false, /* don't error on unexpected swallowed events */
+        resolve);
+    }));
+
+    return (eventPromises);
+  },
+
+  registerMembershipEventsForDectivatedBot: function (testName, framework, disallowedEmails, eventsData) {
+    let eventPromises = [];
+    let swallowedEvents;
     // These events should occur with a new membership that violates a memebership rule
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
     }));
-    // Since this user is disallowed we will get a message telling us the bot is deactivating
-    eventPromises.push(new Promise((resolve) => {
-      this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
-    }));
-    // It will also generate a despawn event with the membership of the dissallowed user
-    eventPromises.push(new Promise((resolve) => {
-      this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
-    }));
-    // Finally, we will get some membership-rules events, 
-    // and one "swallowed" memberEnters for each dissallowed user
-    let swallowedEvents = ['despawn']; 
-    if (dissallowedEmails.length){
-      for (let i=0; i<dissallowedEmails.length; i++) {
+    if (disallowedEmails) {
+      // Since this user is disallowed we will get a message telling us the bot is deactivating
+      eventPromises.push(new Promise((resolve) => {
+        this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+      }));
+      // It will also generate a despawn event with the membership of the dissallowed user
+      eventPromises.push(new Promise((resolve) => {
+        this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
+      }));
+      // Finally, we will get some membership-rules events, 
+      // and one "swallowed" memberEnters for each dissallowed user
+      swallowedEvents = ['despawn']; 
+    } else {
+      // If now disallowed user we are adding a bot to a disallowed space
+      // We will swallow a spawn event
+      swallowedEvents = ['spawn']; 
+    }
+    if (disallowedEmails.length){
+      for (let i=0; i<disallowedEmails.length; i++) {
         swallowedEvents.push('memberEnters');
       }
     }
@@ -301,6 +363,25 @@ module.exports = {
     return (eventPromises);
   },
 
+  registerGuideRemovedFromSpaceEvents: function (testName, framework, eventsData, numDisallowedUsersInSpace) {
+    let eventPromises = [];
+    // Framework always gets the membership change event
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
+    }));
+    // TODO check if other guides are in the space, we assume we'll be disallowed at this point
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
+    }));
+    // Finally, we will get some membership-rules events, a "swallowed" memberExits
+    // and a message about the re-spawning
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMembershipRulesEventHandler(testName, framework,
+        ['despawn'], eventsData, true, resolve);
+    }));
+    return (eventPromises);
+  },
+
   registerMembershipDeletedEventsWhenDisallowedUserExits: function (testName, framework, eventsData, numDisallowedUsersInSpace) {
     let eventPromises = [];
     // Framework always gets the membership change event
@@ -328,23 +409,35 @@ module.exports = {
 
     return (eventPromises);
   },
+  
   botLeaveRoom: function (testName, framework, bot, roomToLeave, eventsData) {
-    const membershipDeleted = new Promise((resolve) => {
+    let leaveRoomEvents = [];
+    leaveRoomEvents.push(new Promise((resolve) => {
       this.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
-    });
-    const stopped = new Promise((resolve) => {
-      bot.stopHandler(testName, resolve);
-    });
-    const despawned = new Promise((resolve) => {
-      this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
-    });
-
+    }));
+    if (bot.active) {
+      leaveRoomEvents.push(new Promise((resolve) => {
+        bot.stopHandler(testName, resolve);
+      }));
+      leaveRoomEvents.push(new Promise((resolve) => {
+        this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
+      }));
+    } else {
+      // There is no 'stop' event because the bot is not in the 'started' state
+      swallowedEventsArray = ['despawn'];
+      leaveRoomEvents.push(new Promise((resolve) => {
+        this.frameworkMembershipRulesEventHandler(testName, framework,
+          swallowedEventsArray, eventsData, 
+          true, 
+          resolve);
+      }));
+    }
 
     return bot.exit()
-      .then(() => when.all([membershipDeleted, stopped, despawned]))
-      .catch((e) => {
-        console.error(`Bot failed to exit room: ${e.message}`);
-      });
+      .then(() => when.all(leaveRoomEvents)
+        .catch((e) => {
+          console.error(`Bot failed to exit room: ${e.message}`);
+        }));
   },
 
   botCreateRoom: function (testName, framework, bot, eventsData, members) {
@@ -454,7 +547,7 @@ module.exports = {
   },
 
   botRespondsToTrigger: function (testName, framework, bot, eventsData, shouldBeAllowed) {
-    if ((shouldBeAllowed !== undefined) && (shouldBeAllowed) && (bot.active)) {
+    if ((shouldBeAllowed !== undefined) && (shouldBeAllowed) && (!bot.active)) {
       return new Error(`${testName} failed.  Expected bot to be in disallowed state but it wasn't.`);
     }
     if (!eventsData.trigger) {
@@ -543,6 +636,10 @@ module.exports = {
     if ("files" in msgObj) {
       swallowedEventsArray.push('files');
     }
+    if (this.framework.membershipRulesStateMessageResponse) {
+      // Wait for the bot to respond with the an "Ignoring input" type message
+      eventsData.registerForBotResponse = true;
+    }
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(testName, framework,
         swallowedEventsArray, eventsData, 
@@ -619,8 +716,15 @@ module.exports = {
       eventsData.message = message;
       assert((id === framework.id),
         'id returned in framework.on("messageCreated") is not the one expected');
-      promiseResolveFunction(assert(validator.isMessage(message),
-        'memssageCreated event did not include a valid message'));
+      if (eventsData.registerForBotResponse) {
+        // This event occured when a user sent a message to a disallowed bot
+        // Register this handler again so that we wait for the bot's automated response
+        delete eventsData.registerForBotResponse;
+        this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, promiseResolveFunction);
+      } else {
+        promiseResolveFunction(assert(validator.isMessage(message),
+          'memssageCreated event did not include a valid message'));
+      }
     });
   },
 
@@ -760,8 +864,10 @@ module.exports = {
   frameworkMembershipRulesEventHandler: function (testName, framework, expectedEvents, eventsData, failOnUnexpectedEvents, promiseResolveFunction) {
     this.framework.once('membershipRulesAction', (type, event, bot, id, ...args) => {
       framework.debug(`Framework membershipRulesAction of type ${type} occurred in test ${testName}`);
-      assert(id === eventsData.bot.id,
-        'bot returned in framework.on("membershipRulesAction") is not the one expected');
+      if ((eventsData.bot) && (eventsData.bot.id))   {
+        assert(id === eventsData.bot.id,
+          'bot returned in framework.on("membershipRulesAction") is not the one expected');
+      }
       assert((((type == 'state-change') && (event === 'spawn')) || (bot.active === false)),
         'bot returned in framework.on("membershipRulesAction") is still in the active state');
       // TODO -- could add some type and event validation
@@ -771,6 +877,19 @@ module.exports = {
           break;
         case ('event-swallowed'):
           framework.debug(`Membership Rules swallowed a "${event}" event`);
+          if (event === 'spawn') {
+            // set the "swallowed bot" in eventsData so it can leave spaces
+            eventsData.bot = bot;
+            // Validate that the membership in the membershipRulesChange belongs to the bot
+            assert((args.length >= 2), 'did not get a membershipRulesChange object ' +
+              'in membershipRulesAction event handler');
+            let mRC = args[1];
+            assert(((typeof mRC == 'object') && 
+              (typeof mRC.membership === 'object') && 
+              (mRC.membership.personId === bot.person.id)),
+            'membershipRulesChange.membership.personId was not the same as the bot\'s' +
+              'person ID when processing a swallowed "spawn" event in the membershipRulesAction handler');
+          }
           break;
         case ('hears-swallowed'):
           framework.debug(`Membership Rules swallowed a "${event}" event`);
@@ -795,7 +914,7 @@ module.exports = {
   },
 
   frameworkDespawnHandler: function (testName, framework, eventsData, promiseResolveFunction) {
-    this.framework.once('despawn', (bot, id, removedBy, membership) => {
+    this.framework.once('despawn', (bot, id, removedBy, membershipRuleChange) => {
       framework.debug(`Framework despawn event occurred in test ${testName}`);
       assert((eventsData.bot.id === bot.id),
         `${testName} failure processing "despawn": bot.id did not match expected`);
@@ -803,14 +922,14 @@ module.exports = {
       if (removedBy) {
         eventsData.removedBy = removedBy;
       }
-      if (membership) {
-        // This despawn was caused by a dissalowed member add
+      if ((membershipRuleChange) && (membershipRuleChange.membershipRule === "restrictedToEmailDomains")) {
+        // This despawn was caused by a disallowed member add
         if (eventsData.disallowedUserEmail.length) {
-          assert((-1 !== eventsData.disallowedUserEmail.indexOf(membership.personEmail)),
+          assert((-1 !== eventsData.disallowedUserEmail.indexOf(membershipRuleChange.membership.personEmail)),
             `${testName} failure processing "despawn": email of dissallowed ` +
           `member did not match any of the expected emails`);
         } else {
-          assert(eventsData.disallowedUserEmail === membership.personEmail,
+          assert(eventsData.disallowedUserEmail === membershipRuleChange.membership.personEmail,
             `${testName} failure processing "despawn": email of dissallowed ` +
             `member did not match expected email`);
         }
