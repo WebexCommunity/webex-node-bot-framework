@@ -55,6 +55,15 @@ Not all of the functionality in flint has been migrated to the new framework.  A
   * getWebhooks() -- call webex.webhooks.list()
   * getAttachmentAction(attachmentActionId) -- call webex.attachmentActions.get(attachmentActionId);
 
+* Bot exposed some functions for uploading file streams, that that were implemented by calling the webex APIs directly.  Some of these have been removed or simplified in favor of leveraging the native webex sdk functionality to support this.
+  * say() -- this function has not changed and provides an optional mechanism for providing URL based file attachments
+  * sayWithLocalFiles - new function adds ability to send a message that includes local files
+  * upload(file) - removed -- call sayWithLocalFile(null, filename) instaed
+  * uploadStream(filename, stream) -- This remains primarily to demonstrate how a developer needs to create a stream from a filename in order to call the webex.messages.create() function.  The filename parameter is removed and discovered from the stream.
+  * messageStreamRoom() -- removed -- call bot.webex.messages.create() with a message object that includes the roomId, the (optional) markdown or text message, and populate the files field with an array containing a single filestream, as described in the documentation for uploadStream
+  * getMessages(count) -- removed -- call bot.webex.messages.list({roomId: bot.room.id, max: count})  -- note that this only works when the bot was created with a user token.
+
+
 * Retry logic for pagination and rate limiting.  The philosopy behind the framework is to encourage developers to leverage the Webex SDK (exposed as an element in the frameowrk and bot objects), natively when needed.   When appropriate applications should inspect the reponse headers for pagination and rate limiting (HTTP 429 Response Code) as needed.  `framework.start()` will fail when the framework was passed a config object that includes any of the following options:
    * @property {number} [maxPageItems=50] - Max results that the paginator uses.
    * @property {number} [maxConcurrent=3] - Max concurrent sessions to the Webex API
@@ -201,6 +210,9 @@ For every message node-flint generates a set of events which may include
 
 Our new framework will ONLY generate the `messageCreated` event in instances when the message was sent by the bot.  In almost all cases bots and applications don't want to respond to their own messages, however those that choose to do so should build the logic for processing them in a `flint.on("messageCreated", message, flintId)` handler since the other events are no longer sent.   If any other space member posts a message, the `message` event will always fire and the `mentioned` event will fire if the message mentioned the bot, and a `files` event will fire if the message includes file attachments.
 
+## Method Changes
+
+Flint functions that were essentially wrappers around core webex APIs have mostly been removed, in 
 
 ## Storage Adaptor Changes
 For developer's who are porting existing flint based bots that use the storage adaptor capabilities there are some changes.
@@ -214,3 +226,5 @@ A new mongo storage adaptor has been added which has been tested with cloud base
 * writeMetrics() -- is a new, optional, method for storage adaptors that can be called to write breadcrumbs into the database that can be used to build reports on the bot's usage
 
 The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
+
+## Function Changes

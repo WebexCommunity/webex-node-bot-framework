@@ -13,7 +13,7 @@ describe('User Created Room to create a Test Bot', () => {
   let eventsData = {};
 
   // Create a room as user to have test bot which will create other rooms
-  before(() => userWebex.rooms.create({ title: User_Test_Space_Title })
+  before(() => userWebex.rooms.create({title: User_Test_Space_Title})
     .then((r) => {
       userCreatedTestRoom = r;
       return validator.isRoom(r);
@@ -65,7 +65,7 @@ describe('User Created Room to create a Test Bot', () => {
 
       for (let entry of Object.entries(framework.initBotStorageData)) {
         storagePromises.push(bot.recall(entry[0]));
-        initValues.push({ key: entry[0], value: entry[1] });
+        initValues.push({key: entry[0], value: entry[1]});
       }
       if (storagePromises.length === 0) {
         framework.debug('No initial config set, no values checked');
@@ -108,7 +108,7 @@ describe('User Created Room to create a Test Bot', () => {
     it('sets and checks some storage elements', () => {
       let testName = 'sets and checks some storage elements';
       testString = 'testStringVal';
-      testObject = { key1: 'val1', key2: 'val2' };
+      testObject = {key1: 'val1', key2: 'val2'};
       bot = userCreatedRoomBot;
 
       return bot.store('testString', testString)
@@ -151,7 +151,7 @@ describe('User Created Room to create a Test Bot', () => {
       let testName = 'sets elements without waiting';
       bot = userCreatedRoomBot;
       testString = 'testStringVal';
-      testObject = { key1: 'val1', key2: 'val2' };
+      testObject = {key1: 'val1', key2: 'val2'};
       let storagePromises = [];
 
       storagePromises.push(bot.store('testString', testString));
@@ -240,7 +240,7 @@ describe('User Created Room to create a Test Bot', () => {
       let testName = `tries to write bot metrics'`;
       bot = userCreatedRoomBot;
 
-      return bot.writeMetric({ event: 'frameworkUnitTestWithActor' }, common.userInfo)
+      return bot.writeMetric({event: 'frameworkUnitTestWithActor'}, common.userInfo)
         .then((result) => {
           framework.debug('Succesfully wrote metrics data:');
           framework.debug(result);
@@ -265,7 +265,7 @@ describe('User Created Room to create a Test Bot', () => {
       let testName = `tries to write bot metrics with actorId`;
       bot = userCreatedRoomBot;
 
-      return bot.writeMetric({ event: 'frameworkUnitTestWithActorId' }, common.userInfo.id)
+      return bot.writeMetric({event: 'frameworkUnitTestWithActorId'}, common.userInfo.id)
         .then((result) => {
           framework.debug('Succesfully wrote metrics data:');
           framework.debug(result);
@@ -290,7 +290,7 @@ describe('User Created Room to create a Test Bot', () => {
       let testName = `tries to write bot metrics with actorId`;
       bot = userCreatedRoomBot;
 
-      return bot.writeMetric({ event: 'frameworkUnitTestWithNoActorInfo' })
+      return bot.writeMetric({event: 'frameworkUnitTestWithNoActorInfo'})
         .then((result) => {
           framework.debug('Succesfully wrote metrics data:');
           framework.debug(result);
@@ -316,10 +316,8 @@ describe('User Created Room to create a Test Bot', () => {
   describe('Bot Created Rooms Tests', () => {
     let botCreatedRoomBot;
     let testName = 'Default Test Name';
-    let message, eventsData = {};
-    let triggers = [], messages = [];
+    let eventsData = {};
     let messageCreatedEvent;
-    let hearsHi, hearsFile, hearsAnything, hearsSomeStuff;
     // Create a room as user to have test bot which will create other rooms
     before(() => {
       let testName = 'bot.newRoom() with user as member test';
@@ -353,241 +351,58 @@ describe('User Created Room to create a Test Bot', () => {
         });
     });
 
-    // remove the hears handlers we set up for these tests
-    after(() => {
-      framework.clearHears(hearsHi);
-      framework.clearHears(hearsFile);
-      framework.clearHears(hearsAnything);
-      framework.clearHears(hearsSomeStuff);
-    });
-
     describe('#user.webex.message.create()', () => {
-      // Setup the promises for the events that come from user input that mentions a bot
-      beforeEach(() => {
-        testName = 'User posts message to bot created room';
-        message = {};
-        eventsData = { bot: botCreatedRoomBot };
-        bot = botCreatedRoomBot;
-      });
-
-      afterEach(() => {
-        messages.push(eventsData.message);
-        triggers.push(eventsData.trigger);
-        assert(validator.objIsEqual(message, eventsData.message),
-          'message returned by API did not match the one from the messageCreated event');
-
-      });
-
-      it('hears the user say hi', () => {
-        let testName = 'hears the user say hi';
-        let hearsInfo = {
-          phrase: 'hi'
-        };
-        return common.userSendMessage(testName, framework, userWebex, bot,
-//          eventsData, hearsInfo, `<@personId:${bot.person.id}> hi`)
-          eventsData, hearsInfo, `hi`)
-          .then((m) => {
-            hearsHi = hearsInfo.functionVar;
-            message = m;
-          });
-      });
-
-      it('hears news about a file', () => {
-        let testName = 'hears news about a file';
-        let hearsInfo = {
-          phrase: /.*file.*/igm,
-        };
-        // Wait for the `files` events (as well as the others)
-        frameworkFilesEvent = new Promise((resolve) => {
-          common.frameworkFilesHandler(testName, framework, eventsData, resolve);
-        });
-        botFilesEvent = new Promise((resolve) => {
-          bot.filesHandler(testName, eventsData, resolve);
-        });
-
-        return common.userSendMessage(testName, framework, userWebex, bot,
-          eventsData, hearsInfo,
-//          `<@personId:${bot.person.id}> Here is a file for ya`,
-          `Here is a file for ya`,
-          process.env.HOSTED_FILE)
-          .then((m) => {
-            message = m;
-            hearsFile = hearsInfo.functionVar;
-            return when.all([frameworkFilesEvent, botFilesEvent]);
-          });
-      });
-
-      it('hears anything via a regex', () => {
-        let testName = 'hears anything via a regex';
-        let hearsInfo = {
-          phrase: /.*/igm,
-          helpString: '',
-          priority: 99
-        };
-
-        return common.userSendMessage(testName, framework, userWebex, bot,
-          eventsData, hearsInfo,
-//          `<@personId:${bot.person.id}>Here is a whole mess of stuff for ya`)
-          `Here is a whole mess of stuff for ya`)
-          .then((m) => {
-            hearsAnything = hearsInfo.functionVar;
-            message = m;
-            return when.all([frameworkFilesEvent, botFilesEvent]);
-          });
-      });
-
-      it('hears a higher priority regex', () => {
-        let testName = 'hears a higher priority regex';
-        let hearsInfo = {
-          phrase: /.*Some Stuf.*/igm,
-          helpString: '',
-          priority: 2 // lower number == higher priority
-        };
-
-        return common.userSendMessage(testName, framework, userWebex, bot,
-          eventsData, hearsInfo,
-          //`<@personId:${bot.person.id}>Here is a Some Stuff for ya`)
-          `Here is a Some Stuff for ya`)
-          .then((m) => {
-            hearsSomeStuff = hearsInfo.functionVar;
-            message = m;
-            return when.all([frameworkFilesEvent, botFilesEvent]);
-          });
-      });
-
-    });
-
-    describe('#bot.say() using triggers from previous test', () => {
-      let trigger, message;
-      // Setup the promises for the events that come from user input that mentions a bot
-      beforeEach(() => {
-        testName = 'Bot posts message to room';
-        message = {};
-        eventsData = { bot: botCreatedRoomBot };
-        framework.messageFormat = 'markdown';
-
-        // Wait for the events associated with a new message before completing test..
-        messageCreatedEvent = new Promise((resolve) => {
-          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
-        });
-      });
-
-      // Build a message with the trigger
-      beforeEach(() => {
-        trigger = triggers.shift();
-        userMessage = messages.shift();
-        if (trigger) {
-          message = `I heard the entry from ${trigger.person.displayName}:\n`;
-          message += (trigger.message.text) ? `* text: ${trigger.message.text}\n` : '';
-          message += (trigger.message.html) ? `* html: ${trigger.message.html}\n` : '';
-          if (trigger.message.files) {
-            message += `There are also ${trigger.message.files.length} files\n`;
-            for (let i = 0; i < trigger.message.files.length; i++) {
-              message += `* File${i} Link: ${trigger.message.files[i]}`;
-            }
+      // Define the messages we want to try sending to the bot
+      let testMessages = [
+        {msgText: 'hi', hearsInfo: {phrase: 'hi'}},
+        {
+          msgText: `Here is a file for ya`,
+          msgFiles: process.env.HOSTED_FILE,
+          hearsInfo: {phrase: /.*file.*/im}
+        },
+        {
+          msgText: `Here is a whole mess of stuff for ya`,
+          hearsInfo: {
+            phrase: /.*/igm,
+            helpString: '',
+            priority: 99
           }
-          if (trigger.phrase) {
-            message += `\nIt matched the framework.hears() phrase: ${trigger.phrase}`;
+        },
+        {
+          msgText: `Here is a Some Stuff for ya`,
+          hearsInfo: {
+            phrase: /.*Some Stuf.*/igm,
+            helpString: '',
+            priority: 2 // lower number == higher priority
           }
-          framework.debug(message);
-        } else {
-          message = '';
         }
+      ];
+
+      // Clean up the hears functions we registered
+      after(() => {
+        testMessages.forEach((testData) => {
+          framework.clearHears(testData.hearsInfo.functionId);
+        });
       });
 
-      // TODO handle this more eleganty, reading each trigger and message until there are no more
-      // Perhaps use the it.each package
-      it('responds to the first trigger', () => {
-        if (!message) {
-          // This can occur if the previous tests failed
-          return new Error('Test didn\'t run.  No trigger to respond to');
-        }
-        return botCreatedRoomBot.say(message)
-          .then((m) => {
-            message = m;
-            assert(validator.isMessage(message),
-              'create message did not return a valid message');
-            return when.all([messageCreatedEvent]);
-          })
-          .then(() => {
-            assert(validator.objIsEqual(message, eventsData.message),
-              'message returned by API did not match the one from the messageCreated event');
-            return when(true);
-          })
-          .catch((e) => {
-            console.error(`${testName} failed: ${e.message}`);
-            return Promise.reject(e);
-          });
+      // loop through message tests..
+      testMessages.forEach((testData) => {
+        eventsData = {bot: botCreatedRoomBot};
+
+        it(`user says ${testData.msgText}`, () => {
+          let testName = `user says ${testData.msgText}`;
+          return common.userSendMessage(testName, framework, userWebex,
+            botCreatedRoomBot, eventsData, testData.hearsInfo,
+            testData.msgText, testData.msgFiles);
+        });
+
+        it(`bot responds to ${testData.msgText}`, () => {
+          let testName = `bot responds to ${testData.msgText}`;
+          return common.botRespondsToTrigger(testName, framework,
+            botCreatedRoomBot, eventsData);
+        });
       });
 
-      it('responds to the second trigger', () => {
-        if (!message) {
-          // This can occur if the previous tests failed
-          return new Error('Test didn\'t run.  No trigger to respond to');
-        }
-        return botCreatedRoomBot.say(message)
-          .then((m) => {
-            message = m;
-            assert(validator.isMessage(message),
-              'create message did not return a valid message');
-            return when.all([messageCreatedEvent]);
-          })
-          .then(() => {
-            assert(validator.objIsEqual(message, eventsData.message),
-              'message returned by API did not match the one from the messageCreated event');
-            return when(true);
-          })
-          .catch((e) => {
-            console.error(`${testName} failed: ${e.message}`);
-            return Promise.reject(e);
-          });
-      });
-
-      it('responds to the third trigger', () => {
-        if (!message) {
-          // This can occur if the previous tests failed
-          return new Error('Test didn\'t run.  No trigger to respond to');
-        }
-        return botCreatedRoomBot.say(message)
-          .then((m) => {
-            message = m;
-            assert(validator.isMessage(message),
-              'create message did not return a valid message');
-            return when.all([messageCreatedEvent]);
-          })
-          .then(() => {
-            assert(validator.objIsEqual(message, eventsData.message),
-              'message returned by API did not match the one from the messageCreated event');
-            return when(true);
-          })
-          .catch((e) => {
-            console.error(`${testName} failed: ${e.message}`);
-            return Promise.reject(e);
-          });
-      });
-
-      it('responds to the fourth trigger', () => {
-        if (!message) {
-          // This can occur if the previous tests failed
-          return new Error('Test didn\'t run.  No trigger to respond to');
-        }
-        return bot.say(message)
-          .then((m) => {
-            message = m;
-            assert(validator.isMessage(message),
-              'create message did not return a valid message');
-            return when.all([messageCreatedEvent]);
-          })
-          .then(() => {
-            assert(validator.objIsEqual(message, eventsData.message),
-              'message returned by API did not match the one from the messageCreated event');
-            return when(true);
-          })
-          .catch((e) => {
-            console.error(`${testName} failed: ${e.message}`);
-            return Promise.reject(e);
-          });
-      });
     });
 
     describe('bot.sendCard', () => {
@@ -820,6 +635,162 @@ describe('User Created Room to create a Test Bot', () => {
       });
 
     });
+
+    describe('Other Bot message functions', () => {
+      let message;
+      let filename = './test/flint.jpg';
+
+      it('sends a local file', () => {
+        let testName = 'sends a local file';
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.sayWithLocalFile('Here is a local file', filename)
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.files === 'object'),
+              `${testName} did not return a message with a file attachment`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return when(true);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+
+      it('sends a local file with no message', () => {
+        let testName = 'sends a local file with no message';
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.sayWithLocalFile('', filename)
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.files === 'object'),
+              `${testName} did not return a message with a file attachment`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return when(true);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+
+      it('sends a local file with a null message', () => {
+        let testName = 'sends a local file with a null message';
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.sayWithLocalFile(null, filename)
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.files === 'object'),
+              `${testName} did not return a message with a file attachment`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return when(true);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+
+      it('sends a non available local file', () => {
+        let testName = 'sends a non available local file';
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.sayWithLocalFile('This file doesn\'t exist', 'foo.jpg')
+          .then(() => when.reject(new Error('bot.sendWithFile with invalid file did not fail!')))
+          .catch((e) => {
+            framework.debug(`${testName} failed as expected: ${e.message}`);
+            return when(true);
+          });
+      });
+
+      it('uploads a stream', () => {
+        let testName = 'uploads a stream';
+        let fs = require('fs');
+        let filename = './test/flint.jpg';
+        let stream = fs.createReadStream(filename);
+
+        // Wait for the events associated with a new message before completing test..
+        messageCreatedEvent = new Promise((resolve) => {
+          common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.uploadStream(stream)
+          .then((m) => {
+            message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.files === 'object'),
+              `${testName} did not return a message with a file attachment`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            return when(true);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+
+      it('censors the previous message', () => {
+        let testName = 'censors the previous message';
+
+        // Wait for the events associated with a new message before completing test..
+        messageDeletedEvent = new Promise((resolve) => {
+          common.frameworkMessageDeletedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.censor(message.id)
+          .then(() => {
+            return when(messageDeletedEvent);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
+    });
   });
+
+
 
 });
