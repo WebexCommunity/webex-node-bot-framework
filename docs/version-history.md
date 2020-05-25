@@ -11,8 +11,8 @@
 
 ## v 1.2.1
 * Modified how webex initialization config is formatted to work with latest SDK builds
-  
-* ## v 1.2.0
+
+## v 1.2.0
 * Added new config option `httpsProxy`.  When set the framework will use this to proxy requests to Webex
 * Slight change to cleanup logic when using websockets to try to elminate the "excessive device registrations" warning that can hit developers who are iteratively testing their apps
 
