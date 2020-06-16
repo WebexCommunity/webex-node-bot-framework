@@ -48,7 +48,7 @@ module.exports = {
     // Now wait until framework is initialized
     return when.all([started, initialized])
       .then(() => {
-        if (framework.webex.config.defaultMercuryOptions) {
+        if (framework.getWebexSDK().config.defaultMercuryOptions) {
           return Promise.reject(new Error(`Framework initialized but has a proxy config when none was set!`));
         }
         assert(validator.isFramework(framework),
@@ -134,26 +134,18 @@ module.exports = {
         .then(() => {
           assert((eventsData.membership.id === membership.id),
             'Membership from framework event does not match the one returned by API');
-          //   // What am I doing here?
-          //   return null;
-          // } else {
           userCreatedRoomBot = eventsData.bot;
           this.createBotEventHandlers(userCreatedRoomBot);
           if (!shouldFail) {
-            assert(_.find(framework.bots, bot => bot.room.id === userCreatedRoomBot.room.id),
+            assert(framework.getBotByRoomId(userCreatedRoomBot.room.id),
               'After spawn new bot is not in framework\'s bot array');
           }
           return userCreatedRoomBot;
-          //          }
         })
         .catch((e) => {
           console.error(`Bot spawn test failed: ${e.message}`);
           return Promise.reject(e);
         }));
-    // .catch((e) => {
-    //   console.error(`Spawn event never occured: ${e.message}`);
-    //   return Promise.reject(e);
-    // });
   },
 
   botAddUsersToSpace: function (testName, framework, bot, userEmails, eventsData) {
@@ -479,7 +471,7 @@ module.exports = {
       .then(() => {
         assert((eventsData.bot.id == botCreatedRoomBot.id),
           'Bot from framework spawned event does not match the one returned by newRoom()');
-        assert(_.find(framework.bots, bot => bot.room.id === botCreatedRoomBot.room.id),
+        assert(framework.getBotByRoomId(botCreatedRoomBot.room.id),
           'After spawn new bot is not in framework\'s bot array');
         return when(botCreatedRoomBot);
       })
@@ -1084,7 +1076,7 @@ function cleanupFromPreviousTests(framework, user) {
     if ((bot.room.title === User_Test_Space_Title) ||
       (bot.room.title === Bot_Test_Space_Title)) {
       framework.debug('Removing room left over from previous test...');
-      framework.webex.rooms.remove(bot.room);
+      bot.getWebexSDK.rooms.remove(bot.room);
     } else if (bot.room.type == 'direct') {
       if (bot.isDirectTo == user.emails[0]) {
         framework.debug(`Found existing direct space with ${bot.room.title}.  Will run direct message tests.`);
@@ -1096,6 +1088,7 @@ function cleanupFromPreviousTests(framework, user) {
 }
 
 function asUserCleanupFromPreviousTests(userWebex) {
+  // Todo -- handle paginated responses...
   userWebex.rooms.list()
     .then((rooms) => {
       for (let room of rooms.items) {
