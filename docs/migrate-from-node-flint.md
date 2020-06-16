@@ -39,21 +39,21 @@ Not all of the functionality in flint has been migrated to the new framework.  A
 
 * Flint exposed many functions that were primiarly thin wrappers around functionality that is natively exposed via the webex SDK.  Since we wish to promote the understanding and use of the SDK these have mostly been removed. The following flint fucntions are NOT exposed by our famework:
   * parseFile(message) -- to access files simply GET the URL(s) in the attachment field of a message.
-  * getRooms() -- call framework.webex.rooms.list()
-  * getRoom(roomId) -- call framework.webex.rooms.get(roomId)
-  * getTeams() -- call framework.webex.teams.list()
-  * getTeam(teamId) -- call framework.webex.teams.get(teamId)
-  * getTeamRooms(teamId) -- call framework.webex.rooms.get({teamId: teamId})
-  * getPerson(personId) -- call webex.people.get(personId);
-  * getMessage(messageId) -- call webex.messages.get(messageId)
-  * getFiles(messageId) -- call webex.messages.get(messageId) to get message and then to access files simply GET the URL(s) in the attachment field of a message.
-  * getMembership(membershipId) -- call webex.memberships.get(membershipId)
-  * getMemberships(roomId) -- call webex.memberships.list({ roomId: roomId })
-  * getTeamMembership(teamMembershipId) -- call webex.teamMembership.get(teamMembershipId)
-  * getTeamMemberships(teamId) -- call webex.teamMemberships.list({ teamId: teamId })
-  * getWebhook(webhookId) -- call webex.webhooks.get(webhookId)
-  * getWebhooks() -- call webex.webhooks.list()
-  * getAttachmentAction(attachmentActionId) -- call webex.attachmentActions.get(attachmentActionId);
+  * getRooms() -- call framework.getWebexSDK().rooms.list()
+  * getRoom(roomId) -- call framework.getWebexSDK().rooms.get(roomId)
+  * getTeams() -- call framework.getWebexSDK().teams.list()
+  * getTeam(teamId) -- call framework.getWebexSDK().teams.get(teamId)
+  * getTeamRooms(teamId) -- call framework.getWebexSDK().rooms.get({teamId: teamId})
+  * getPerson(personId) -- call framework.getWebexSDK().people.get(personId);
+  * getMessage(messageId) -- call framework.getWebexSDK().messages.get(messageId)
+  * getFiles(messageId) -- call framework.getWebexSDK().messages.get(messageId) to get message and then to access files simply GET the URL(s) in the attachment field of a message.
+  * getMembership(membershipId) -- call framework.getWebexSDK().memberships.get(membershipId)
+  * getMemberships(roomId) -- call framework.getWebexSDK().memberships.list({ roomId: roomId })
+  * getTeamMembership(teamMembershipId) -- call framework.getWebexSDK().teamMembership.get(teamMembershipId)
+  * getTeamMemberships(teamId) -- call framework.getWebexSDK().teamMemberships.list({ teamId: teamId })
+  * getWebhook(webhookId) -- call framework.getWebexSDK().webhooks.get(webhookId)
+  * getWebhooks() -- call framework.getWebexSDK().webhooks.list()
+  * getAttachmentAction(attachmentActionId) -- call framework.getWebexSDK().attachmentActions.get(attachmentActionId);
 
 * Bot exposed some functions for uploading file streams, that that were implemented by calling the webex APIs directly.  Some of these have been removed or simplified in favor of leveraging the native webex sdk functionality to support this.
   * say() -- this function has not changed and provides an optional mechanism for providing URL based file attachments
@@ -127,10 +127,10 @@ For developer's who are porting existing flint based bots to this framework the 
 | active        | active       | Bot active state                             |                                                              |
 | person        | --           | Bot Person Object                            | Availabile as bot.framework.person                         |
 | email         | --           | Bot email                                    | Availabile as bot.framework.person.emails[0]                                   | 
-| team          | --           | Bot team object                              | This object is seldom used and creating it slows down spawning a bot.  Apps that want it can check if `bot.room.teamId` exists and if so call `bot.webex.teams.get(bot.room.teamId)`       |
+| team          | --           | Bot team object                              | This object is seldom used and creating it slows down spawning a bot.  Apps that want it can check if `bot.room.teamId` exists and if so call `bot.getWebexSDK().teams.get(bot.room.teamId)`       |
 | room          | room         | Bot room object                              | Now is standard webex room object                            |
 | membership    | membership   | Bot membership object                        | Standard Webex Teams membership object for bot               |
-| memberships   | memberships  | All memberships for bot's space              | This array is seldom used.  Creating it slows down the initial bot spawn, and keeping it "current" requires periodic "refresh" calls to the platform.  Apps that want to inspect room memberships can instead call `bot.webex.memberships.list({roomId: bot.room.id})` at the time the data is needed.  The response is a standard Webex response and the members will be in an array called `items`.
+| memberships   | memberships  | All memberships for bot's space              | This array is seldom used.  Creating it slows down the initial bot spawn, and keeping it "current" requires periodic "refresh" calls to the platform.  Apps that want to inspect room memberships can instead call `bot.getWebexSDK().memberships.list({roomId: bot.room.id})` at the time the data is needed.  The response is a standard Webex response and the members will be in an array called `items`.
 |
 | isLocked      | isLocked     | If bot's space is locked                     |                                                              |
 | isModerator   | isModerator  | If bot is a moderator                        |                                                              |

@@ -402,9 +402,11 @@ not sent due to mebership rules.  See <a href="./doc/membership-rules-readme.md"
     * [new Framework(options)](#new_Framework_new)
     * [.options](#Framework+options) : <code>object</code>
     * [.setWebexToken(token)](#Framework+setWebexToken) ⇒ <code>Promise.&lt;String&gt;</code>
+    * [.getWebexSDK()](#Framework+getWebexSDK) ⇒ <code>object</code>
     * [.stop()](#Framework+stop) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.start()](#Framework+start) ⇒ <code>Promise.&lt;Boolean&gt;</code>
     * [.restart()](#Framework+restart) ⇒ <code>Promise.&lt;Boolean&gt;</code>
+    * [.getBotByRoomId(roomId)](#Framework+getBotByRoomId) ⇒ <code>object</code>
     * [.hears(phrase, action, [helpText], [preference])](#Framework+hears) ⇒ <code>String</code>
     * [.clearHears(id)](#Framework+clearHears) ⇒ <code>null</code>
     * [.showHelp([header], [footer])](#Framework+showHelp) ⇒ <code>String</code>
@@ -477,6 +479,25 @@ framework.setWebexToken('Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u')
      console.log('token updated to: ' + token);
   });
 ```
+<a name="Framework+getWebexSDK"></a>
+
+### framework.getWebexSDK() ⇒ <code>object</code>
+Accessor for Webex SDK instance
+
+Access SDK functionality described in [SDK Reference](https://developer.webex.com/docs/sdks/browser#sdk-api-reference)
+
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
+**Returns**: <code>object</code> - - Framework's Webex SDK instance  
+**Example**  
+```js
+let webex = framework.getWebexSDK();
+webex.people.get(me)
+  .then(person => {
+    console.log('SDK instantiated by: ' + person.displayName);
+  }).catch(e => {
+    console.error('SDK failed to lookup framework user: ' + e.message);
+  });
+```
 <a name="Framework+stop"></a>
 
 ### framework.stop() ⇒ <code>Promise.&lt;Boolean&gt;</code>
@@ -506,6 +527,28 @@ Restart Framework.
 **Example**  
 ```js
 framework.restart();
+```
+<a name="Framework+getBotByRoomId"></a>
+
+### framework.getBotByRoomId(roomId) ⇒ <code>object</code>
+Get bot object associated with roomId.
+Returns null if no object exists
+
+**Kind**: instance method of [<code>Framework</code>](#Framework)  
+**Returns**: <code>object</code> - - found bot object or null  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| roomId | <code>string</code> | id of room to search for |
+
+**Example**  
+```js
+let bot = framework.getBotByRoomId(roomId);
+if (bot) {
+  bot.say('Hi, I\'m the bot in this room!');
+} else {
+  console.log('Could not find bot for room ID: ' + roomId);
+}
 ```
 <a name="Framework+hears"></a>
 
@@ -693,6 +736,7 @@ before emitting and event
 * [Bot](#Bot)
     * [new Bot(framework, options, webex)](#new_Bot_new)
     * [.exit()](#Bot+exit) ⇒ <code>Promise.&lt;Boolean&gt;</code>
+    * [.getWebexSDK()](#Bot+getWebexSDK) ⇒ <code>object</code>
     * [.add(email(s), [moderator])](#Bot+add) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.remove(email(s))](#Bot+remove) ⇒ <code>Promise.&lt;Array&gt;</code>
     * [.getModerators()](#Bot+getModerators) ⇒ <code>Promise.&lt;Array&gt;</code>
@@ -736,6 +780,28 @@ Instructs Bot to exit from room.
 **Example**  
 ```js
 bot.exit();
+```
+<a name="Bot+getWebexSDK"></a>
+
+### bot.getWebexSDK() ⇒ <code>object</code>
+Accessor for Webex SDK instance
+
+This is a convenience and returns the same shared Webex SDK instance 
+that is returned by a call to framework.getWebexSDK()
+
+Access SDK functionality described in [SDK Reference](https://developer.webex.com/docs/sdks/browser#sdk-api-reference)
+
+**Kind**: instance method of [<code>Bot</code>](#Bot)  
+**Returns**: <code>object</code> - - Bot's Webex SDK instance  
+**Example**  
+```js
+let webex = bot.getWebexSDK();
+webex.people.get(me)
+  .then(person => {
+    console.log('SDK instantiated by: ' + person.displayName);
+  }).catch(e => {
+    console.error('SDK failed to lookup framework user: ' + e.message);
+  });
 ```
 <a name="Bot+add"></a>
 
