@@ -1,3 +1,7 @@
+## v 2.1.0
+* Added new accessor methods [framework.getWebexSDK()](../README.md#Framework+getWebexSDK) and [bot.getWebexSDK()](../README.md#Bot+getWebexSDK) to allow developers to access the framework's underlying Webex Javascript SDK instance which can be used to call any [JSSDK method](https://webex.github.io/webex-js-sdk/api/). Note that there is a single webex SDK instance used by the framework.  The bot accessor method is simply a convenience, both accessors return the same object, and the same object will be returned when this accessor is called on any of the frmaework's bot objects.
+* Added [framework.getBotByRoomId()](../README.md#Framework+getBotByRoomId) which allows developers to discover the bot object associated with a particular room.
+
 ## v 2.0.0
 * Added [Membership Rules](./membership-rules-readme.md) configuration options restrict bot interactions to spaces that are exclusively populated by users with email domains specified in a restricted to domain list.   Beta Mode further restricts bot interaction to only spaces where specific named users are present.
 * Added bot.sayWithLocalFiles
