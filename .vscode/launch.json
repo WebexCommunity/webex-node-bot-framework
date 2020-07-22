@@ -14,6 +14,11 @@
       "type": "node",
       "request": "launch",
       "name": "Membership Rules Demo",
+      "env": {
+        "ALLOWED_DOMAINS": "shipherd.com, gmail.com",
+        "GUIDE_EMAILS": "jshipher@cisco.com,compliance@shipherd.com",
+        "TOKEN": "NTkwNjc2MmEtNTJjMC00YmUzLTg2ODEtOWEzMzM2YzM5MTE5NDRjNGQ0YTItOGI0_PF84_ce861fba-6e2f-49f9-9a84-b354008fac9e"
+      },
       "program": "${workspaceFolder}/docs/demo-membership-rules.js"
     },
     {
@@ -30,9 +35,11 @@
         "-u",
         "bdd",
         "--timeout",
-        "40000",
+        "90000",
         "--colors",
-        "${workspaceFolder}/test/bot-tests.js"
+        "${workspaceFolder}/test/guide-rules-tests.js"
+//        "${workspaceFolder}/test/membership-rules-tests.js"
+//        "${workspaceFolder}/test/invalid-config-tests.js"
       ],
       "internalConsoleOptions": "openOnSessionStart"
     }
