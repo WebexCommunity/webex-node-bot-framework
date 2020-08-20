@@ -4,13 +4,13 @@ Some bots may be designed to only work with a particular set of users.   The fra
 
 ## Email domain restrictions
 
-In many cases developers may build bots that are meant to be used only by employees of their company (or possibly of several companies).   Setting the framework config's  `restrictToEmailDomains` parameter to a comma separated list of email domains instructs the framework to essentially ignore any spaces where the membership list includes users who's email addresses are not in the restricted domain list.
+In many cases developers may build bots that are meant to be used only by employees of their company (or possibly of several companies).   Setting the framework config's  `restrictedToEmailDomains` parameter to a comma separated list of email domains instructs the framework to essentially ignore any spaces where the membership list includes users who's email addresses are not in the restricted domain list.
 
 ## Guided Mode
 
 Sometimes, it may be desirable for the bot to be functional only when it is in spaces that have specific people in them. For example when a bot is first being developed, the developer may want the bot to only work in spaces that they are in.  They can then invite other users to these spaces to provide them with a "guided experience" of the bot. Setting the framework config's  `guideEmails` parameter to a comma separated list of webex user email addreses instructs the framework to essentially ignore any spaces where the membership list does not include a guide.
 
-If both `restrictToEmailDomans` and `guideEmails` are set the domain restrictions take precedence, meaning that guides MUST belong to one of the restricted domains.
+If both `restrictedToEmailDomans` and `guideEmails` are set the domain restrictions take precedence, meaning that guides MUST belong to one of the restricted domains.
 
 ## How it works
 
@@ -18,7 +18,7 @@ When a bot is first added to a space, the framework will examine the membership 
 
 On subsequent membership changes, the framework will re-examine the membership list.   If a previously unauthorized space is now populated solely by users whose domains are in the `restrictedToEmailDomains` list, or, if a guide has entered in guided mode, a framework `spawn` event will be generated, just like the one that occurs when the bot is added to a new space.  The parameters for this spawn event will include an additional `membershipRuleChange` parameter which provides detail on the membership change and the membership rule that triggered the event.  When this occurs the framework will generate a message that says "I am now allowed to interact with all the members in this space and will no longer ignore any input.". (Note that this message can be customized by setting the `membershipRulesAllowedResponse` parameter).
 
-Conversely, if the new member has joined a previously allowed space, but the new member is not authorized, the framework will generate a `despawn` event.  The parameters for this event will include a new `membershipRuleChange` parameter which provides the new users membership object and an indication that this event was triggered by a `restrictToEmailDomans` rule, will also be sent.
+Conversely, if the new member has joined a previously allowed space, but the new member is not authorized, the framework will generate a `despawn` event.  The parameters for this event will include a new `membershipRuleChange` parameter which provides the new users membership object and an indication that this event was triggered by a `restrictedToEmailDomans` rule, will also be sent.
 
 ## membershipRuleChange object
 
