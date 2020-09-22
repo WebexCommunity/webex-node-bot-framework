@@ -1,3 +1,8 @@
+## v 2.2.1
+* Added `removeDeviceRegistrationsOnStart` configuration option.   This can be set to `true` during the iterative development process if the developer is using websockets and gets an `excessive device registrations` error, but this should be used carefully as it logs the user associated with the app token out of any clients.  (It is generally safe for bots.)  
+  
+  It should not be necessary to set this if your application ensures that it calls `framework.stop` when it exits, perhaps by registering a signal handler as demonstrated in the [**Websocket Example**](./docs/example3.md), as this method deletes the device registration created for the websocket notifications used by that instance of the app.
+
 ## v 2.1.1
 * Bumped lodash version number
 
