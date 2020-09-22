@@ -7,7 +7,7 @@ In the summer of 2019, Cisco introduced a new mechanism in the Webex Javascript 
 The webex-node-bot-framework allows your application to take advantage of this by simply removing the webhookUrl field from the configuration object passed to the flint constructor. If this field is not set, flint will register to listen for the socket based events instead of creating webhooks.
 
 ```js
-var Framework = require('webex-node-bot-framework'); 
+var Framework = require('webex-node-bot-framework');
 
 // No express server needed when running in websocket mode
 
@@ -21,7 +21,7 @@ var config = {
 var framework = new Framework(config);
 framework.start();
 
-// An initialized event means your webhooks are all registered and the 
+// An initialized event means your webhooks are all registered and the
 // framework has created a bot object for all the spaces your bot is in
 framework.on("initialized", function () {
   framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
@@ -34,11 +34,11 @@ framework.on("initialized", function () {
 // Otherwise, this bot was in the space before this server instance started
 framework.on('spawn', function (bot, id, addedBy) {
   if (!addedBy) {
-    // don't say anything here or your bot's spaces will get 
+    // don't say anything here or your bot's spaces will get
     // spammed every time your server is restarted
     framework.debug(`Framework created an object for an existing bot in a space called: ${bot.room.title}`);
   } else {
-    // addedBy is the ID of the user who just added our bot to a new space, 
+    // addedBy is the ID of the user who just added our bot to a new space,
     // Say hello, and tell users what you do!
     bot.say('Hi there, you can say hello to me.  Don\'t forget you need to mention me in a group space!');
   }
@@ -61,10 +61,14 @@ framework.hears(/.*/gim, function(bot, trigger) {
 });
 
 // gracefully shutdown (ctrl-c)
+// This is especially important when using websockets
+// as it cleans up the socket connection. Failure to do
+// this could result in an "excessive device registrations"
+// error during the iterative development process
 process.on('SIGINT', function() {
   framework.debug('stoppping...');
-  // server.close();
   framework.stop().then(function() {
+    server.close();
     process.exit();
   });
 });
