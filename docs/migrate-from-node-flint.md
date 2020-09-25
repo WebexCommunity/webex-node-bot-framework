@@ -1,9 +1,9 @@
 # Differences from the original flint framework
 
-The primary reason for creating the webex-node-bot-framework was to create a framework based on the [webex-jssdk](https://webex.github.io/webex-js-sdk) which continues to be supported as new features and functionality are added to Webex. This version of the proejct was designed with two themes in mind:
+The primary reason for creating the webex-node-bot-framework was to create a framework based on the [webex-jssdk](https://webex.github.io/webex-js-sdk) which continues to be supported as new features and functionality are added to Webex. This version of the project was designed with two themes in mind:
 
-* Mimimize Webex API Calls.  The original flint could be quite slow as it attempted to provide bot developers rich details about the space, membership, message and message author.   This version eliminates some of that data in the interests of efficiency, (but provides convenience methods to enable bot developers to get this information if it is required)
-* Leverage native Webex data types.   The original flint would copy details from the webex objects such as message and person into various flint objects.  This version simply attaches the native Webex objects.   This increases the framework's efficiency and makes it future proof as new attributes are added to the various webex DTOs
+* **Mimimize Webex API Calls**  The original flint could be quite slow as it attempted to provide bot developers rich details about the space, membership, message and message author.   This version eliminates some of that data in the interests of efficiency, but provides convenience methods to enable bot developers to get this information if it is required.
+* **Leverage native Webex data types**   The original flint would copy details from the Webex objects, such as message and person, into various flint objects.  This version simply attaches the native Webex objects.   This increases the framework's efficiency and makes it future proof as new attributes are added to the various Webex DTOs.
 
 It's also worth noting that the `flint` object from node-flint has been renamed simply to `framework`.  For developers porting to from node-flint, it may be simpler to modify code that looks like this:
 
@@ -32,12 +32,12 @@ var config = {
 };
 var flint = new Framework(config);
 ```
-Naming the new Framework object `flint`, allows existing `flint.hears()` and `flint.on()` functions to behave as the currently do.  
+Naming the new Framework object `flint`, allows existing `flint.hears()` and `flint.on()` functions to behave as they currently do.  
 
 ## Missing functionality
-Not all of the functionality in flint has been migrated to the new framework.  Apps that rely on any of the following may wish to postpone their migration (or look to implement these features some other way):
+Not all of the functionality in flint has been migrated to this new framework.  Apps that rely on any of the following may wish to postpone their migration (or look to implement these features some other way):
 
-* Flint exposed many functions that were primiarly thin wrappers around functionality that is natively exposed via the webex SDK.  Since we wish to promote the understanding and use of the SDK these have mostly been removed. The following flint fucntions are NOT exposed by our famework:
+* Flint exposed many functions that were primarily thin wrappers around functionality that is natively exposed via the Webex SDK.  Since we wish to promote the understanding and use of the SDK these have mostly been removed. The following flint functions are NOT exposed by our framework:
   * parseFile(message) -- to access files simply GET the URL(s) in the attachment field of a message.
   * getRooms() -- call framework.getWebexSDK().rooms.list()
   * getRoom(roomId) -- call framework.getWebexSDK().rooms.get(roomId)
@@ -55,36 +55,37 @@ Not all of the functionality in flint has been migrated to the new framework.  A
   * getWebhooks() -- call framework.getWebexSDK().webhooks.list()
   * getAttachmentAction(attachmentActionId) -- call framework.getWebexSDK().attachmentActions.get(attachmentActionId);
 
-* Bot exposed some functions for uploading file streams, that that were implemented by calling the webex APIs directly.  Some of these have been removed or simplified in favor of leveraging the native webex sdk functionality to support this.
+* Bot exposed some functions for uploading file streams, that that were implemented by calling the Webex APIs directly.  Some of these have been removed or simplified in favor of leveraging the native Webex SDK functionality to support this.
   * say() -- this function has not changed and provides an optional mechanism for providing URL based file attachments
   * sayWithLocalFiles - new function adds ability to send a message that includes local files
-  * upload(file) - removed -- call sayWithLocalFile(null, filename) instaed
+  * upload(file) - removed -- call sayWithLocalFile(null, filename) instead
   * uploadStream(filename, stream) -- This remains primarily to demonstrate how a developer needs to create a stream from a filename in order to call the webex.messages.create() function.  The filename parameter is removed and discovered from the stream.
   * messageStreamRoom() -- removed -- call bot.webex.messages.create() with a message object that includes the roomId, the (optional) markdown or text message, and populate the files field with an array containing a single filestream, as described in the documentation for uploadStream
   * getMessages(count) -- removed -- call bot.webex.messages.list({roomId: bot.room.id, max: count})  -- note that this only works when the bot was created with a user token.
 
 
-* Retry logic for pagination and rate limiting.  The philosopy behind the framework is to encourage developers to leverage the Webex SDK (exposed as an element in the frameowrk and bot objects), natively when needed.   When appropriate applications should inspect the reponse headers for pagination and rate limiting (HTTP 429 Response Code) as needed.  `framework.start()` will fail when the framework was passed a config object that includes any of the following options:
+* Retry logic for pagination and rate limiting.  The philosophy behind the framework is to encourage developers to leverage the Webex SDK (exposed as an element in the framework and bot objects), natively when needed.   When appropriate applications should inspect the response headers for pagination and rate limiting (HTTP 429 Response Code) as needed.  `framework.start()` will fail when the framework was passed a config object that includes any of the following options:
    * @property {number} [maxPageItems=50] - Max results that the paginator uses.
    * @property {number} [maxConcurrent=3] - Max concurrent sessions to the Webex API
    * @property {number} [minTime=600] - Min time between consecutive request starts.
    * @property {number} [requeueMinTime=minTime*10] - Min time between consecutive request starts of requests that have been re-queued.
-   * @property {number} [requeueMaxRetry=3] - Msx number of atteempts to make for failed request.
+   * @property {number} [requeueMaxRetry=3] - Max number of attempts to make for failed request.
    * @property {array} [requeueCodes=[429,500,503]] - Array of http result codes that should be retried.
    * @property {number} [queueSize=10000] - Size of the buffer that holds outbound requests.
    * @property {number} [requeueSize=10000] - Size of the buffer that holds outbound re-queue requests.
 
 * Storage. 
-  * There has been no testing of the redis version of the `bot.store()`, `bot.recall()`, `bot.forget()` functions.   While they may work, it is reccomended that developers validate this before publishing a bot that leverages redis.  
+  * There has been no testing of the redis version of the `bot.store()`, `bot.recall()`, `bot.forget()` functions.   While they may work, it is recommended that developers validate this before publishing a bot that leverages redis.  
   * A new framework config option `initBotStorageData` is now available.   Developers can set this to create an initial set of key/value pairs that a bot object will have when it is first spawned.
   * A new mongo storage adaptor is available.  See the Storage Adaptor Changes for more details on how Storage Adaptors now work.
 
+
 ## Spawn events
-Flint would attempt to find all spaces that the bot is part of before completing its initialization.   This could take time and provide inaccurate results, especially for bots that are in over a thousand spaces.  The framework works more like the Webex Teams clients.   By default it tries to find the 100 most recently active spaces at startup (this can be configured using the config option `maxStartupSpaces`).  As the framework processes message:created and membership:created events, it will spawn additional bot objects as needed.   Bots that are spawned due to being added to a new space (since the framework started) will have an additional `addedBy` parameter passed to the ["spawn" event handler](../README.md#"spawn")
+Flint would attempt to find all spaces that the bot is part of before completing its initialization.   This could take time and provide inaccurate results, especially for bots that are in over a thousand spaces.  The framework works more like the Webex Teams clients.   By default, it tries to find the 100 most recently active spaces at startup (this can be configured using the config option `maxStartupSpaces`).  As the framework processes message:created and membership:created events, it will spawn additional bot objects as needed.   Bots that are spawned due to being added to a new space (since the framework started) will have an additional `addedBy` parameter passed to the ["spawn" event handler](../README.md#"spawn")
 
 
 ## Common migration tasks
-Alternatly, since elements of the bot and trigger objects have also changed, one might just bite the bullet, and do some search and replace.  The biggest migration tasks come from the renaming of flint to framework and the change in structures for the bot and trigger objects.  Common case sensitive search and replace tasks might include
+Alternately, since elements of the bot and trigger objects have also changed, one might just bite the bullet, and do some search and replace.  The biggest migration tasks come from the renaming of flint to framework and the change in structures for the bot and trigger objects.  Common case sensitive search and replace tasks might include
 
 * node-flint --> webex-node-bot-framework
 * Flint --> Framework 
@@ -100,6 +101,7 @@ With that said, please review the other changes outlined in this document to det
 
 ## Core Object Changes
 For developer's who are porting existing flint based bots to this framework the following tables provide an overview of the changes to the key objects (note that all dates are strings, not moment objects as they were in node-flint):
+
 
 ## Framework (Formerly Flint)
 **Kind**: global class  
@@ -176,11 +178,11 @@ Trigger Object
 | personMembership  |  --                 | Person Membership object for person             | use bot.getTriggerMembership()    (TODO)  |
 
 ## Event changes
-Node-flint generated a set of `person` events based on membership changes.  For each membership, the framework would fetch the person object associated with that memebership pass it to the event handler.  Since many bots don't even register these handers this seems expensive.  Information like the personEmail and personDisplayName are also already included in the membership DTO.  Finally, bots that truly wish to get the person object can always query it directly via the `framework.getPerson(membership.personId)` function.
+Node-flint generated a set of `person` events based on membership changes.  For each membership, the framework would fetch the person object associated with that membership pass it to the event handler.  Since many bots don't even register these handers this seems expensive.  Information like the personEmail and personDisplayName are also already included in the membership DTO.  Finally, bots that truly wish to get the person object can always query it directly via the `framework.getPerson(membership.personId)` function.
 
  Our framework instead generates a set of related `member` named events and passes the membership associated with the change to event handler.   This makes the framework snappier and the events seem more aptly named (since the membership change may be associated with another bot as well as a person).
 
-Witht this in mind the following node-flint events are now renamed as follows:
+With this in mind the following node-flint events are now renamed as follows:
 * `personEnters` -> `memberAdded`
 * `personExits` -> `memberRemoved`
 * `personAddedAsModerator`  -> `memberAddedAsModerator`
@@ -212,19 +214,17 @@ Our new framework will ONLY generate the `messageCreated` event in instances whe
 
 ## Method Changes
 
-Flint functions that were essentially wrappers around core webex APIs have mostly been removed, in 
+Flint functions that were essentially wrappers around core Webex APIs have mostly been removed, in 
 
 ## Storage Adaptor Changes
 For developer's who are porting existing flint based bots that use the storage adaptor capabilities there are some changes.
 
 The basic `bot.store()`, `bot.recall()`, and `bot.forget()` work as they always have when using the memory default memory storage adaptor, but there are changes in the persistent memory store adaptors.   
 
-A new mongo storage adaptor has been added which has been tested with cloud based mongo atlas DBs.   It adds several new functions:
+A new Mongo storage adaptor has been added which has been tested with cloud based Mongo Atlas DBs.   It adds several new functions:
 
 * initialize() -- this must be called before framework.start() is called and will validate that the configuration is correct
-* initStorage() -- this is called internally by the framework when a new bot is spawned.  If the new framework configuration elememnt `initBotStorageData` is set, these key/value pairs will be set on a the new bot.
+* initStorage() -- this is called internally by the framework when a new bot is spawned.  If the new framework configuration element `initBotStorageData` is set, these key/value pairs will be set on the new bot.
 * writeMetrics() -- is a new, optional, method for storage adaptors that can be called to write breadcrumbs into the database that can be used to build reports on the bot's usage
 
 The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
-
-## Function Changes
