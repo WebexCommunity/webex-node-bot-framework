@@ -1,3 +1,10 @@
+# Version History
+
+## v 2.2.2
+
+* Finally merged an awesome PR from @zapdos26, which cleaned up a lot of embarrasing spelling and syntax errors in my [Migrating from flint guide](./migrate-from-node-flint.md)
+* Better handling during startup of 1-1 spaces where the other participant no longer has a valid Webex account
+
 ## v 2.2.1
 * Added `removeDeviceRegistrationsOnStart` configuration option.   This can be set to `true` during the iterative development process if the developer is using websockets and gets an `excessive device registrations` error, but this should be used carefully as it logs the user associated with the app token out of any clients.  (It is generally safe for bots.)  
   
