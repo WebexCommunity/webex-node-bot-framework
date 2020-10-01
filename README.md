@@ -753,6 +753,7 @@ before emitting and event
     * [.reply(replyTo, message, [format])](#Bot+reply) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.dm(person, [format], message)](#Bot+dm) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.sendCard(cardJson, fallbackText)](#Bot+sendCard) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.dmCard(person, cardJson, fallbackText)](#Bot+dmCard) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.uploadStream(filename, stream)](#Bot+uploadStream) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.censor(messageId)](#Bot+censor) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.roomRename(title)](#Bot+roomRename) ⇒ <code>Promise.&lt;Room&gt;</code>
@@ -1227,6 +1228,41 @@ framework.hears('card please', function(bot, trigger) {
           {
               "type": "Action.Submit",
               "title": "Submit"
+          }
+      ]
+   },
+   "This is the fallback text if the client can't render this card");
+ });
+```
+<a name="Bot+dmCard"></a>
+
+### bot.dmCard(person, cardJson, fallbackText) ⇒ <code>Promise.&lt;Message&gt;</code>
+Send a Card to a 1-1 space.
+
+**Kind**: instance method of [<code>Bot</code>](#Bot)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| person | <code>String</code> | Email or ID of the user to 1-1 message. |
+| cardJson | <code>Object</code> | The card JSON to render.  This can come from the Webex Buttons and Cards Designer. |
+| fallbackText | <code>String</code> | Message to be displayed on client's that can't render cards. |
+
+**Example**  
+```js
+// Simple example
+framework.hears('card for joe please', function(bot, trigger) {
+  bot.dmCard(
+   'joe@email.com',
+   {
+      "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+      "type": "AdaptiveCard",
+      "version": "1.0",
+      "body": [
+          {
+            "type": "TextBlock",
+            "text": "Joe, here is your card!",
+            "weight": "Bolder",
+            "size": "Medium"
           }
       ]
    },
