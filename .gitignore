@@ -17,6 +17,7 @@ node_modules
 # Private environments
 .env
 ToDo.private
+local-tests
 
 # Test version of sample and private tests
 example1.js
