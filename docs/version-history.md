@@ -1,8 +1,13 @@
 # Version History
 
+## v 2.3.0
+
+* Added a new [bot.dmCard](../README.md#Bot+dmCard) method to facilitate sending a card to a user in a 1-1 space
+* Fixed a bug in the startup logic introduced in the v2.2.2 change to better handle spawning in 1-1 spaces where the other participant no longer has a valid webex account
+
 ## v 2.2.2
 
-* Finally merged an awesome PR from @zapdos26, which cleaned up a lot of embarrasing spelling and syntax errors in my [Migrating from flint guide](./migrate-from-node-flint.md)
+* Finally merged an awesome PR from @zapdos26, which cleaned up a lot of embarrassing spelling and syntax errors in my [Migrating from flint guide](./migrate-from-node-flint.md)
 * Better handling during startup of 1-1 spaces where the other participant no longer has a valid Webex account
 
 ## v 2.2.1
