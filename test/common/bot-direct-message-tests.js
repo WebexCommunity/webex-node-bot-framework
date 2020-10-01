@@ -14,6 +14,11 @@ describe('Bot interacts with user in 1-1 space', () => {
   let message;
   let eventsData = {};
   let trigger = {};
+
+  // Let's use markdown by default for these test
+  let origFormat = framework.messageFormat;
+  framework.messageFormat = 'markdown';
+
   let messageCreatedEvent, frameworkMessageEvent, botMessageEvent;
   // Setup the promises for the events that come from user input that mentions a bot
   beforeEach(() => {
@@ -36,7 +41,10 @@ describe('Bot interacts with user in 1-1 space', () => {
     });
   });
 
-
+  after(() => 
+    // restore the default framework message format
+    framework.messageFormat = origFormat
+  );
 
   it('checks for persistent storage from previous tests', () => {
     let bot = common.botForUser1on1Space;
@@ -143,6 +151,75 @@ describe('Bot interacts with user in 1-1 space', () => {
     }
 
     return common.botForUser1on1Space.dm(personId, msg)
+      .then((m) => {
+        message = m;
+        // messages.push(m); 
+        assert(validator.isMessage(message),
+          'create message did not return a valid message');
+        // Wait for all the event handlers and the heard handler to fire
+        return when(messageCreatedEvent);
+      })
+      .catch((e) => {
+        console.error(`${testName} failed: ${e.message}`);
+        return Promise.reject(e);
+      });
+  });
+
+  it('bot sends a plain text message in the 1-1 space', () => {
+    testName = 'bot sends a plain text message in the 1-1 space';
+    if (!common.botForUser1on1Space) {
+      return when(true);
+    }
+    // send the bots response
+    let msg = 'This is a **plain text** message.';
+    let personId = common.userInfo.id;
+    return common.botForUser1on1Space.dm(personId, 'text', msg)
+      .then((m) => {
+        message = m;
+        // messages.push(m); 
+        assert(validator.isMessage(message),
+          'create message did not return a valid message');
+        // Wait for all the event handlers and the heard handler to fire
+        return when(messageCreatedEvent);
+      })
+      .catch((e) => {
+        console.error(`${testName} failed: ${e.message}`);
+        return Promise.reject(e);
+      });
+  });
+
+  it('bot sends a plain text message using a message object in the 1-1 space', () => {
+    testName = 'bot sends a plain text message using a message object in the 1-1 space';
+    if (!common.botForUser1on1Space) {
+      return when(true);
+    }
+    // send the bots response
+    let msg = 'This is a **plain text** message sent in the markdown fields of a message request.';
+    let personId = common.userInfo.id;
+    return common.botForUser1on1Space.dm(personId, 'text', {markdown: msg})
+      .then((m) => {
+        message = m;
+        // messages.push(m); 
+        assert(validator.isMessage(message),
+          'create message did not return a valid message');
+        // Wait for all the event handlers and the heard handler to fire
+        return when(messageCreatedEvent);
+      })
+      .catch((e) => {
+        console.error(`${testName} failed: ${e.message}`);
+        return Promise.reject(e);
+      });
+  });
+
+  it('bot sends a card in the 1-1 space', () => {
+    testName = 'bot sends a card in the 1-1 space';
+    if (!common.botForUser1on1Space) {
+      return when(true);
+    }
+    // send the bots response
+    let cardJson = require('../common/input-card.json');
+    let personEmail = common.userInfo.emails[0];
+    return common.botForUser1on1Space.dmCard(personEmail, cardJson, 'What is your name')
       .then((m) => {
         message = m;
         // messages.push(m); 
