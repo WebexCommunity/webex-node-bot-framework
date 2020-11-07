@@ -54,6 +54,7 @@ class MongoStore {
      * @property {object} [initBotStorageData={}] - Object with any default key/value pairs that a new bot should get upon creation 
      * @property {string} [metricsCollectionName] - Mongo collection name for bot.writeMetric() (will be created if set, but does not exist),
      *     bot.writeMetric() calls will fail if this is not set
+     * @property {Boolean} [metricsStoreUserDetails] - Store detailed user information with metrics, otherwise only store user id and org id
      * @property {Boolean} [singleInstance=false] - Optimize bot.recall() speed if the bot is only running a single instance.
      *     Data is still written to db, but lookups are done from local memory
      *     Should be used with caution!
@@ -459,9 +460,15 @@ class MongoStore {
   writeMetricWithActorData(data, actorPerson) {
     try {
       if (actorPerson) {
-        data.actorEmail = actorPerson.emails[0];
-        data.actorDisplayName = actorPerson.displayName;
-        data.actorDomain = _.split(_.toLower(data.actorEmail), '@', 2)[1];
+        if (metricsStoreUserDetails) {
+          data.actorEmail = actorPerson.emails[0];
+          data.actorDisplayName = actorPerson.displayName;
+          data.actorDomain = _.split(_.toLower(data.actorEmail), '@', 2)[1];
+        }
+        else {
+          data.actorId = actorPerson.id;
+        }
+        
         data.actorOrgId = actorPerson.orgId;
       }
     } catch (e) {
