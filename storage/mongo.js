@@ -54,7 +54,7 @@ class MongoStore {
      * @property {object} [initBotStorageData={}] - Object with any default key/value pairs that a new bot should get upon creation 
      * @property {string} [metricsCollectionName] - Mongo collection name for bot.writeMetric() (will be created if set, but does not exist),
      *     bot.writeMetric() calls will fail if this is not set
-     * @property {Boolean} [metricsStoreUserDetails] - Store detailed user information with metrics, otherwise only store user id and org id
+     * @property {Boolean} [metricsStoreIdsOnly] - Only store user id and org id in the metrics store
      * @property {Boolean} [singleInstance=false] - Optimize bot.recall() speed if the bot is only running a single instance.
      *     Data is still written to db, but lookups are done from local memory
      *     Should be used with caution!
@@ -68,7 +68,7 @@ class MongoStore {
     this.initizalized = false;
     this.config = config;
 
-    // Use default storage collection name if none set
+        // Use default storage collection name if none set
     this.config.metricsCollectionName = (config.metricsCollectionName) ? config.metricsCollectionName : 'webexBotFramworkStorage';
 
     // As an optimization this storage adapter can run in "single instance" mode and do "recalls" from memory
@@ -83,6 +83,11 @@ class MongoStore {
     // this.connectUrl = encodeURI(`mongodb+srv://${config.mongoUser}:${config.mongoPass}@${config.mongoConnectionStringSuffix}`);
     // this.connectUrl = encodeURI(`mongodb+srv://tropoBot:7M9rdmW6Goq1yAwg@cluster0-5rfnd.mongodb.net/new-cardSchool-dev?retryWrites=true&w=majority`);
     this.connectUrl = encodeURI(config.mongoUri);
+
+    // default to false if the value is not set in the config
+    if(config.metricsStoreIdsOnly === undefined) {
+      this.config.metricsStoreIdsOnly = false;
+    }
   }
 
   /**
@@ -460,15 +465,16 @@ class MongoStore {
   writeMetricWithActorData(data, actorPerson) {
     try {
       if (actorPerson) {
-        if (metricsStoreUserDetails) {
+        if (this.config.metricsStoreIdsOnly) {
+          data.actorId = actorPerson.id;
+        }
+        else {
           data.actorEmail = actorPerson.emails[0];
           data.actorDisplayName = actorPerson.displayName;
           data.actorDomain = _.split(_.toLower(data.actorEmail), '@', 2)[1];
         }
-        else {
-          data.actorId = actorPerson.id;
-        }
-        
+
+        // always store orgId
         data.actorOrgId = actorPerson.orgId;
       }
     } catch (e) {
