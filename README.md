@@ -739,6 +739,7 @@ before emitting and event
 | isModerator | <code>boolean</code> | If bot is a moderator |
 | isGroup | <code>boolean</code> | If bot is in Group Room |
 | isDirect | <code>boolean</code> | If bot is in 1:1/Direct Room |
+| isTeam | <code>boolean</code> | If bot is in a Room associated to a Team |
 | isDirectTo | <code>string</code> | Recipient Email if bot is in 1:1/Direct Room |
 | lastActivity | <code>date</code> | Last bot activity |
 
@@ -1707,6 +1708,7 @@ Options Object
 | [storageCollectionName] | <code>string</code> | <code>&quot;webexBotFramworkStorage&quot;</code> | Mongo collection name for bot.[store,recall]() (will be created if does not exist) |
 | [initBotStorageData] | <code>object</code> | <code>{}</code> | Object with any default key/value pairs that a new bot should get upon creation |
 | [metricsCollectionName] | <code>string</code> |  | Mongo collection name for bot.writeMetric() (will be created if set, but does not exist),     bot.writeMetric() calls will fail if this is not set |
+| [metricsStoreIdsOnly] | <code>Boolean</code> |  | Only store user id and org id in the metrics store |
 | [singleInstance] | <code>Boolean</code> | <code>false</code> | Optimize bot.recall() speed if the bot is only running a single instance.     Data is still written to db, but lookups are done from local memory     Should be used with caution! |
 
 <a name="MongoStore+initialize"></a>
