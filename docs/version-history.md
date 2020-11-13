@@ -1,5 +1,10 @@
 # Version History
 
+## v 2.3.2
+
+* Bug fix to properly create a new team space in `bot.newRoom()` if isTeam param is true.
+* New metricsStoreIdsOnly config param for mongo storage adapter.  If set only the actor's personId and orgId will be logged in a call to `bot.writeMetric()`.  The default behavior also logs the actor's email, domain, and displayName, if a valid personId is passed as the actor parameter.
+
 ## v 2.3.1
 
 * Moved repo to https://github.com/WebexSamples/webex-node-bot-framework
