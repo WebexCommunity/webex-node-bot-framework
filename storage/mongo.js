@@ -488,7 +488,7 @@ class MongoStore {
         return when(mResponse.ops[0]);
       })
       .catch((e) => {
-        return when.reject(new Error(`Failed writing metric to dabease: ${e.message}.  Metric data is lost`));
+        return when.reject(new Error(`Failed writing metric to database: ${e.message}.  Metric data is lost`));
       });
   };
 
