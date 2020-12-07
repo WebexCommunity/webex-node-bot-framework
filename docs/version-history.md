@@ -1,5 +1,11 @@
 # Version History
 
+## v 2.3.3
+* Fix but to correctly emit memberRemovedAsModerator event
+* Fixed typo in error message in Mongo storage adapter
+* Thank you briancp!
+
+* Bug fix to properly create a new team space in `bot.newRoom()` if isTeam param is true.
 ## v 2.3.2
 
 * Bug fix to properly create a new team space in `bot.newRoom()` if isTeam param is true.
