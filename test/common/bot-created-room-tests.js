@@ -788,6 +788,28 @@ describe('User Created Room to create a Test Bot', () => {
             return Promise.reject(e);
           });
       });
+
+      it('renames the test room', () => {
+        let testName = 'renames the test room';
+
+        // Wait for the events associated with a new message before completing test..
+        roomUpdatedEvent = new Promise((resolve) => {
+          common.frameworkRoomUpdatedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        roomRenamedEvent = new Promise((resolve) => {
+          common.frameworkRoomRenamedEventHandler(testName, framework, eventsData, resolve);
+        });
+
+        return botCreatedRoomBot.roomRename('This room has been renamed')
+          .then(() => {
+            return when.all([roomUpdatedEvent, roomRenamedEvent]);
+          })
+          .catch((e) => {
+            console.error(`${testName} failed: ${e.message}`);
+            return Promise.reject(e);
+          });
+      });
     });
   });
 
