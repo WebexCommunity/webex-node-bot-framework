@@ -1446,6 +1446,7 @@ Room Locked event.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
+| room | <code>object</code> | Room Object |
 | id | <code>string</code> | Framework UUID |
 
 <a name="event_roomUnocked"></a>
@@ -1459,6 +1460,7 @@ Room Unocked event.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
+| room | <code>object</code> | Room Object |
 | id | <code>string</code> | Framework UUID |
 
 <a name="event_roomRenamed"></a>
@@ -1472,6 +1474,7 @@ Room Renamed event.
 | Name | Type | Description |
 | --- | --- | --- |
 | bot | <code>object</code> | Bot Object |
+| room | <code>object</code> | Room Object |
 | id | <code>string</code> | Framework UUID |
 
 <a name="event_memberEnters"></a>

@@ -678,7 +678,31 @@ module.exports = {
       assert((id === framework.id),
         'id returned in framework.on("roomCreated") is not the one expected');
       promiseResolveFunction(assert(validator.isRoom(room),
-        'roomCreated event did not include a valid message'));
+        'roomCreated event did not include a valid room'));
+    });
+  },
+
+  frameworkRoomUpdatedEventHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    this.framework.once('roomUpdated', (room, id) => {
+      framework.debug(`Framework roomUpdated event occurred in test ${testName}`);
+      eventsData.room = room;
+      assert((id === framework.id),
+        'id returned in framework.on("roomUpdated") is not the one expected');
+      promiseResolveFunction(assert(validator.isRoom(room),
+        'roomUpdated event did not include a valid room'));
+    });
+  },
+
+  frameworkRoomRenamedEventHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    this.framework.once('roomRenamed', (bot, room, id) => {
+      framework.debug(`Framework roomRenamed event occurred in test ${testName}`);
+      eventsData.room = room;
+      assert((eventsData.bot.id == bot.id),
+        'bot returned in framework.on("roomRenamed") is not the one expected');
+      assert((id === framework.id),
+        'id returned in framework.on("roomRenamed") is not the one expected');
+      promiseResolveFunction(assert(validator.isRoom(room),
+        'roomRenamed event did not include a valid room'));
     });
   },
 
@@ -785,6 +809,10 @@ module.exports = {
       assert((bot.id === eventsData.bot.id),
         'bot returned in framework.on("memberEnters") is not the one expected');
       // TODO validate membership
+      assert((membership.id === eventsData.membership.id),
+        'membership returned in framework.on("memberEnters") is not the one expected');
+      assert(validator.isMembership(membership),
+        'membership returned in framework.on("memberEnters") is not valid');
       assert((id === framework.id),
         'id returned in framework.on("memberEnters") is not the one expected');
       promiseResolveFunction(true);
