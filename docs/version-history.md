@@ -1,5 +1,11 @@
 # Version History
 
+## v 2.3.4
+* Fix to correctly emit roomRenamed, roomLocked and roomUnlocked events, with an updated room object.
+* Remove old comments about bot.reply not being generally available
+* Remove old "Webex Teams" branding.  (Webex Teams is now simply "Webex")
+* Thank you master-hax!
+
 ## v 2.3.3
 * Fix but to correctly emit memberRemovedAsModerator event
 * Fixed typo in error message in Mongo storage adapter
