@@ -17,7 +17,8 @@ app.use(bodyParser.json());
 var config = {
   webhookUrl: 'http://myserver.com/framework',
   token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u',
-  port: 80
+  port: 80,
+  messageFormat: 'markdown'
 };
 
 // init framework
@@ -30,10 +31,9 @@ framework.on("initialized", async function () {
 
 // send an example card in response to any input
 framework.hears(/.*/, function(bot) {
-  bot.sendCard({
-    // Fallback text for clients that don't render cards
-    markdown: "[Tell us about yourself](https://www.example.com/form/book-vacation). We just need a few more details to get you booked for the trip of a lifetime!",
-    attachments: cardBody
+  // Fallback text for clients that don't render cards - messageFormat (in this example using Markdown) is defined in Framework Options
+  const fallbackText = "[Tell us about yourself](https://www.example.com/form/book-vacation). We just need a few more details to get you booked for the trip of a lifetime!";
+  bot.sendCard(cardBody, fallbackText);
   });
 });
 
