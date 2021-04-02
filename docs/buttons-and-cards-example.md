@@ -3,7 +3,7 @@ The framework supports a bot.sendCard function for sending [Buttons and Cards](h
 
 The input to a sendCard is simply the card JSON, which can be copied from the [Webex For Developers Card Designer](https://developer.webex.com/buttons-and-cards-designer), and fallback message to be rendered on clients that don't support Buttons and Cards.
 
-If the card that is sent includes an Action.Submit button, the framework will generate an `attachmentAction` event whenever a user clicks on it.  Applications can process these events by implementing a `framework.on('attachmentAction')` handler.  The parameters passed to this hander will include the bot object for the space where the button was pushed along with a trigger that includes an attachmentAction object as described in the [Buttons and Cards Guide](https://developer.webex.com/docs/api/guides/cards/working-with-cards)
+If the card that is sent includes an Action.Submit button, the framework will generate an `attachmentAction` event whenever a user clicks on it.  Applications can process these events by implementing a `framework.on('attachmentAction')` handler.  The parameters passed to this hander will include the bot object for the space where the button was pushed along with a trigger that includes an attachmentAction object as described in the [Buttons and Cards Guide](https://developer.webex.com/docs/api/guides/cards#working-with-cards)
 
 ```js
 var Framework = require('webex-node-bot-framework');
@@ -17,7 +17,8 @@ app.use(bodyParser.json());
 var config = {
   webhookUrl: 'http://myserver.com/framework',
   token: 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u',
-  port: 80
+  port: 80,
+  messageFormat: 'markdown'
 };
 
 // init framework
@@ -30,11 +31,9 @@ framework.on("initialized", async function () {
 
 // send an example card in response to any input
 framework.hears(/.*/, function(bot) {
-  bot.sendCard({
-    // Fallback text for clients that don't render cards
-    markdown: "[Tell us about yourself](https://www.example.com/form/book-vacation). We just need a few more details to get you booked for the trip of a lifetime!",
-    attachments: cardBody
-  });
+  // Fallback text for clients that don't render cards - messageFormat (in this example using Markdown) is defined in Framework Options
+  const fallbackText = "[Tell us about yourself](https://www.example.com/form/book-vacation). We just need a few more details to get you booked for the trip of a lifetime!";
+  bot.sendCard(cardBody, fallbackText);
 });
 
 // Process a submitted card
