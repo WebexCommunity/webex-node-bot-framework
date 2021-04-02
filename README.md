@@ -1184,7 +1184,7 @@ Send a Webex Teams Card to room.
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 **See**
 
-- [Buttons and Cards Guide](https://developer.webex.com/docs/api/guides/cards/working-with-cards) for further information.
+- [Buttons and Cards Guide](https://developer.webex.com/docs/api/guides/cards#working-with-cards) for further information.
 - [Buttons and Cards Framework Example](./docs/buttons-and-cards-example.md)
 
 
