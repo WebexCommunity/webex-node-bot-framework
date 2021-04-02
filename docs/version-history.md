@@ -1,5 +1,8 @@
 # Version History
 
+## v 2.3.5
+* Merge PRs from jeremywillans to use new Webex API URL, and to fix the sendCard example.
+* Update some dependencies
 ## v 2.3.4
 * Fix to correctly emit roomRenamed, roomLocked and roomUnlocked events, with an updated room object.
 * Remove old comments about bot.reply not being generally available
