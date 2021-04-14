@@ -69,7 +69,7 @@ class MongoStore {
     this.config = config;
 
     // Use default storage collection name if none set
-    this.config.metricsCollectionName = (config.metricsCollectionName) ? config.metricsCollectionName : 'webexBotFramworkStorage';
+    this.config.metricsCollectionName = (config.metricsCollectionName) ? config.metricsCollectionName : 'webexBotFrameworkStorage';
 
     // As an optimization this storage adapter can run in "single instance" mode and do "recalls" from memory
     // Developers should set this only if they are SURE that only one instance of the bot is running.
