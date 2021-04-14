@@ -1104,7 +1104,7 @@ function cleanupFromPreviousTests(framework, user) {
     if ((bot.room.title === User_Test_Space_Title) ||
       (bot.room.title === Bot_Test_Space_Title)) {
       framework.debug('Removing room left over from previous test...');
-      bot.getWebexSDK.rooms.remove(bot.room);
+      bot.getWebexSDK().rooms.remove(bot.room);
     } else if (bot.room.type == 'direct') {
       if (bot.isDirectTo == user.emails[0]) {
         framework.debug(`Found existing direct space with ${bot.room.title}.  Will run direct message tests.`);
