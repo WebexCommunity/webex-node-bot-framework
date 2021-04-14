@@ -40,7 +40,7 @@ if (process.env.MONGO_URI) {
   console.error('The mongo storage driver requires the following environment variables:\n' +
     '* MONGO_URI -- mongo connection URL see https://docs.mongodb.com/manual/reference/connection-string' +
     '\n\nThe following optional environment variables will also be used if set:\n' +
-    '* MONGO_BOT_STORE -- name of collection for bot storage elements (will be created if does not exist).  Will use "webexBotFramworkStorage" if not set\n' +
+    '* MONGO_BOT_STORE -- name of collection for bot storage elements (will be created if does not exist).  Will use "webexBotFrameworkStorage" if not set\n' +
     '* MONGO_BOT_METRICS -- name of a collection to write bot metrics to (will be created if does not exist). bot.writeMetric() calls will fail if not set\n' +
     '* MONGO_INIT_STORAGE -- stringified ojbect aassigned as the default startup config if non exists yet\n' +
     '* MONGO_SINGLE_INSTANCE_MODE -- Optimize lookups speeds when only a single bot server instance is running\n\n' +

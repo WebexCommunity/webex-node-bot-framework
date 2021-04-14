@@ -50,7 +50,7 @@ class MongoStore {
            This is typically in the format of:\n mongodb+srv://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]],
            ie: mongodb+srv://myUser:secretPassw0rd@cluster#-area.mongodb.net/myClusterDBName?retryWrites=true&w=majority`,
            see:  https://docs.mongodb.com/manual/reference/connection-string/
-     * @property {string} [storageCollectionName=webexBotFramworkStorage] - Mongo collection name for bot.[store,recall]() (will be created if does not exist)
+     * @property {string} [storageCollectionName=webexBotFrameworkStorage] - Mongo collection name for bot.[store,recall]() (will be created if does not exist)
      * @property {object} [initBotStorageData={}] - Object with any default key/value pairs that a new bot should get upon creation 
      * @property {string} [metricsCollectionName] - Mongo collection name for bot.writeMetric() (will be created if set, but does not exist),
      *     bot.writeMetric() calls will fail if this is not set
