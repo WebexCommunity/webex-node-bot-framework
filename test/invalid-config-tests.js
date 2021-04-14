@@ -7,7 +7,7 @@ console.log('********************************');
 console.log('* Invalid configuration tests...');
 console.log('********************************\n');
 
-// Validate that framwork.start() fails with invalid configs
+// Validate that framework.start() fails with invalid configs
 describe('#framework invalid config tests', () => {
   let options = {};
   let f = null;
