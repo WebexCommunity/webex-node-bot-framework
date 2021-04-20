@@ -507,6 +507,9 @@ describe('User Created Room to create a Test Bot', () => {
           .then(() => {
             assert(validator.objIsEqual(message, eventsData.message),
               'message returned by API did not match the one from the messageCreated event');
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
             return bot.reply(message, 'This is the first reply');
           })
           .then((m) => {
@@ -515,6 +518,14 @@ describe('User Created Room to create a Test Bot', () => {
               `${testName} did not return a valid message`);
             assert((typeof m.parentId === 'string'),
               `${testName} did not return a message with a parentId`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
             return bot.reply(message, 'This is a reply to the reply!');
           })
           .then((m) => {
@@ -523,6 +534,14 @@ describe('User Created Room to create a Test Bot', () => {
               `${testName} did not return a valid message`);
             assert((typeof m.parentId === 'string'),
               `${testName} did not return a message with a parentId`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
             return bot.reply(message,
               {
                 roomId: 'this will be ignored',
@@ -536,52 +555,92 @@ describe('User Created Room to create a Test Bot', () => {
               `${testName} did not return a valid message`);
             assert((typeof m.parentId === 'string'),
               `${testName} did not return a message with a parentId`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
             return bot.reply(messageId,
               'This is **another** reply, using an ID instead of an message object');
           })
           .then((m) => {
             message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
             newMessage = {
               text: "This is a reply sent as a message object"
             }; 
-            assert(validator.isMessage(message),
-              `${testName} did not return a valid message`);
-            assert((typeof m.parentId === 'string'),
-              `${testName} did not return a message with a parentId`);
             return bot.reply(message, newMessage);
           })
           .then((m) => {
             message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
             newMessage = {
               markdown: "This is a **markdown** formatted reply sent as a message object"
             }; 
-            assert(validator.isMessage(message),
-              `${testName} did not return a valid message`);
-            assert((typeof m.parentId === 'string'),
-              `${testName} did not return a message with a parentId`);
             return bot.reply(message, newMessage);
           })
           .then((m) => {
             message = m;
+            assert(validator.isMessage(message),
+              `${testName} did not return a valid message`);
+            assert((typeof m.parentId === 'string'),
+              `${testName} did not return a message with a parentId`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
             newMessage = {
               text: "This is a reply sent as a message object that includes a file attachment",
               files: [process.env.HOSTED_FILE]
             }; 
-            assert(validator.isMessage(message),
-              `${testName} did not return a valid message`);
-            assert((typeof m.parentId === 'string'),
-              `${testName} did not return a message with a parentId`);
             return bot.reply(message, newMessage);
           })
           .then((m) => {
             message = m;
-            newMessage = {
-              text: "This is a reply sent as a message object that sets roomId and parentId"
-            }; 
             assert(validator.isMessage(message),
               `${testName} did not return a valid message`);
             assert((typeof m.parentId === 'string'),
               `${testName} did not return a message with a parentId`);
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
+            newMessage = {
+              text: "This is a reply sent as a message object that sets roomId and parentId"
+            }; 
             return bot.reply(message, newMessage);
           })
           .then((m) => {
@@ -591,18 +650,30 @@ describe('User Created Room to create a Test Bot', () => {
             assert((typeof m.parentId === 'string'),
               `${testName} did not return a message with a parentId`);
             framework.messageFormat = 'text';
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
+            messageCreatedEvent = new Promise((resolve) => {
+              common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+            });
             return bot.reply(message,
               'This is **the final** reply, with the format set explicitly', 'markdown');
           })
           .then((m) => {
             message = m;
-            // Message ID is not set to a non top level message
+            // Message ID is not set to a non top level message, used in next test
             messageId = m.id;
             assert(validator.isMessage(message),
               `${testName} did not return a valid message`);
             assert((typeof m.parentId === 'string'),
               `${testName} did not return a message with a parentId`);
-            framework.messageFormat = 'text';
+            return when(messageCreatedEvent);
+          })
+          .then(() => {
+            assert(validator.objIsEqual(message, eventsData.message),
+              'message returned by API did not match the one from the messageCreated event');
             // Reset the default message formate before finishing
             return when(framework.messageFormat = messageFormat);
           })
