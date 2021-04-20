@@ -19,13 +19,17 @@ describe('Bot interacts with user in 1-1 space', () => {
   let origFormat = framework.messageFormat;
   framework.messageFormat = 'markdown';
 
+  if (!common.botForUser1on1Space) {
+    console.error('No 1-1 space to run direct message tests.  This isn\'t bad, it just is...');
+    console.error('If you want to run the direct message tests, manually create a 1-1 space with your test bot and test user.');
+    return;
+  }
+
+
   let messageCreatedEvent, frameworkMessageEvent, botMessageEvent;
   // Setup the promises for the events that come from user input that mentions a bot
   beforeEach(() => {
     message = {};
-    if (!common.botForUser1on1Space) {
-      return when(true);
-    }
 
     // Wait for the events associated with a new message before completing test..
     eventsData = { bot: common.botForUser1on1Space };
@@ -67,11 +71,6 @@ describe('Bot interacts with user in 1-1 space', () => {
 
   it('hears the user without needing to be mentioned', () => {
     testName = 'hears the user without needing to be mentioned';
-    if (!common.botForUser1on1Space) {
-      console.error('No 1-1 space to run direct message tests.  This isn\'t bad, it just is...');
-      console.error('If you want to run the direct message tests, manually create a 1-1 space with your test bot and test user.');
-      return when(true);
-    }
     // Wait for the hears event associated with the input text
     const heard = new Promise((resolve) => {
       framework.hears(/^DM: hi.*/igm, (b, t) => {
@@ -105,9 +104,6 @@ describe('Bot interacts with user in 1-1 space', () => {
 
   it('bot responds with a direct mention via email', () => {
     testName = 'bot responds with a direct mention';
-    if (!common.botForUser1on1Space) {
-      return when(true);
-    }
     // send the bots response
     let msg = 'I heard you';
     let email = common.botForUser1on1Space.isDirectTo;
@@ -136,9 +132,6 @@ describe('Bot interacts with user in 1-1 space', () => {
 
   it('bot responds with a direct mention via personId', () => {
     testName = 'bot responds with a direct mention via personId';
-    if (!common.botForUser1on1Space) {
-      return when(true);
-    }
     // send the bots response
     let msg = 'I heard you - by personId this time.';
     let personId = common.userInfo.id;
@@ -167,9 +160,6 @@ describe('Bot interacts with user in 1-1 space', () => {
 
   it('bot sends a plain text message in the 1-1 space', () => {
     testName = 'bot sends a plain text message in the 1-1 space';
-    if (!common.botForUser1on1Space) {
-      return when(true);
-    }
     // send the bots response
     let msg = 'This is a **plain text** message.';
     let personId = common.userInfo.id;
@@ -190,9 +180,6 @@ describe('Bot interacts with user in 1-1 space', () => {
 
   it('bot sends a plain text message using a message object in the 1-1 space', () => {
     testName = 'bot sends a plain text message using a message object in the 1-1 space';
-    if (!common.botForUser1on1Space) {
-      return when(true);
-    }
     // send the bots response
     let msg = 'This is a **plain text** message sent in the markdown fields of a message request.';
     let personId = common.userInfo.id;
@@ -213,9 +200,6 @@ describe('Bot interacts with user in 1-1 space', () => {
 
   it('bot sends a card in the 1-1 space', () => {
     testName = 'bot sends a card in the 1-1 space';
-    if (!common.botForUser1on1Space) {
-      return when(true);
-    }
     // send the bots response
     let cardJson = require('../common/input-card.json');
     let personEmail = common.userInfo.emails[0];
