@@ -1,5 +1,11 @@
 # Version History
 
+## v 2.3.7
+
+* Merge PR from jeremywillans to add support for Blockquote in Markdown
+* Merge PR from jeremywillans to fix bot.isLocked attribute on roomLocked/Unlocked event
+* Update dependencies to reduce npm and dependabot warnings
+
 ## v 2.3.6
 
 * Merge PR from jeremywillans to fix incorrect mongo storageCollectionName

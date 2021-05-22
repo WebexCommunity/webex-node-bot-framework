@@ -1,6 +1,6 @@
 {
   "name": "webex-node-bot-framework",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "description": "Webex Teams Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
@@ -37,14 +37,14 @@
     "moment": "^2.24.0",
     "mongodb": "^3.5.7",
     "url": "^0.11.0",
-    "validator": "^12.0.0",
+    "validator": "^13.6.0",
     "webex": "^1.99.0",
     "when": "^3.7.8"
   },
   "devDependencies": {
-    "doctoc": "^1.4.0",
-    "dotenv": "^8.2.0",
-    "jsdoc-to-markdown": "^5.0.3",
-    "mocha": "^6.2.2"
+    "doctoc": "^2.0.0",
+    "dotenv": "^10.0.0",
+    "jsdoc-to-markdown": "^7.0.1",
+    "mocha": "^8.4.0"
   }
 }
