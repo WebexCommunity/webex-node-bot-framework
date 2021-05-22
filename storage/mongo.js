@@ -50,7 +50,7 @@ class MongoStore {
            This is typically in the format of:\n mongodb+srv://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]],
            ie: mongodb+srv://myUser:secretPassw0rd@cluster#-area.mongodb.net/myClusterDBName?retryWrites=true&w=majority`,
            see:  https://docs.mongodb.com/manual/reference/connection-string/
-     * @property {string} [storageCollectionName=webexBotFramworkStorage] - Mongo collection name for bot.[store,recall]() (will be created if does not exist)
+     * @property {string} [storageCollectionName=webexBotFrameworkStorage] - Mongo collection name for bot.[store,recall]() (will be created if does not exist)
      * @property {object} [initBotStorageData={}] - Object with any default key/value pairs that a new bot should get upon creation 
      * @property {string} [metricsCollectionName] - Mongo collection name for bot.writeMetric() (will be created if set, but does not exist),
      *     bot.writeMetric() calls will fail if this is not set
@@ -69,7 +69,7 @@ class MongoStore {
     this.config = config;
 
     // Use default storage collection name if none set
-    this.config.metricsCollectionName = (config.metricsCollectionName) ? config.metricsCollectionName : 'webexBotFramworkStorage';
+    this.config.metricsCollectionName = (config.metricsCollectionName) ? config.metricsCollectionName : 'webexBotFrameworkStorage';
 
     // As an optimization this storage adapter can run in "single instance" mode and do "recalls" from memory
     // Developers should set this only if they are SURE that only one instance of the bot is running.

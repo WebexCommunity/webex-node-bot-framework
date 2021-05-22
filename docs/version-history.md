@@ -1,20 +1,29 @@
 # Version History
 
+## v 2.3.6
+
+* Merge PR from jeremywillans to fix incorrect mongo storageCollectionName
+* Thank you Chuck Shipman
+
 ## v 2.3.5
+
 * Merge PRs from jeremywillans to use new Webex API URL, and to fix the sendCard example.
 * Update some dependencies
+
 ## v 2.3.4
+
 * Fix to correctly emit roomRenamed, roomLocked and roomUnlocked events, with an updated room object.
 * Remove old comments about bot.reply not being generally available
 * Remove old "Webex Teams" branding.  (Webex Teams is now simply "Webex")
 * Thank you master-hax!
 
 ## v 2.3.3
+
 * Fix but to correctly emit memberRemovedAsModerator event
 * Fixed typo in error message in Mongo storage adapter
 * Thank you briancp!
-
 * Bug fix to properly create a new team space in `bot.newRoom()` if isTeam param is true.
+
 ## v 2.3.2
 
 * Bug fix to properly create a new team space in `bot.newRoom()` if isTeam param is true.
