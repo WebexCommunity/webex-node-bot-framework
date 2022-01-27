@@ -1,5 +1,9 @@
 # Version History
 
+## v 2.3.8
+
+* Fix bug in framework.getPersonByEmail helper method
+
 ## v 2.3.7
 
 * Merge PR from jeremywillans to add support for Blockquote in Markdown
