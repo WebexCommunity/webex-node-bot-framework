@@ -37,6 +37,7 @@ Feel free to join the ["Webex Node Bot Framework" space on Webex](https://eurl.i
   - [Authentication](#authentication)
   - [Storage](#storage)
   - [Bot Accounts](#bot-accounts)
+  - [Troubleshooting](#troubleshooting)
 - [Framework Reference](#framework-reference)
   - [Classes](#classes)
   - [Objects](#objects)
@@ -285,7 +286,6 @@ See [MongoStore](#MongoStore), for details on how to configure this storage adap
 
 The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
 
-
 ## Bot Accounts
 
 **When using "Bot Accounts" the major differences are:**
@@ -307,8 +307,26 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 * If defining a framework.hears() using regex, the trigger.args array is the entire
   message.
 
-# Framework Reference
+## Troubleshooting
 
+A common complaint from new framework developers is "My bot is not responding to  messages!".  If this is happening to you, here are a few things to check:
+
+1. Make sure you have configured your app with the token that belongs to the bot you are sending messages to.
+2. Make sure your framework based app is up and running.
+3. If using webhooks, make sure that your Webhook URL is reachable from the public internet.  If you aren't sure how to test this, remove the `webhookUrl` key from your framework config object.   This will use websockets which are more likely to work in development configurations.
+4. If interacting with a bot in a group space, make sure to at-mention your bot when you send it a message.  Only messages that specifically at-mention a bot by name are sent to the bot logic.
+
+If you are having intermittent problems with your bot failing to respond to messages this may be a problem with the Webex services itself, a problem with the framework, or a problem with the way you have configured your `framework.hears(...)` methods.   One way to isolate the problem is to add a handler for the internal framework log events, as follows
+
+```javascript
+framework.on('log', (msg) => {
+  console.log(msg);
+});
+```
+
+This will cause your app to include framework logging which provides details about every message received, and every `framework.hears()` handler that is invoked in response to those messages.   If you don't see the message you are sending to your bot, contact Webex developer support.  If you do see the message, check the logs to validate that your `framework.hears()` handler is being called.   You may need to modify the phrase. 
+
+# Framework Reference
 
 ## Classes
 
