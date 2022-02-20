@@ -1,5 +1,9 @@
 # Version History
 
+## v 2.3.9
+
+* Emit framework log events with details about framework.hears() calls
+
 ## v 2.3.8
 
 * Fix bug in framework.getPersonByEmail helper method
