@@ -4,7 +4,7 @@ Some bots may be designed to only work with a particular set of users.   The fra
 
 ## Email domain restrictions
 
-In many cases developers may build bots that are meant to be used only by employees of their company (or possibly of several companies).   Setting the framework config's  `restrictedToEmailDomains` parameter to a comma separated list of email domains instructs the framework to essentially ignore any spaces where the membership list includes users who's email addresses are not in the restricted domain list.
+In many cases developers may build bots that are meant to be used only by employees of their company (or possibly of several companies).   Setting the framework config's  `restrictedToEmailDomains` parameter to a comma separated list of email domains instructs the framework to essentially ignore any spaces where the membership list includes users whose email addresses are not in the restricted domain list.
 
 ## Guided Mode
 
