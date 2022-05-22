@@ -16,9 +16,9 @@ npm run build
 
 #### Test
 
-Before submitting a pull request, please validate that all tests work and are augmented as necessary, to test your new functionality.   It is reccomended that you familiarize yourself with the tests BEFORE begining any feature related work.
+Before submitting a pull request, please validate that all tests work and are augmented as necessary, to test your new functionality.   It is recommended that you familiarize yourself with the tests BEFORE beginning any feature related work.
 
-The tests require the following environment variables which will be read in from a .env file if one is available.
+The tests require the following environment variables which will be read in from a .env file, in the test directory, if one is available.
 | Variable| Value | Purpose                    |
 | --------------- | -------------- | ------------------------------ | 
 |BOT_API_TOKEN             | Token of a bot created on [Webex For Developers](https://developer.webex.com/my-apps/new/bot)| Identity of bot to test framework with.  There is no need to have any actual bot code associated with this token, in fact its probably better if there isnt.|
