@@ -31,7 +31,6 @@ Feel free to join the ["Webex Node Bot Framework" space on Webex](https://eurl.i
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
   - [Installation](#installation)
   - [Overview](#overview)
   - [Authentication](#authentication)
@@ -324,9 +323,10 @@ framework.on('log', (msg) => {
 });
 ```
 
-This will cause your app to include framework logging which provides details about every message received, and every `framework.hears()` handler that is invoked in response to those messages.   If you don't see the message you are sending to your bot, contact Webex developer support.  If you do see the message, check the logs to validate that your `framework.hears()` handler is being called.   You may need to modify the phrase. 
+This will cause your app to include framework logging which provides details about every message received, and every `framework.hears()` handler that is invoked in response to those messages.   If you don't see the message you are sending to your bot, contact Webex developer support.  If you do see the message, check the logs to validate that your `framework.hears()` handler is being called.   You may need to modify the phrase. See the [framework.hears documentation](#Framework+hears)
 
 # Framework Reference
+
 
 ## Classes
 
