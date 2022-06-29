@@ -1,5 +1,10 @@
 # Version History
 
+## v 2.3.10
+
+* Updated many dependencies
+* Grammar fix in contributing.md - Thank you Tim Statler!
+
 ## v 2.3.9
 
 * Emit framework log events with details about framework.hears() calls
