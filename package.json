@@ -45,9 +45,5 @@
     "dotenv": "^10.0.0",
     "jsdoc-to-markdown": "^7.1.1",
     "mocha": "^10.0.0"
-  },
-  "resolutions": {
-    "ansi-regex": "4.1.1",
-    "glob-parent": "5.1.2"
   }
 }
