@@ -1,5 +1,9 @@
 # Version History
 
+## v 2.3.11
+
+* Add debugging for message processing.  Set the environment DEBUG=framework for additional details on how th framework is processing incoming messages.
+
 ## v 2.3.10
 
 * Updated many dependencies
