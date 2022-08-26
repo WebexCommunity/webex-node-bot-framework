@@ -33,11 +33,11 @@
   "license": "MIT",
   "dependencies": {
     "https-proxy-agent": "^5.0.0",
-    "moment": "^2.29.2",
+    "moment": "^2.29.4",
     "mongodb": "^3.5.7",
     "url": "^0.11.0",
     "validator": "^13.6.0",
-    "webex": "^1.99.0",
+    "webex": "^2.4.2",
     "when": "^3.7.8"
   },
   "devDependencies": {
