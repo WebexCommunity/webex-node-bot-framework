@@ -32,12 +32,12 @@
   "author": "JP Shipherd <jpbulk@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "https-proxy-agent": "^5.0.0",
-    "moment": "^2.29.2",
+    "https-proxy-agent": "^5.0.1",
+    "moment": "^2.29.4",
     "mongodb": "^3.5.7",
     "url": "^0.11.0",
-    "validator": "^13.6.0",
-    "webex": "^1.99.0",
+    "validator": "^13.7.0",
+    "webex": "^2.14.3",
     "when": "^3.7.8"
   },
   "devDependencies": {
