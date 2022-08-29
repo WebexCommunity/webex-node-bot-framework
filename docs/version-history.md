@@ -1,5 +1,9 @@
 # Version History
 
+## v 2.3.13
+
+* Update docs to reflect FedRAMP option not enabled by default.
+
 ## v 2.3.12
 
 * Adds support for the FedRAMP Environment. Add the config parameter `fedramp: true` to enable this functionality.
