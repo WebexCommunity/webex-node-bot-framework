@@ -1,8 +1,13 @@
 # Version History
 
+## v 2.3.12
+
+* Adds support for the FedRAMP Environment. Add the config parameter `fedramp: true` to enable this functionality.
+
 ## v 2.3.11
 
 * Add debugging for message processing.  Set the environment DEBUG=framework for additional details on how th framework is processing incoming messages.
+* Updated dependencies
 
 ## v 2.3.10
 
