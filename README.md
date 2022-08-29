@@ -488,7 +488,7 @@ Options Object
 | [membershipRulesDisallowedResponse] | <code>string</code> |  | Message from bot when it detects it is in a space that does not conform to the membership rules          specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is         "Sorry, my use is not allowed for all the members in this space. Will ignore any new messages to me.".         No message will be sent if this is set to an empty string. |
 | [membershipRulesStateMessageResponse] | <code>string</code> |  | Message from bot when it is messaged in a space that does not conform to the membership rules         specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is         "Sorry, because my use is not allowed for all the members in this space I am ignoring any input.".         No message will be sent if this is set to an empty string. |
 | [membershipRulesAllowedResponse] | <code>string</code> |  | Message from bot when it detects that an the memberships of a space it is in have changed in         in order to conform with the membership rules specified by the The default messages is "I am now allowed to interact with all the members in this space and will no longer ignore any input.".         No message will be sent if this is set to an empty string. |
-| [fedramp] | <code>Boolean</code> | <code>true</code> | If specified, enables the framework to support the Webex FedRAMP environment. |
+| [fedramp] | <code>Boolean</code> |  | If specified, enables the framework to support the Webex FedRAMP environment. |
 
 <a name="Framework+setWebexToken"></a>
 
