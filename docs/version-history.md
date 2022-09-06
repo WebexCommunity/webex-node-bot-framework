@@ -1,6 +1,6 @@
 # Version History
 
-## v 2.3.13
+## v 2.3.14
 
 * Dependency `webex` has been downgraded to exact-version 2.4.2 due to reported issues with the Framework.
 
