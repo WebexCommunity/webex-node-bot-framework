@@ -1,6 +1,6 @@
 {
   "name": "webex-node-bot-framework",
-  "version": "2.3.13",
+  "version": "2.3.14",
   "description": "Webex Teams Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
@@ -32,12 +32,15 @@
   "author": "JP Shipherd <jpbulk@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "debug": "^4.3.4",
     "https-proxy-agent": "^5.0.1",
+    "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "mongodb": "^3.5.7",
     "url": "^0.11.0",
+    "uuid": "3.4.0",
     "validator": "^13.7.0",
-    "webex": "^2.14.3",
+    "webex": "2.4.2",
     "when": "^3.7.8"
   },
   "devDependencies": {
