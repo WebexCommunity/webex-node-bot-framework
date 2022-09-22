@@ -4,7 +4,7 @@ Framework of webhook events. This is not always easy or possible.
 
 In the summer of 2019, Cisco introduced a new mechanism in the Webex Javascript SDK which allows applications to register to receive the message, membership, and room events via a socket instead of via wehbhoks. This allows applications to be deployed behind firewalls and removes the requirement that webex bots and integrations must expose a public IP address to receive events. 
 
-The webex-node-bot-framework allows your application to take advantage of this by simply removing the webhookUrl field from the configuration object passed to the flint constructor. If this field is not set, flint will register to listen for the socket based events instead of creating webhooks.
+The webex-node-bot-framework allows your application to take advantage of this by simply removing the webhookUrl field from the configuration object passed to the framework constructor. If this field is not set, the framework will register to listen for the socket based events instead of creating webhooks.
 
 ```js
 var Framework = require('webex-node-bot-framework');
