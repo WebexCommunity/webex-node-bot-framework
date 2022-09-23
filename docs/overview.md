@@ -12,7 +12,7 @@ framework.start();
 
 // An initialized event means your webhooks are all registered and the 
 // framework has created bot objects for the spaces your bot was found in
-framework.on("initialized", function () {
+framework.on("initialized", () => {
   framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
 });
 
@@ -21,7 +21,7 @@ framework.on("initialized", function () {
 // The id field is the id of the framework
 // If addedBy is set, it means that a user has added your bot to a new space
 // Otherwise, this bot was in the space before this server instance started
-framework.on('spawn', function (bot, id, addedBy) {
+framework.on('spawn', (bot, id, addedBy) => {
   if (!addedBy) {
     // don't say anything here or your bot's spaces will get 
     // spammed every time your server is restarted
@@ -45,15 +45,16 @@ The `trigger` object provides details about the message that was sent, and the p
 A simple example of a framework.hears() function setup:
 
 ```js
-framework.hears(phrase, function(bot, trigger, id) {
+let priority = 0;
+framework.hears(phrase, (bot, trigger, id) => {
   bot.<command>
-    .then(function(returnedValue) {
+    .then((returnedValue) => {
       // do something with returned value
     })
-    .catch(function(err) {
+    .catch((err) => {
       // handle errors
     });
-});
+},'This is text that describes what happens when user sends phrase to bot', priority);
 ```
 
 * `phrase` : This can be either a string or a regex pattern.
@@ -70,6 +71,8 @@ of the chained 'then' functions.
 * `trigger` : The object that describes the details around what triggered the
 `phrase`.
 * `commands` : The commands that are ran when the `phrase` is heard.
+* `help text` : Optional help text can be supplied after the function.  This enables the `framework.showHelp()` method to automatically generate help messages for the bot.
+* `priority` : Optional priority can be supplied after the function (or help text) to specify which function should be called when multiple phrases match.  The hears() method(s) with the lowest priorities are called if priorities are set.
 
 ## Authentication
 The token used to authenticate the Framework with the Webex API is passed as part of the
@@ -82,7 +85,7 @@ token, use the Framework#setWebexToken() method.
 var newToken = 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u';
 
 framework.setWebexToken(newToken)
-.then(function(token) {
+.then((token) => {
   console.log('token updated to: ' + token);
 });
 ```

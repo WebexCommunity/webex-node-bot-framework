@@ -21,7 +21,7 @@ framework.start();
 
 // An initialized event means your webhooks are all registered and the 
 // framework has created a bot object for all the spaces your bot is in
-framework.on("initialized", function () {
+framework.on("initialized", () => {
   framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
 });
 
@@ -30,7 +30,7 @@ framework.on("initialized", function () {
 // The id field is the id of the framework
 // If addedBy is set, it means that a user has added your bot to a new space
 // Otherwise, this bot was in the space before this server instance started
-framework.on('spawn', function (bot, id, addedBy) {
+framework.on('spawn', (bot, id, addedBy) => {
   if (!addedBy) {
     // don't say anything here or your bot's spaces will get 
     // spammed every time your server is restarted
@@ -42,34 +42,36 @@ framework.on('spawn', function (bot, id, addedBy) {
   }
 });
 
-var responded = false;
 // say hello
-framework.hears('hello', function(bot, trigger) {
+framework.hears('hello', (bot, trigger) => {
   bot.say('Hello %s!', trigger.person.displayName);
-  responded = true;
-});
+}, '**hello** - say hello and I\'ll say hello back');
+
+// get help
+framework.hears('help', (bot, trigger) => {
+  bot.say('markdown', framework.showHelp());
+}, '**help** - get a list of my commands', 0); // zero is default priorty
 
 // Its a good practice to handle unexpected input
-framework.hears(/.*/gim, function(bot, trigger) {
-  if (!responded) {
+// Setting a priority > 0 means this will be called only if nothing else matches
+framework.hears(/.*/gim, (bot, trigger) => {
     bot.say('Sorry, I don\'t know how to respond to "%s"', trigger.message.text);
-  }
-  responded = false;
-});
+    bot.say('markdown', framework.showHelp());
+}, 99999);
 
 // define express path for incoming webhooks
 app.post('/framework', webhook(framework));
 
 // start express server
-var server = app.listen(config.port, function () {
+var server = app.listen(config.port, () => {
   framework.debug('Framework listening on port %s', config.port);
 });
 
 // gracefully shutdown (ctrl-c)
-process.on('SIGINT', function() {
+process.on('SIGINT', () => {
   framework.debug('stoppping...');
   server.close();
-  framework.stop().then(function() {
+  framework.stop().then(() => {
     process.exit();
   });
 });

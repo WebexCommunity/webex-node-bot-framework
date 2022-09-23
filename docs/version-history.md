@@ -1,5 +1,13 @@
 # Version History
 
+## v 2.3.15
+
+* Updated docs to emphasize the use of the built in help message param of `framework.hears()`
+* Updated samples to use built-in help and the use of priority for better catch-all handling
+* Updated docs to use modern => syntax in function definitions
+* See updated [WebexSamples/webex-bot-starter: A template to deploy a bot in Webex Teams using the webex-node-bot-framework](https://github.com/WebexSamples/webex-bot-starter) for the best example of how to use the `framework.showHelp()` method and leverage `framework.hears()` priority when implementing a catch-all handler
+* Thanks @RobM-ADP for the PR on removing flint references and documenting priority issue
+
 ## v 2.3.14
 
 * Dependency `webex` has been downgraded to exact-version 2.4.2 due to reported issues with the Framework.
