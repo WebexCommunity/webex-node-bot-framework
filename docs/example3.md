@@ -4,7 +4,7 @@ Framework of webhook events. This is not always easy or possible.
 
 In the summer of 2019, Cisco introduced a new mechanism in the Webex Javascript SDK which allows applications to register to receive the message, membership, and room events via a socket instead of via wehbhoks. This allows applications to be deployed behind firewalls and removes the requirement that webex bots and integrations must expose a public IP address to receive events. 
 
-The webex-node-bot-framework allows your application to take advantage of this by simply removing the webhookUrl field from the configuration object passed to the flint constructor. If this field is not set, flint will register to listen for the socket based events instead of creating webhooks.
+The webex-node-bot-framework allows your application to take advantage of this by simply removing the webhookUrl field from the configuration object passed to the framework constructor. If this field is not set, the framework will register to listen for the socket based events instead of creating webhooks.
 
 ```js
 var Framework = require('webex-node-bot-framework');
@@ -23,7 +23,7 @@ framework.start();
 
 // An initialized event means your webhooks are all registered and the
 // framework has created a bot object for all the spaces your bot is in
-framework.on("initialized", function () {
+framework.on("initialized", () => {
   framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
 });
 
@@ -32,7 +32,7 @@ framework.on("initialized", function () {
 // The id field is the id of the framework
 // If addedBy is set, it means that a user has added your bot to a new space
 // Otherwise, this bot was in the space before this server instance started
-framework.on('spawn', function (bot, id, addedBy) {
+framework.on('spawn', (bot, id, addedBy) => {
   if (!addedBy) {
     // don't say anything here or your bot's spaces will get
     // spammed every time your server is restarted
@@ -45,29 +45,27 @@ framework.on('spawn', function (bot, id, addedBy) {
 });
 
 
-var responded = false;
 // say hello
-framework.hears('hello', function(bot, trigger) {
+framework.hears('hello', (bot, trigger) => {
   bot.say('Hello %s!', trigger.person.displayName);
-  responded = true;
-});
+}, '**hello** - say hello and I\'ll say hello back'); // zero is default priorty
 
 // Its a good practice to handle unexpected input
-framework.hears(/.*/gim, function(bot, trigger) {
-  if (!responded) {
+// Setting a priority > 0 means this will be called only if nothing else matches
+framework.hears(/.*/gim, (bot, trigger) => {
     bot.say('Sorry, I don\'t know how to respond to "%s"', trigger.message.text);
-  }
-  responded = false;
-});
+    bot.say('markdown', framework.showHelp());
+}, 99999);
+
 
 // gracefully shutdown (ctrl-c)
 // This is especially important when using websockets
 // as it cleans up the socket connection. Failure to do
 // this could result in an "excessive device registrations"
 // error during the iterative development process
-process.on('SIGINT', function() {
+process.on('SIGINT', () => {
   framework.debug('stoppping...');
-  framework.stop().then(function() {
+  framework.stop().then(() => {
     server.close();
     process.exit();
   });
