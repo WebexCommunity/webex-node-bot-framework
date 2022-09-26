@@ -1,1 +1,0 @@
-web: DEBUG=framework,bot node app.js
