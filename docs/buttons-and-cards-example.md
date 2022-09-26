@@ -25,19 +25,19 @@ var config = {
 var framework = new Framework(config);
 framework.start();
 
-framework.on("initialized", async function () {
+framework.on("initialized", () => {
   framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
 });
 
 // send an example card in response to any input
-framework.hears(/.*/, function(bot) {
+framework.hears(/.*/, (bot) => {
   // Fallback text for clients that don't render cards - messageFormat (in this example using Markdown) is defined in Framework Options
   const fallbackText = "[Tell us about yourself](https://www.example.com/form/book-vacation). We just need a few more details to get you booked for the trip of a lifetime!";
   bot.sendCard(cardBody, fallbackText);
 });
 
 // Process a submitted card
-framework.on('attachmentAction', function (bot, trigger) {
+framework.on('attachmentAction', (bot, trigger) => {
   bot.say(`Got an attachmentAction:\n${JSON.stringify(trigger.attachmentAction, null, 2)}`);
 });
 
@@ -45,15 +45,15 @@ framework.on('attachmentAction', function (bot, trigger) {
 app.post('/', webhook(framework));
 
 // start express server
-var server = app.listen(config.port, function () {
+var server = app.listen(config.port, () => {
   framework.debug('Framework listening on port %s', config.port);
 });
 
 // gracefully shutdown (ctrl-c)
-process.on('SIGINT', function() {
+process.on('SIGINT', () => {
   framework.debug('stoppping...');
   server.close();
-  framework.stop().then(function() {
+  framework.stop().then(() => {
     process.exit();
   });
 });

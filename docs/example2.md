@@ -18,23 +18,23 @@ var framework = new Framework(config);
 framework.start();
 
 // say hello
-framework.hears('/hello', function(bot, trigger) {
+framework.hears('hello', (bot, trigger) => {
   bot.say('Hello %s!', trigger.person.displayName);
-});
+}, '**hello** - say hello and I\'ll say hello back'); // zero is default priorty
 
 // define restify path for incoming webhooks
 server.post('/framework', webhook(framework));
 
 // start restify server
-server.listen(config.port, function () {
+server.listen(config.port, () => {
   framework.debug('Framework listening on port %s', config.port);
 });
 
 // gracefully shutdown (ctrl-c)
-process.on('SIGINT', function() {
+process.on('SIGINT', () => {
   framework.debug('stoppping...');
   server.close();
-  framework.stop().then(function() {
+  framework.stop().then(() => {
     process.exit();
   });
 });

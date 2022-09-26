@@ -106,7 +106,7 @@ framework.start();
 
 // An initialized event means your webhooks are all registered and the 
 // framework has created a bot object for all the spaces your bot is in
-framework.on("initialized", function () {
+framework.on("initialized", () => {
   framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
 });
 
@@ -115,7 +115,7 @@ framework.on("initialized", function () {
 // The id field is the id of the framework
 // If addedBy is set, it means that a user has added your bot to a new space
 // Otherwise, this bot was in the space before this server instance started
-framework.on('spawn', function (bot, id, addedBy) {
+framework.on('spawn', (bot, id, addedBy) => {
   if (!addedBy) {
     // don't say anything here or your bot's spaces will get 
     // spammed every time your server is restarted
@@ -127,34 +127,36 @@ framework.on('spawn', function (bot, id, addedBy) {
   }
 });
 
-var responded = false;
 // say hello
-framework.hears('hello', function(bot, trigger) {
+framework.hears('hello', (bot, trigger) => {
   bot.say('Hello %s!', trigger.person.displayName);
-  responded = true;
-});
+}, '**hello** - say hello and I\'ll say hello back');
+
+// get help
+framework.hears('help', (bot, trigger) => {
+  bot.say('markdown', framework.showHelp());
+}, '**help** - get a list of my commands', 0); // zero is default priorty
 
 // Its a good practice to handle unexpected input
-framework.hears(/.*/gim, function(bot, trigger) {
-  if (!responded) {
+// Setting a priority > 0 means this will be called only if nothing else matches
+framework.hears(/.*/gim, (bot, trigger) => {
     bot.say('Sorry, I don\'t know how to respond to "%s"', trigger.message.text);
-  }
-  responded = false;
-});
+    bot.say('markdown', framework.showHelp());
+}, 99999);
 
 // define express path for incoming webhooks
 app.post('/framework', webhook(framework));
 
 // start express server
-var server = app.listen(config.port, function () {
+var server = app.listen(config.port, () => {
   framework.debug('Framework listening on port %s', config.port);
 });
 
 // gracefully shutdown (ctrl-c)
-process.on('SIGINT', function() {
+process.on('SIGINT', () => {
   framework.debug('stoppping...');
   server.close();
-  framework.stop().then(function() {
+  framework.stop().then(() => {
     process.exit();
   });
 });
@@ -180,7 +182,7 @@ framework.start();
 
 // An initialized event means your webhooks are all registered and the 
 // framework has created bot objects for the spaces your bot was found in
-framework.on("initialized", function () {
+framework.on("initialized", () => {
   framework.debug("Framework initialized successfully! [Press CTRL-C to quit]");
 });
 
@@ -189,7 +191,7 @@ framework.on("initialized", function () {
 // The id field is the id of the framework
 // If addedBy is set, it means that a user has added your bot to a new space
 // Otherwise, this bot was in the space before this server instance started
-framework.on('spawn', function (bot, id, addedBy) {
+framework.on('spawn', (bot, id, addedBy) => {
   if (!addedBy) {
     // don't say anything here or your bot's spaces will get 
     // spammed every time your server is restarted
@@ -213,15 +215,16 @@ The `trigger` object provides details about the message that was sent, and the p
 A simple example of a framework.hears() function setup:
 
 ```js
-framework.hears(phrase, function(bot, trigger, id) {
+let priority = 0;
+framework.hears(phrase, (bot, trigger, id) => {
   bot.<command>
-    .then(function(returnedValue) {
+    .then((returnedValue) => {
       // do something with returned value
     })
-    .catch(function(err) {
+    .catch((err) => {
       // handle errors
     });
-});
+},'This is text that describes what happens when user sends phrase to bot', priority);
 ```
 
 * `phrase` : This can be either a string or a regex pattern.
@@ -238,6 +241,8 @@ of the chained 'then' functions.
 * `trigger` : The object that describes the details around what triggered the
 `phrase`.
 * `commands` : The commands that are ran when the `phrase` is heard.
+* `help text` : Optional help text can be supplied after the function.  This enables the `framework.showHelp()` method to automatically generate help messages for the bot.
+* `priority` : Optional priority can be supplied after the function (or help text) to specify which function should be called when multiple phrases match.  The hears() method(s) with the lowest priorities are called if priorities are set.
 
 ## Authentication
 The token used to authenticate the Framework with the Webex API is passed as part of the
@@ -250,7 +255,7 @@ token, use the Framework#setWebexToken() method.
 var newToken = 'Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u';
 
 framework.setWebexToken(newToken)
-.then(function(token) {
+.then((token) => {
   console.log('token updated to: ' + token);
 });
 ```
@@ -504,7 +509,7 @@ Tests, and then sets a new Webex Token.
 **Example**  
 ```js
 framework.setWebexToken('Tm90aGluZyB0byBzZWUgaGVyZS4uLiBNb3ZlIGFsb25nLi4u')
-  .then(function(token) {
+  .then((token) => {
      console.log('token updated to: ' + token);
   });
 ```
@@ -596,16 +601,33 @@ Add action to be performed when bot hears a phrase.
 **Example**  
 ```js
 // using a string to match first word and defines help text
-framework.hears('/say', function(bot, trigger, id) {
-  bot.say(trigger.args.slice(1, trigger.arges.length - 1));
+framework.hears('/say', (bot, trigger) {
+  bot.say(trigger.args.slice(1, trigger.args.length - 1));
 }, '/say <greeting> - Responds with a greeting');
 ```
 **Example**  
 ```js
 // using regex to match across entire message
-framework.hears(/(^| )beer( |.|$)/i, function(bot, trigger, id) {
+framework.hears(/(^| )beer( |.|$)/i, (bot, trigger) => {
   bot.say('Enjoy a beer, %s! 🍻', trigger.person.displayName);
 });
+```
+**Example**  
+```js
+// create hears handlers that use the helpText and preference params
+// This handler has a lower preference than the catchall
+// and inlcudes a built-in message for the showHelp command
+framework.hears('help', (bot, trigger) => {
+  bot.say('markdown', framework.showHelp());
+}, 'help - shows information about commands I understand', 0);
+
+// This catchall handler does not include a help  message, but it
+// does set a high preference value so it will not be called if any
+// handlers with a lower preference score match
+framework.hears(/.*&#8205;/gim, (bot, trigger) => {
+  bot.say('I didn\'t quite understand that.');
+  bot.say('markdown;, framework.showHelp());
+ }, 99999);
 ```
 <a name="Framework+clearHears"></a>
 
@@ -621,7 +643,7 @@ Remove a "framework.hears()" entry.
 **Example**  
 ```js
 // using a string to match first word and defines help text
-var hearsHello = framework.hears('/framework', function(bot, trigger, id) {
+var hearsHello = framework.hears('/framework', (bot, trigger, id) => {
   bot.say('Hello %s!', trigger.person.displayName);
 });
 framework.clearHears(hearsHello);
@@ -640,8 +662,8 @@ Display help for registered Framework Commands.
 
 **Example**  
 ```js
-framework.hears('/help', function(bot, trigger, id) {
-  bot.say(framework.showHelp());
+framework.hears('/help', (bot, trigger, id) => {
+  bot.say('markdown', framework.showHelp());
 });
 ```
 <a name="Framework+setAuthorizer"></a>
@@ -715,14 +737,14 @@ framework.use('events.js');
 **Example**  
 ```js
 // events.js
-module.exports = function(framework) {
-  framework.on('spawn', function(bot) {
+module.exports = (framework) => {
+  framework.on('spawn', (bot) => {
     console.log('new bot spawned in room: %s', bot.myroom.title);
   });
-  framework.on('despawn', function(bot) {
+  framework.on('despawn', (bot) => {
     console.log('bot despawned in room: %s', bot.myroom.title);
   });
-  framework.on('messageCreated', function(message, bot) {
+  framework.on('messageCreated', (message, bot) => {
     console.log('"%s" said "%s" in room "%s"', message.personEmail, message.text, bot.myroom.title);
   });
 };
@@ -856,7 +878,7 @@ bot.add('john@test.com');
 ```js
 // add one person as moderator to room by email
 bot.add('john@test.com', true)
-  .catch(function(err) {
+  .catch((err) => {
     // log error if unsuccessful
     console.log(err.message);
   });
@@ -897,7 +919,7 @@ Get room moderators.
 **Example**  
 ```js
 bot.getModerators()
-  .then(function(moderators) {
+  .then((moderators) => {
     console.log(moderators);
   });
 ```
@@ -942,7 +964,7 @@ using a bot token, it requires an authorized user token
 **Example**  
 ```js
 bot.moderateRoom()
-  .then(function(err) {
+  .then((err) => {
     console.log(err.message)
   });
 ```
@@ -958,7 +980,7 @@ using a bot token, it requires an authorized user token
 **Example**  
 ```js
 bot.unmoderateRoom()
-  .then(function(err) {
+  .then((err) => {
     console.log(err.message)
   });
 ```
@@ -979,7 +1001,7 @@ using a bot token, it requires an authorized user token
 **Example**  
 ```js
 bot.moderatorSet('john@test.com')
-  .then(function(err) {
+  .then((err) => {
     console.log(err.message)
   });
 ```
@@ -1000,7 +1022,7 @@ using a bot token, it requires an authorized user token
 **Example**  
 ```js
 bot.moderatorClear('john@test.com')
-  .then(function(err) {
+  .then((err) => {
     console.log(err.message)
   });
 ```
@@ -1012,7 +1034,7 @@ Remove a room and all memberships.
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
 **Example**  
 ```js
-framework.hears('/implode', function(bot, trigger) {
+framework.hears('/implode', (bot, trigger) => {
   bot.implode();
 });
 ```
@@ -1031,43 +1053,43 @@ Send text with optional file to room.
 **Example**  
 ```js
 // Simple example
-framework.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', (bot, trigger) => {
   bot.say('hello');
 });
 ```
 **Example**  
 ```js
 // Simple example to send message and file
-framework.hears('/file', function(bot, trigger) {
+framework.hears('/file', (bot, trigger) => {
   bot.say({text: 'Here is your file!', file: 'http://myurl/file.doc'});
-});
+}, '**file** - ask bot to post a file to the space');
 ```
 **Example**  
 ```js
 // Markdown Method 1 - Define markdown as default
 framework.messageFormat = 'markdown';
-framework.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', (bot, trigger) => {
   bot.say('**hello**, How are you today?');
-});
+}, '**hello** - say hello to the bot');
 ```
 **Example**  
 ```js
 // Markdown Method 2 - Define message format as part of argument string
-framework.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', (bot, trigger) => {
   bot.say('markdown', '**hello**, How are you today?');
-});
+}, '**hello** - say hello to the bot');
 ```
 **Example**  
 ```js
 // Mardown Method 3 - Use an object (use this method of bot.say() when needing to send a file in the same message as markdown text.
-framework.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', (bot, trigger) => {
   bot.say({markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.personDisplayName + '>*'});
-});
+}, '**hello** - say hello to the bot');
 ```
 **Example**  
 ```js
 // Send an Webex card by providing a fully formed message object.
-framework.hears('/card please', function(bot, trigger) {
+framework.hears('/card please', (bot, trigger) => {
   bot.say({       
      // Fallback text for clients that don't render cards is required
      markdown: "If you see this message your client cannot render buttons and cards.",
@@ -1076,6 +1098,7 @@ framework.hears('/card please', function(bot, trigger) {
        "content": myCardsJson
     }]
    });
+  }, '**card please** - ask bot to post a card to the space');
 ```
 <a name="Bot+sayWithLocalFile"></a>
 
@@ -1092,9 +1115,9 @@ Send optional text message with a local file to room.
 **Example**  
 ```js
 // Simple example
-framework.hears('/file', function(bot, trigger) {
+framework.hears('/file', (bot, trigger) => {
   bot.sayWithLocalFile('here is a file', './image.jpg);
-});
+}, '**file** - ask bot to send a file to the space');
 ```
 <a name="Bot+reply"></a>
 
@@ -1112,36 +1135,36 @@ Send a threaded message reply
 **Example**  
 ```js
 // Simple example
-framework.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', (bot, trigger) => {
   bot.reply(trigger.message, 'hello back at you');
-});
+}, '**hello** - say hello to the bot);
 ```
 **Example**  
 ```js
 // Markdown Method 1 - Define markdown as default
 framework.messageFormat = 'markdown';
-framework.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', (bot, trigger) => {
   bot.reply(trigger.message, '**hello**, How are you today?');
-});
+}, '**hello** - say hello to the bot);
 ```
 **Example**  
 ```js
 // Markdown Method 2 - Define message format as part of argument string
-framework.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', (bot, trigger) => {
   bot.reply(trigger.message, '**hello**, How are you today?', 'markdown');
-});
+}, '**hello** - say hello to the bot);
 ```
 **Example**  
 ```js
 // Mardown Method 3 - Use an object (use this method of bot.reply() when needing to send a file in the same message as markdown text.
-framework.hears('/hello', function(bot, trigger) {
+framework.hears('/hello', (bot, trigger) => {
   bot.reply(trigger.message, {markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.personDisplayName + '>*'});
-});
+}, '**hello** - say hello to the bot);
 ```
 **Example**  
 ```js
 // Reply to a card when a user hits an action.submit button
-framework.on('attachmentAction', function(bot, trigger) {
+framework.on('attachmentAction', (bot, trigger) => {
   bot.reply(trigger.attachmentAction, 'Thanks for hitting the button');
 });
 ```
@@ -1162,38 +1185,38 @@ This sends a message to a 1:1 room with the user (creates 1:1, if one does not a
 **Example**  
 ```js
 // Simple example
-framework.hears('dm me', function(bot, trigger) {
+framework.hears('dm me', (bot, trigger) => {
   bot.dm(trigger.person.id, 'hello');
-});
+}, '**dm me** - ask the bot to send a message to you in a 1-1 space');
 ```
 **Example**  
 ```js
 // Simple example to send message and file
-framework.hears('dm me a file', function(bot, trigger) {
+framework.hears('dm me a file', (bot, trigger) => {
   bot.dm(trigger.person.id, {text: 'Here is your file!', file: 'http://myurl/file.doc'});
-});
+}, '**dm me a file ** - ask the bot to send a file to you in a 1-1 space');
 ```
 **Example**  
 ```js
 // Markdown Method 1 - Define markdown as default
 framework.messageFormat = 'markdown';
-framework.hears('dm me some rich text', function(bot, trigger) {
+framework.hears('dm me some rich text', (bot, trigger) => {
   bot.dm(trigger.person.id, '**hello**, How are you today?');
-});
+}, '**dm me some rich text** - ask the bot to send a rich text message to you in a 1-1 space');
 ```
 **Example**  
 ```js
 // Markdown Method 2 - Define message format as part of argument string
-framework.hears('dm someone', function(bot, trigger) {
+framework.hears('dm someone', (bot, trigger) => {
   bot.dm('john@doe.com', 'markdown', '**hello**, How are you today?');
-});
+}, '**dm someone** - ask the bot to send a message to john@doe.com in a 1-1 space');
 ```
 **Example**  
 ```js
 // Mardown Method 3 - Use an object (use this method of bot.dm() when needing to send a file in the same message as markdown text.
-framework.hears('dm someone', function(bot, trigger) {
+framework.hears('dm someone', (bot, trigger) => {
   bot.dm('someone@domain.com', {markdown: '*Hello <@personId:' + trigger.person.id + '|' + trigger.person.displayName + '>*'});
-});
+}, '**dm someone** - ask the bot to send a message and file to someone@domain.com in a 1-1 space');
 ```
 <a name="Bot+sendCard"></a>
 
@@ -1215,7 +1238,7 @@ Send a Webex Teams Card to room.
 **Example**  
 ```js
 // Simple example
-framework.hears('card please', function(bot, trigger) {
+framework.hears('card please', (bot, trigger) => {
   bot.SendCard(
    {
       "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
@@ -1258,7 +1281,7 @@ framework.hears('card please', function(bot, trigger) {
       ]
    },
    "This is the fallback text if the client can't render this card");
- });
+ }, '**card please** - ask the bot to post a card to the space');
 ```
 <a name="Bot+dmCard"></a>
 
@@ -1276,7 +1299,7 @@ Send a Card to a 1-1 space.
 **Example**  
 ```js
 // Simple example
-framework.hears('card for joe please', function(bot, trigger) {
+framework.hears('card for joe please', (bot, trigger) => {
   bot.dmCard(
    'joe@email.com',
    {
@@ -1293,7 +1316,7 @@ framework.hears('card for joe please', function(bot, trigger) {
       ]
    },
    "This is the fallback text if the client can't render this card");
- });
+ }, '**card for john please** - ask the bot to send a card to joe@email.com in a 1-1 space');
 ```
 <a name="Bot+uploadStream"></a>
 
@@ -1309,7 +1332,7 @@ Upload a file to a room using a Readable Stream
 
 **Example**  
 ```js
-framework.hears('/file', function(bot, trigger) {
+framework.hears('/file', (bot, trigger) => {
 
   // define filename used when uploading to room
   var filename = 'test.png';
@@ -1318,7 +1341,7 @@ framework.hears('/file', function(bot, trigger) {
   var stream = fs.createReadStream('/my/file/test.png');
 
   bot.uploadStream(stream);
-});
+}, '**\/file** - ask the bot to post a file to the space via the stream method');
 ```
 <a name="Bot+censor"></a>
 
@@ -1345,7 +1368,7 @@ Set Title of Room.
 **Example**  
 ```js
 bot.roomRename('My Renamed Room')
-  .then(function(err) {
+  .then((err) => {
     console.log(err.message)
   });
 ```
@@ -1637,7 +1660,7 @@ Bot Spawned.
 **Example**  
 ```js
 // DM the user who added bot to a group space
-framework.on('spawn', function(bot, flintId, addedById) {
+framework.on('spawn', (bot, flintId, addedById) => {
     if (!addedById) {
      // don't say anything here or your bot's spaces will get
      // spammed every time your server is restarted
