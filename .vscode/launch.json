@@ -35,6 +35,46 @@
         "${workspaceFolder}/test/bot-tests.js"
       ],
       "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Mocha Tests Membership Rules",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "env": {
+        "DEBUG": "framework"
+      },
+      "cwd": "${workspaceRoot}",
+      "args": [
+        "--exit",
+        "-u",
+        "bdd",
+        "--timeout",
+        "40000",
+        "--colors",
+        "${workspaceFolder}/test/membership-rules-tests.js"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Mocha Tests Guide Rules",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "env": {
+        "DEBUG": "framework"
+      },
+      "cwd": "${workspaceRoot}",
+      "args": [
+        "--exit",
+        "-u",
+        "bdd",
+        "--timeout",
+        "40000",
+        "--colors",
+        "${workspaceFolder}/test/guide-rules-tests.js"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
     }
   ]
 }
