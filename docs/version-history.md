@@ -1,5 +1,14 @@
 # Version History
 
+## v 2.3.16
+
+* Added a new framework config option `profileMsgProcessingTime`.  Set to true to profile time spent in framework and hears() callbacks per message.   When set the framework will log the processing time per message to the console.   When framework.stop() is called the total number of messages processed and the average processing time will be displayed in the console. 
+  * This was added in anticipation of adding a new feature to extract the bot command and prompt into the trigger object.  Depending on the impact ot processing time this new feature may or may not be on by default.
+* Added new documentation with more details on how to run the tests
+* Accepted Dependency Bot Recomendations
+   * Bump decode-uri-component from 0.2.0 to 0.2.2
+   * Bump @xmldom/xmldom from 0.7.5 to 0.7.8
+
 ## v 2.3.15
 
 * Updated docs to emphasize the use of the built in help message param of `framework.hears()`
