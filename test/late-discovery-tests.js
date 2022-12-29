@@ -1,7 +1,7 @@
 /* late-discovery-tests.js
  *
  * A set of tests to validate framework functionality
- * can create bot objects on the fly as opposed
+ * to create bot objects on the fly as opposed
  * to on startup.
  * 
  * These tests require that the bot exist in a one on one
@@ -25,6 +25,9 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   // This is the key to these tests, we wont discover any spaces on 
   // startup, just when a message:created event occurs
   frameworkOptions.maxStartupSpaces = 0;
+  // Enable Message Process Speed Profiling in tests
+  frameworkOptions.profileMsgProcessingTime = true;
+
   framework = new Framework(frameworkOptions);
   let userOptions = {credentials: {access_token: process.env.USER_API_TOKEN}};
   userWebex = Webex.init(userOptions);
@@ -36,6 +39,7 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
     'The tests will create a new space with the bot and the user');
   process.exit(-1);
 }
+
 
 // Load the common module which includes functions and variables
 // shared by multiple tests

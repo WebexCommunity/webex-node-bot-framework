@@ -18,7 +18,6 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   (typeof process.env.VALID_USER_API_TOKEN === 'string') &&
   (typeof process.env.DISALLOWED_USER_API_TOKEN === 'string') &&
   (typeof process.env.ANOTHER_DISALLOWED_USERS_EMAIL === 'string') &&
-  (typeof process.env.ALLOWED_DOMAINS === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
   frameworkOptions = { token: process.env.BOT_API_TOKEN };
   if (typeof process.env.INIT_STORAGE === 'string') {
@@ -32,12 +31,14 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
       process.exit(-1);
     }
   }
+  
+  // Enable Message Process Speed Profiling in tests
+  frameworkOptions.profileMsgProcessingTime = true;
   framework = new Framework(frameworkOptions);
   validUserWebex = Webex.init({ credentials: {access_token: process.env.VALID_USER_API_TOKEN }});
   disallowedUserWebex = Webex.init({ credentials: {access_token: process.env.DISALLOWED_USER_API_TOKEN }});
 } else {
   console.error('Missing required environment variables:\n' +
-    '- ALLOWED_DOMAINS -- comma seperated list of allowed domain names\n' +
     '- BOT_API_TOKEN -- token associatd with an existing bot\n' +
     '- VALID_USER_API_TOKEN -- token associated with an existing user with an allowed domain\n' +
     '- DISSALOWED_USER_API_TOKEN -- valid token associated with an existing user with an allowed domain\n' +
@@ -63,7 +64,7 @@ describe('#framework', () => {
     .then((person) => {
       framework.options.guideEmails = person.emails[0];
       framework.options.membershipRulesDisallowedResponse = '';
-      return dissallowedUserWebex.people.get('me');
+      return disallowedUserWebex.people.get('me');
     }).then((person) => {
       common.setDisallowedUserPerson(person);
     })
