@@ -20,7 +20,12 @@ environmentEvaluated = true;
 if ((typeof process.env.AUTHORIZED_USER_API_TOKEN === 'string') &&
   (typeof process.env.USER_API_TOKEN === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
-  framework = new Framework({ token: process.env.AUTHORIZED_USER_API_TOKEN });
+
+  // Enable Message Process Speed Profiling in tests
+  let frameworkOptions = { token: process.env.AUTHORIZED_USER_API_TOKEN };
+  frameworkOptions.profileMsgProcessingTime = true;
+
+  framework = new Framework(frameworkOptions);
   userWebex = Webex.init({ credentials: {access_token: process.env.USER_API_TOKEN }});
 } else {
   console.error('Missing required evnvironment variables:\n' +

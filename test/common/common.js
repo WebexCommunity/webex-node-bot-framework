@@ -58,7 +58,10 @@ module.exports = {
           asUserCleanupFromPreviousTests(userWebex);
         }
         // Make sure we have user info before next step...
-        return when(userInfoIsReady);
+        return when(userInfoIsReady).catch((e) => {
+          console.error(`Could not initialize user with USER_API_TOKEN: ${e.message}`);
+          return Promise.reject(e);
+        });    
       })
       .then((person) => {
         this.userInfo = person;
@@ -265,9 +268,9 @@ module.exports = {
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
     }));
-    eventPromises.push(new Promise((resolve) => {
-      this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
-    }));
+    // eventPromises.push(new Promise((resolve) => {
+    //   this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
+    // }));
 
     swallowedEvents = ['spawn']; 
 

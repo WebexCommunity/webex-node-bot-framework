@@ -15,22 +15,38 @@ describe('Bot interacts with user in 1-1 space', () => {
   let eventsData = {};
   let trigger = {};
 
-  // Let's use markdown by default for these test
+  // // Let's use markdown by default for these test
   let origFormat = framework.messageFormat;
   framework.messageFormat = 'markdown';
 
-  if (!common.botForUser1on1Space) {
-    console.error('No 1-1 space to run direct message tests.  This isn\'t bad, it just is...');
-    console.error('If you want to run the direct message tests, manually create a 1-1 space with your test bot and test user.');
-    return;
-  }
+  // if (!common.botForUser1on1Space) {
+  //   console.error('No 1-1 space to run direct message tests.  This isn\'t bad, it just is...');
+  //   console.error('If you want to run the direct message tests, manually create a 1-1 space with your test bot and test user.');
+  //   return;
+  // }
 
 
   let messageCreatedEvent, frameworkMessageEvent, botMessageEvent;
+  // Before running tests check if the test bot exists in a 1-1 space with test user
+  // If not generate an info message that 1-1 tests will be skipped
+  before(() => {
+    if (!common.botForUser1on1Space) {
+      console.error('No 1-1 space to run direct message tests.  This isn\'t bad, it just is...');
+      console.error('Since 1-1 spaces can never be removed the tests will not create one.');
+      console.error('If you want to run the direct message tests, manually create a 1-1 space with your test bot and test user.');
+      console.error('Otherwise, seeing "8 pending" tests is the expected result.')
+      return;
+    }
+  });
+
   // Setup the promises for the events that come from user input that mentions a bot
   beforeEach(() => {
     message = {};
 
+    if (!common.botForUser1on1Space) {
+      return;
+    }
+      
     // Wait for the events associated with a new message before completing test..
     eventsData = { bot: common.botForUser1on1Space };
     common.createBotEventHandlers(common.botForUser1on1Space);
@@ -50,7 +66,14 @@ describe('Bot interacts with user in 1-1 space', () => {
     framework.messageFormat = origFormat
   );
 
-  it('checks for persistent storage from previous tests', () => {
+  // Note that each test will be skipped if no 1-1 space
+  // this.skip syntax does not work with arrow functions, 
+  // hence function() syntax for thes tests
+  it('checks for persistent storage from previous tests', function () {
+    if (!common.botForUser1on1Space) {
+      this.skip();
+    }
+    
     let bot = common.botForUser1on1Space;
     if (process.env.MONGO_USER) {
       return bot.recall('frameworkTestRuns')
@@ -69,7 +92,11 @@ describe('Bot interacts with user in 1-1 space', () => {
     }
   });
 
-  it('hears the user without needing to be mentioned', () => {
+  it('hears the user without needing to be mentioned', function () {
+    if (!common.botForUser1on1Space) {
+      this.skip();
+    }
+
     testName = 'hears the user without needing to be mentioned';
     // Wait for the hears event associated with the input text
     const heard = new Promise((resolve) => {
@@ -102,7 +129,11 @@ describe('Bot interacts with user in 1-1 space', () => {
       });
   });
 
-  it('bot responds with a direct mention via email', () => {
+  it('bot responds with a direct mention via email', function () {
+    if (!common.botForUser1on1Space) {
+      this.skip();
+    }
+
     testName = 'bot responds with a direct mention';
     // send the bots response
     let msg = 'I heard you';
@@ -130,7 +161,11 @@ describe('Bot interacts with user in 1-1 space', () => {
       });
   });
 
-  it('bot responds with a direct mention via personId', () => {
+  it('bot responds with a direct mention via personId', function () {
+    if (!common.botForUser1on1Space) {
+      this.skip();
+    }
+
     testName = 'bot responds with a direct mention via personId';
     // send the bots response
     let msg = 'I heard you - by personId this time.';
@@ -158,7 +193,11 @@ describe('Bot interacts with user in 1-1 space', () => {
       });
   });
 
-  it('bot sends a plain text message in the 1-1 space', () => {
+  it('bot sends a plain text message in the 1-1 space', function () {
+    if (!common.botForUser1on1Space) {
+      this.skip();
+    }
+
     testName = 'bot sends a plain text message in the 1-1 space';
     // send the bots response
     let msg = 'This is a **plain text** message.';
@@ -178,7 +217,11 @@ describe('Bot interacts with user in 1-1 space', () => {
       });
   });
 
-  it('bot sends a plain text message using a message object in the 1-1 space', () => {
+  it('bot sends a plain text message using a message object in the 1-1 space', function () {
+    if (!common.botForUser1on1Space) {
+      this.skip();
+    }
+
     testName = 'bot sends a plain text message using a message object in the 1-1 space';
     // send the bots response
     let msg = 'This is a **plain text** message sent in the markdown fields of a message request.';
@@ -198,7 +241,11 @@ describe('Bot interacts with user in 1-1 space', () => {
       });
   });
 
-  it('bot sends a card in the 1-1 space', () => {
+  it('bot sends a card in the 1-1 space', function () {
+    if (!common.botForUser1on1Space) {
+      this.skip();
+    }
+
     testName = 'bot sends a card in the 1-1 space';
     // send the bots response
     let cardJson = require('../common/input-card.json');
@@ -218,7 +265,11 @@ describe('Bot interacts with user in 1-1 space', () => {
       });
   });
 
-  it('updates persistent storage for the next tests', () => {
+  it('updates persistent storage for the next tests', function () {
+    if (!common.botForUser1on1Space) {
+      this.skip();
+    }
+
     let bot = common.botForUser1on1Space;
     if (process.env.MONGO_USER) {
       return bot.store('frameworkTestRuns', frameworkTestRuns + 1)
