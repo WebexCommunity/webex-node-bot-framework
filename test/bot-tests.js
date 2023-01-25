@@ -29,6 +29,9 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
       process.exit(-1);
     }
   }
+  // Enable Message Process Speed Profiling in tests
+  frameworkOptions.profileMsgProcessingTime = true;
+
   framework = new Framework(frameworkOptions);
   let userOptions = {credentials: {access_token: process.env.USER_API_TOKEN}};
   userWebex = Webex.init(userOptions);

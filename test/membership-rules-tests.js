@@ -1,7 +1,9 @@
 /* membership-rules-tests.js
  *
- * A set of tests to validate framework functionality
- * when framework is created using a bot token
+ * A set of tests to validate the framework's
+ * membership-rules functionality, validating that
+ * the bot will not respond in spaces with 
+ * disallowed users
  */
 
 const Framework = require('../lib/framework');
@@ -10,7 +12,6 @@ const Webex = require('webex');
 console.log('************************************');
 console.log('* Framework mebership rules tests...');
 console.log('************************************\n');
-
 
 // Initialize the framework and user objects once for all the tests
 let framework;
@@ -34,6 +35,9 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
     }
   }
   frameworkOptions.restrictedToEmailDomains = process.env.ALLOWED_DOMAINS;
+
+  // Enable Message Process Speed Profiling in tests
+  frameworkOptions.profileMsgProcessingTime = true;
   framework = new Framework(frameworkOptions);
   validUserWebex = Webex.init({ credentials: {access_token: process.env.VALID_USER_API_TOKEN }});
   disallowedUserWebex = Webex.init({ credentials: {access_token: process.env.DISALLOWED_USER_API_TOKEN }});
@@ -78,7 +82,11 @@ describe('#framework', () => {
 
   // Test bot interactions in a bot created test space
   // That does and doesn't include dissallowed members
-  require('./common/bot-membership-rules-tests.js');
+  //require('./common/bot-membership-rules-tests.js');
+
+  // Test bot interactions in a bot created test space
+  // That does and doesn't include dissallowed members
+  require('./common/guided-mode-rules-tests.js');
 
   // Test bot interactions in a user created test space
   // With no disallowed members -- make sure nothing breaks in this mode

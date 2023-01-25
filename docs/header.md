@@ -8,7 +8,7 @@ The primary change in this implementation is that it is based on the [webex-jssd
 
 For developers who are familiar with flint, or who wish to port existing bots built on node-flint to the webex-node-bot-framework, this implementation is NOT backwards compatible.  Please see [Migrating from the original flint framework](./docs/migrate-from-node-flint.md)
 
-Feel free to join the ["Webex Node Bot Framework" space on Webex](https://eurl.io/#BJ7gmlSeU) to ask questions and share tips on how to leverage this framework.
+Feel free to join the ["Webex Node Bot Framework" space on Webex](https://eurl.io/#BJ7gmlSeU) to ask questions and share tips on how to leverage this framework.   This project is community supported so contributions are welcome.   If you are interested in making the framework better please see the [Contribution Guidelines](./docs/contributing.md).
 
 ## News
 * May, 2020 - Version 2 introduces a some new configuration options designed to help developers restrict access to their bot.   This can be helpful during the development phase (`guideEmails` parameter) or for production bots that should be restricted for use to users that have certain email domains (`restrictedToEmailDomains` parameter).   See [Membership-Rules README](./docs/membership-rules-readme.md)

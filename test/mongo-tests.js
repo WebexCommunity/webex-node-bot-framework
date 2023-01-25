@@ -1,7 +1,7 @@
 /* mongo-tests.js
  *
  * A set of tests to validate framework functionality
- * when framework is created using a the mongo storage d
+ * when framework is created using a the mongo storage adaptor
  */
 
 const Framework = require('../lib/framework');

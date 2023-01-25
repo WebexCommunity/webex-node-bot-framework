@@ -436,7 +436,7 @@ describe('User Created Room to create a Test Bot', () => {
           });
       });
 
-      it('presses a button on a card', () => {
+      it('presses a button on a card (two info messages from framework validate precedence in replies)', () => {
         let testName = 'user presses a button on a card';
         let attachmentAction;
         let inputs = {
