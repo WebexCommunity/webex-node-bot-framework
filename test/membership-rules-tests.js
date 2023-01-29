@@ -82,17 +82,12 @@ describe('#framework', () => {
 
   // Test bot interactions in a bot created test space
   // That does and doesn't include dissallowed members
-  //require('./common/bot-membership-rules-tests.js');
-
-  // Test bot interactions in a bot created test space
-  // That does and doesn't include dissallowed members
-  require('./common/guided-mode-rules-tests.js');
+  require('./common/bot-membership-rules-tests.js');
 
   // Test bot interactions in a user created test space
   // With no disallowed members -- make sure nothing breaks in this mode
-  //require('./common/bot-created-room-tests.js');
+  require('./common/bot-created-room-tests.js');
 
-  // Test bot's membership functions
 });
 
 // gracefully shutdown (ctrl-c)
