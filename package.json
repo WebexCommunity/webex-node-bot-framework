@@ -37,7 +37,7 @@
     "https-proxy-agent": "^5.0.1",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
-    "mongodb": "^4.13.0",
+    "mongodb": "^3.5.7",
     "validator": "^13.7.0",
     "webex": "2.29.3",
     "when": "^3.7.8"
