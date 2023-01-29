@@ -7,11 +7,10 @@
 * Added new documentation with more details on how to run the tests
 * Manually updated dependencies
   * Bump webex from 2.4.2 to 2.29.3
-  * Bump mongodb from 3.5.7 to 4.13.0
 * Removed 30 npm install warnings.  5 still remain
   * Used the npm overrides in package.json to update packages in dependencies when possible.
-  *   This field requires the use of npm v8 or better.
-  * Remaining deprecated packages cannot be updates which making changes in webex sdk code
+  *   This field requires the use of npm v8.3 or better.
+  * Remaining deprecated packages cannot be updated without changes in webex sdk code
 
 
 ## v 2.3.15
