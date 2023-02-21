@@ -1,5 +1,9 @@
 # Version History
 
+## v 2.4.1
+
+* Override json5 to 2.2.3 to resolve security vulnerability
+
 ## v 2.4.0
 
 * Added a new framework config option `profileMsgProcessingTime`.  Set to true to profile time spent in framework and hears() callbacks per message.   When set the framework will log the processing time per message to the console.   When framework.stop() is called the total number of messages processed and the average processing time will be displayed in the console. 
@@ -11,7 +15,6 @@
   * Used the npm overrides in package.json to update packages in dependencies when possible.
   *   This field requires the use of npm v8.3 or better.
   * Remaining deprecated packages cannot be updated without changes in webex sdk code
-
 
 ## v 2.3.15
 

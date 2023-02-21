@@ -1,6 +1,6 @@
 {
   "name": "webex-node-bot-framework",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Webex Teams Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
@@ -50,7 +50,8 @@
     "jsonwebtoken": "9.0.0",
     "ua-parser": "0.7.33",
     "@xmldom/xmldom": "0.7.8",
-    "yargs": "17.6.2"
+    "yargs": "17.6.2",
+    "json5": "2.2.3"
   },
   "devDependencies": {
     "doctoc": "^2.2.0",
