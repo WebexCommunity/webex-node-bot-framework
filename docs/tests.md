@@ -88,7 +88,7 @@ The following tests are availabe:
 			- Select **Connect your Application**  
 				- In the **Driver** dropdown select `Node.js`  
 				- In the **Version** dropdown select `4.1 or later`  
-				- Copy the connection string presented.   It should looks something like this: `mongodb+srv://frameworkTester:<password>@cluster0.0823kk.mongodb.net/?retryWrites=true&w=majority`  
+				- Copy the connection string presented.   It should looks something like this: `mongodb+srv://frameworkTester:<password>@cluster0.0823kk.mongodb.net/?retryWrites=true&writeConcern=majority`  
 	- ### Setting up the mongo environment variables  
 		- Set MONGO_URI to the connection string.  If this was copied from the Mongo Cloud GUI using the steps above, replace `<password>` with the password you saved when you created the user for the database  
 		- Set MONGO_BOT_STORE to the name of a collection to use as the storage adapter (ie: the place where data sent with `bot.store()` will be stored).   I typically set this to `frameworkTests-botStore` but it can be anything.   If this collection does not yet exist in your database it will be created automatically the first time the test runs.  

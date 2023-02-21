@@ -200,7 +200,7 @@ class MongoStore {
     let initBotStorageData = JSON.parse(JSON.stringify(initStorage));
     initBotStorageData._id = id;
     this.memStore[id] = initBotStorageData;
-    return this.botStoreCollection.insertOne(initBotStorageData, { upsert: true, w: 1 })
+    return this.botStoreCollection.insertOne(initBotStorageData, { upsert: true, writeConcern: 1 })
       .then((mReturn) => {
         debug(`Mongo response when creating default store config for spaceId: ${id}:`);
         debug(mReturn);
@@ -380,7 +380,7 @@ class MongoStore {
           let update = {};
           update[key] = "";
           return this.botStoreCollection.updateOne(
-            { _id: id }, { $unset: update }, { upsert: true, w: 1 })
+            { _id: id }, { $unset: update }, { upsert: true, writeConcern: 1 })
             .then((mongoResponse) => {
               debug('Mongo response from updating store config in bot.forget():');
               debug(mongoResponse);
