@@ -7,7 +7,7 @@ let User_Test_Space_Title = common.User_Test_Space_Title;
 
 let validator = common.validator;
 
-describe('Non Guide Created Room', () => {
+describe('Non Guide Creates Room with Bot', () => {
   let userCreatedTestRoom, userCreatedRoomBot;
   let eventsData = {};
   // Define the messages we want to try sending to the bot
@@ -33,6 +33,7 @@ describe('Non Guide Created Room', () => {
     userCreatedTestRoom, eventsData, /*shouldFail = */ true, disallowedUser)
     .then((b) => {
       userCreatedRoomBot = b;
+      eventsData.bot = b;
     }));
 
   // Bot leaves rooms
@@ -56,33 +57,37 @@ describe('Non Guide Created Room', () => {
       });
   });
 
-  // loop through message tests..
-  testMessages.forEach((testData) => {
-    eventsData = {bot: userCreatedRoomBot};
-  
-    it(`user says "${testData.msgText}" to disallowed bot`, () => {
-      let testName = `user says ${testData.msgText} to disallowed bot`;
-      eventsData = {bot: userCreatedRoomBot};
-      framework.debug(`${testName} test starting...`);
-      return common.userSendMessage(testName, framework, disallowedUser,
-        userCreatedRoomBot, eventsData,
-        testData.hearsInfo, testData.msgText, testData.msgFiles);
-    });
-
-    it(`bot should not respond to ${testData.msgText}`, () => {
-      let testName = `bot should not respond to "${testData.msgText}"`;
-      let shouldBeAllowed = false;
-      framework.debug(`${testName} test starting...`);
-      return common.botRespondsToTrigger(testName, framework,
-        userCreatedRoomBot, eventsData, shouldBeAllowed);
-    });
-  
-  });
-  
-  it(`Removes the framework.hears() handlers setup in previous ` + `${testMessages.length * 2} tests`, () => {
+  describe('Non guide user iteracts with bot', () => {
+    // loop through message tests..
     testMessages.forEach((testData) => {
-      framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
-      framework.clearHears(testData.hearsInfo.functionId);
+    
+      it(`user says "${testData.msgText}" to disallowed bot`, () => {
+        let testName = `user says ${testData.msgText} to disallowed bot`;
+        // Adding expectHearsSwallowed in cases where the bot is configured
+        // to not reply when spoken to in spaces with no guides
+        // TODO add logic to check framework.options.membershipRulesDisallowedResponse
+        eventsData.expectHearsSwallowed = true;
+        framework.debug(`${testName} test starting...`);
+        return common.userSendMessage(testName, framework, disallowedUser,
+          userCreatedRoomBot, eventsData,
+          testData.hearsInfo, testData.msgText, testData.msgFiles);
+      });
+
+      it(`bot should not respond to ${testData.msgText}`, () => {
+        let testName = `bot should not respond to "${testData.msgText}"`;
+        let shouldBeAllowed = false;
+        framework.debug(`${testName} test starting...`);
+        return common.botRespondsToTrigger(testName, framework,
+          userCreatedRoomBot, eventsData, shouldBeAllowed);
+      });
+  
+    });
+    
+    it(`Removes the framework.hears() handlers setup in previous ` + `${testMessages.length * 2} tests`, () => {
+      testMessages.forEach((testData) => {
+        framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
+        framework.clearHears(testData.hearsInfo.functionId);
+      });
     });
   });
 
@@ -95,7 +100,7 @@ describe('Non Guide Created Room', () => {
 
     // loop through message tests..
     testMessages.forEach((testData) => {
-      eventsData = {bot: userCreatedRoomBot};
+      eventsData = {expectHearsSwallowed: false};
 
       it(`user says ${testData.msgText}`, () => {
         let testName = `user says ${testData.msgText}`;
@@ -385,13 +390,13 @@ describe('Non Guide Created Room', () => {
   //   });
   });
 
-  describe('Bot removes guide user from space and users iteracts with it', () => {
+  describe('Bot removes guide user from space and other user iteracts with it', () => {
 
     before(() => {
       testName = "removes guide user from the room";
       return common.botRemoveUserFromSpace(testName, framework, userCreatedRoomBot,
         common.userInfo.emails[0], eventsData, 
-        0, /* numDisallowedUsersInSpace */
+        1, /* numDisallowedUsersInSpace */
         false, /* isDisallowedUser */);
     });
 

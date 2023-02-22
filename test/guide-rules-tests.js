@@ -63,6 +63,7 @@ describe('#framework', () => {
   before(() => validUserWebex.people.get('me')
     .then((person) => {
       framework.options.guideEmails = person.emails[0];
+      // Bot will not respond to messages in spaces without a guide user
       framework.options.membershipRulesDisallowedResponse = '';
       return disallowedUserWebex.people.get('me');
     }).then((person) => {
