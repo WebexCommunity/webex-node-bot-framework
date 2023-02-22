@@ -4,7 +4,7 @@
 ```bash
 mkdir myproj
 cd myproj
-git clone https://github.com/webex/webex-node-bot-framework
+git clone https://github.com/WebexCommunity/webex-node-bot-framework
 npm install ./webex-node-bot-framework
 ```
 
