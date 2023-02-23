@@ -62,9 +62,8 @@ describe('#framework', () => {
   // We will use the "valid user" as the guide
   before(() => validUserWebex.people.get('me')
     .then((person) => {
+      // Initialize framework in guide mode using default messages
       framework.options.guideEmails = person.emails[0];
-      // Bot will not respond to messages in spaces without a guide user
-      framework.options.membershipRulesDisallowedResponse = '';
       return disallowedUserWebex.people.get('me');
     }).then((person) => {
       common.setDisallowedUserPerson(person);
@@ -80,15 +79,8 @@ describe('#framework', () => {
   //Stop framework to shut down the event listeners
   after(() => common.stopFramework('shutdown framework', framework));
 
-  // Test bot interactions in a bot created test space
-  // That does and doesn't include dissallowed members
   require('./common/guided-mode-rules-tests.js');
 
-  // Test bot interactions in a user created test space
-  // With no disallowed members -- make sure nothing breaks in this mode
-  //require('./common/bot-created-room-tests.js');
-
-  // Test bot's membership functions
 });
 
 // gracefully shutdown (ctrl-c)
