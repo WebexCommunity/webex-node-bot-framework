@@ -264,17 +264,27 @@ module.exports = {
   registerMembershipEventsForGuideAdded: function (testName, framework, disallowedEmails, eventsData) {
     let eventPromises = [];
     let swallowedEvents;
-    // These events should occur with a new membership that adds a guide to a previously unguided space
+    // These events should occur with a new membership that adds a guide 
+    // to a previously unguided space
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
     }));
-    // eventPromises.push(new Promise((resolve) => {
-    //   this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
-    // }));
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
+    }));
 
-    swallowedEvents = ['spawn']; 
+    if (framework.membershipRulesAllowedResponse) {
+      // When Guides are removed from space with bot expect a 
+      // message from the bot saying it won't work
+        eventsData.checkMembershipRulesAllowedResponse = true;
+        eventPromises.push(new Promise((resolve) => {
+        this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        }));
+      }
+  
 
-    // TODO figure out what membershipRulesActions will be generated
+    swallowedEvents = ['memberEnters']; 
+
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(testName, framework,
         swallowedEvents, eventsData,
@@ -304,6 +314,15 @@ module.exports = {
       // Finally, we will get some membership-rules events, 
       // and one "swallowed" memberEnters for each dissallowed user
       swallowedEvents = ['despawn']; 
+    } else if (("guideEmails" in framework) && framework.guideEmails.length &&
+              framework.membershipRulesDisallowedResponse) {
+      // Bot in Guided Mode being added to a space with no guides expect a 
+      // message from the bot saying it won't work and a "swallowed" spawn event
+      eventsData.checkMembershipRulesDisallowedResponse = true;
+      eventPromises.push(new Promise((resolve) => {
+        this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+      }));
+      swallowedEvents = ['spawn']; 
     } else {
       // If now disallowed user we are adding a bot to a disallowed space
       // We will swallow a spawn event
@@ -360,19 +379,31 @@ module.exports = {
 
   registerGuideRemovedFromSpaceEvents: function (testName, framework, eventsData, numDisallowedUsersInSpace) {
     let eventPromises = [];
+    let swallowedEvents;
     // Framework always gets the membership change event
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
     }));
+
     // TODO check if other guides are in the space, we assume we'll be disallowed at this point
     eventPromises.push(new Promise((resolve) => {
       this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
     }));
+
+    if (framework.membershipRulesDisallowedResponse) {
+    // When Guides are removed from space with bot expect a 
+    // message from the bot saying it won't work
+      eventsData.checkMembershipRulesDisallowedResponse = true;
+      eventPromises.push(new Promise((resolve) => {
+      this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+      }));
+    }
     // Finally, we will get some membership-rules events, a "swallowed" memberExits
     // and a message about the re-spawning
+    swallowedEvents = ['despawn']
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(testName, framework,
-        ['despawn'], eventsData, true, resolve);
+        swallowedEvents, eventsData, true, resolve);
     }));
     return (eventPromises);
   },
@@ -485,7 +516,7 @@ module.exports = {
   },
 
   userSendMessage: function (testName, framework, userWebex, bot, eventsData, hearsInfo, markdown, files) {
-    // We mention the bot whe the test is running as a bot account
+    // We mention the bot when the test is running as a bot account
     // Only register for mention events, if we are mentioning the bot
     let isMention = false;
     if (framework.isBotAccount) {
@@ -505,23 +536,22 @@ module.exports = {
     if (bot.active) {
       eventPromises = this.registerMessageHandlers(testName, isMention, framework, bot, msgObj, eventsData);
     } else {
-      eventPromises = this.getInActiveBotEventArray(testName, isMention, framework, msgObj, eventsData);
+      eventPromises = this.getInactiveBotEventArray(testName, isMention, framework, msgObj, eventsData);
     }
 
-    // Register the framework.hears handler for this message.  We want this 
-    // ven in the case of dissalowed bots so we can capture the "swallowed-hears"
+    // Register the framework.hears handler for this message 
     let calledHearsPromise = new Promise((resolve) => {
       hearsInfo.functionId = framework.hears(hearsInfo.phrase, (b, t) => {
         assert((b.id === bot.id),
-          'bot returned in fint.hears("hi") is not the one expected');
+          `bot returned in fint.hears(${hearsInfo.phrase}) is not the one expected`);
         assert(validator.objIsEqual(t, eventsData.trigger),
-          'trigger returned in framework.hears("hi") was not as expected');
-        framework.debug('Bot heard message "hi" that user posted');
+          `trigger returned in framework.hears(${hearsInfo.phrase}) was not as expected`);
+        framework.debug(`Bot heard message "${hearsInfo.phrase}" that user posted`);
         resolve(true);
       }), hearsInfo.helpString, hearsInfo.priority;
     });
     if (bot.active) {
-      // Wait for it to be called if our bot is active
+      // Only wait for it to be called if our bot is active (not disabled for guide mode)
       eventPromises.push(calledHearsPromise);
     }
 
@@ -617,7 +647,7 @@ module.exports = {
     return eventPromises;
   },
 
-  getInActiveBotEventArray: function (testName, isMention, framework, msgObj, eventsData) {
+  getInactiveBotEventArray: function (testName, isMention, framework, msgObj, eventsData) {
     let eventPromises = [];
 
     // Wait for the events associated with a new message before completing test..
@@ -633,7 +663,7 @@ module.exports = {
     }
     if (this.framework.membershipRulesStateMessageResponse) {
       // Wait for the bot to respond with the an "Ignoring input" type message
-      eventsData.registerForBotResponse = true;
+      eventsData.msgSentToDisabledGuideModeBot = true;
     }
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(testName, framework,
@@ -735,15 +765,37 @@ module.exports = {
       eventsData.message = message;
       assert((id === framework.id),
         'id returned in framework.on("messageCreated") is not the one expected');
-      if (eventsData.registerForBotResponse) {
+      if (eventsData.msgSentToDisabledGuideModeBot) {
         // This event occured when a user sent a message to a disallowed bot
         // Register this handler again so that we wait for the bot's automated response
-        delete eventsData.registerForBotResponse;
+        delete eventsData.msgSentToDisabledGuideModeBot;
+        eventsData.checkMembershipRulesStateMessageResponse = true;
         this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, promiseResolveFunction);
-      } else {
-        promiseResolveFunction(assert(validator.isMessage(message),
-          'memssageCreated event did not include a valid message'));
-      }
+        return
+      } else if (eventsData.checkMembershipRulesDisallowedResponse) {
+        delete eventsData.checkMembershipRulesDisallowedResponse;
+        // Assert that the disabled Guide Mode bot is sending the configured 
+        // when added to a room with no guides or when the last guide is removed from a room
+        assert((message.markdown == framework.membershipRulesDisallowedResponse),
+          `Guide mode bot added to space with no guides responded to a membership change with "${message.markdown}",
+           expected "${framework.membershipRulesDisallowedResponse}".`); 
+      } else if (eventsData.checkMembershipRulesStateMessageResponse) {
+        delete eventsData.checkMembershipRulesStateMessageResponse;
+        // Assert that the disabled Guide Mode bot is sending the configured 
+        // response after being mentiond
+        assert((message.markdown == framework.membershipRulesStateMessageResponse),
+          `Guide mode bot in space with no guides responded to a message with "${message.markdown}",
+           expected "${framework.membershipRulesStateMessageResponse}".`); 
+      } else if (eventsData.checkMembershipRulesAllowedResponse) {
+        delete eventsData.checkMembershipRulesAllowedResponse;
+        // Assert that the disabled Guide Mode bot is sending the configured 
+        // response when guide is added to a previously unguided room
+        assert((message.markdown == framework.membershipRulesAllowedResponse),
+          `Guide mode bot responded to a guide being added with "${message.markdown}",
+          expected "${framework.membershipRulesAllowedResponse}".`); 
+        }
+      promiseResolveFunction(assert(validator.isMessage(message),
+        'memssageCreated event did not include a valid message'));
     });
   },
 
