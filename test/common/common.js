@@ -172,10 +172,17 @@ module.exports = {
 
     let eventPromises = [];
     if ((bot.active) && (!eventsData.disallowedUserEmail.length)) {
+      // Active bot should behave normally when a non restricted member enters
       eventPromises = this.registerMembershipHandlers(testName, framework, bot, eventsData);
     } else if ((!bot.active) && (guideAdded)) {
+      // Inactive bot should do a membership rules spawn when guide enters
+      // This will fail if the space also includes restricted domain users -- not currently in tests
       eventPromises = this.registerMembershipEventsForGuideAdded(testName, framework, eventsData.disallowedUserEmail, eventsData);
+    } else if (!bot.active) {
+      // An inactive bot will remain inactive when non-guide users enter, memberEnters will be swallowed
+      eventPromises = this.registerMembershipEventsForInactiveBot(testName, framework, eventsData.disallowedUserEmail, eventsData);
     } else {
+      // This membership will trigger a membership rules "despawn"
       eventPromises = this.registerMembershipEventsForDectivatedBot(testName, framework, eventsData.disallowedUserEmail, eventsData);
     }
 
@@ -214,7 +221,6 @@ module.exports = {
         (-1 != framework.guideEmails.indexOf(_.toLower(userEmail)))) {
       guideRemoved = true;
     }
-
 
     if (!bot.active) {
       assert(numDisallowedUsersInSpace, 
@@ -285,6 +291,25 @@ module.exports = {
 
     swallowedEvents = ['memberEnters']; 
 
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMembershipRulesEventHandler(testName, framework,
+        swallowedEvents, eventsData,
+        false, /* don't error on unexpected swallowed events */
+        resolve);
+    }));
+
+    return (eventPromises);
+  },
+
+  registerMembershipEventsForInactiveBot: function (testName, framework, disallowedEmails, eventsData) {
+    let eventPromises = [];
+    let swallowedEvents;
+    // These events should occur when a new member will not change a bot's inactive status
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
+    }));
+    // the memberEnters event should be "swallowed", and the bot should not respond
+    swallowedEvents = ['memberEnters']; 
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(testName, framework,
         swallowedEvents, eventsData,
@@ -370,9 +395,11 @@ module.exports = {
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMemberExitsHandler(testName, framework, eventsData, resolve);
     }));
-    eventPromises.push(new Promise((resolve) => {
-      bot.memberExitsHandler(testName, eventsData, resolve);
-    }));
+    if (bot != null) {
+      eventPromises.push(new Promise((resolve) => {
+        bot.memberExitsHandler(testName, eventsData, resolve);
+      }));
+    }
 
     return (eventPromises);
   },
@@ -955,15 +982,26 @@ module.exports = {
           if (event === 'spawn') {
             // set the "swallowed bot" in eventsData so it can leave spaces
             eventsData.bot = bot;
-            // Validate that the membership in the membershipRulesChange belongs to the bot
             assert((args.length >= 2), 'did not get a membershipRulesChange object ' +
               'in membershipRulesAction event handler');
-            let mRC = args[1];
-            assert(((typeof mRC == 'object') && 
-              (typeof mRC.membership === 'object') && 
-              (mRC.membership.personId === bot.person.id)),
-            'membershipRulesChange.membership.personId was not the same as the bot\'s' +
-              'person ID when processing a swallowed "spawn" event in the membershipRulesAction handler');
+            let actorId = args[0];
+            let membershipRulesChange = args[1];
+            assert(((typeof membershipRulesChange == 'object') && 
+              (typeof membershipRulesChange.membership === 'object')),
+              'membershipRulesChange event did not return expected membershipRulesChange object');
+            if (membershipRulesChange.membershipRule === "restrictedToEmailDomains") {
+              // Validate that the membership belongs to the actor
+              // This won't always be the case (it's the email of the first member who is not in
+              // the allowed domains list), but they are the same in all of our test cases.
+              assert((membershipRulesChange.membership.personId === actorId),
+              'membershipRulesChange.membership.personId was not the same as the person who attempted to add ' +
+                'the bot when processing a swallowed "spawn" event in the membershipRulesAction handler');
+            } else {
+              // Validate that the membership in the membershipRulesChange belongs to the bot
+              assert((membershipRulesChange.membership.personId === bot.person.id),
+              'membershipRulesChange.membership.personId was not the same as the bot\'s' +
+                'person ID when processing a swallowed "spawn" event in the membershipRulesAction handler');
+            }
           }
           break;
         case ('hears-swallowed'):
