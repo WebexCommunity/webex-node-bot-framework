@@ -1,5 +1,10 @@
 # Version History
 
+## v 2.4.2
+
+* Update link to repo in auto generated "Powered by Webex Node Bot Framework"  help responses.
+* Recent update to mongo library was causing deprecation warnings.  Updated code and docs to use the preferred `writeConcern` syntax instead of deprecated `w` in mongo connection strings and API calls.
+
 ## v 2.4.1
 
 * Override json5 to 2.2.3 to resolve security vulnerability
