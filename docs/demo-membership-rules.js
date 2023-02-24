@@ -1,4 +1,4 @@
-var Framework = require('../lib/framework');
+var Framework = require('webex-node-bot-framework');
 
 var express = require('express');
 var app = express();
@@ -23,9 +23,9 @@ if (!((process.env.ALLOWED_DOMAINS) || (process.env.GUIDE_EMAILS))) {
   process.exit(0);
 }
 
-config.membershipRulesDisallowedResponse = "Test Message Disregard -- I am no longer allowed to interact with the members in this space";
-config.membershipRulesStateMessageResponse = "Test Message Disregard -- I am disregarding input when unauthorized users are in the room";
-config.membershipRulesAllowedResponse = "Test Message Disregard -- All unauthorized users have exited the room";
+config.membershipRulesDisallowedResponse = "Test Message Disregard -- I am no longer allowed to interact with the members in this space.";
+config.membershipRulesStateMessageResponse = "Test Message Disregard -- I am disregarding input due to my space memebership rules.";
+config.membershipRulesAllowedResponse = "Test Message Disregard -- Space membership has changes and I am now allowed to interact with users in this space.";
 
 // init framework
 var framework = new Framework(config);
@@ -95,15 +95,22 @@ framework.on('membershipRulesAction', (type, event, bot, id, ...args) => {
       case ('event-swallowed'):
         if (event === 'spawn') {
           if (args.length >= 2) {
-          let actorId = args[0];
-          let membershipRuleChange = args[1];
-          let email = membershipRuleChange.membership.personEmail;
-          if (membershipRuleChange && membershipRuleChange.membershipRule === "restrictedToEmailDomains") {
-              console.log(`spawn swallowed. Dissallowed member: ${email}`);
-            } else {
-              console.log(`spawn swallowed. Space membership is missing one of `+
-              'the users specified in the `guideEmails` framework config parameter');
+            // This will be the ID or the membership of the user who added the bot
+            let actor = args[0];  
+            if (typeof(actor) == 'object') {
+                actor = actor.personEmail;
             }
+            console.log(`Membership rules prevented a bot from being added by ${actor}`)
+            // This will be the membership rules change object
+            let membershipRuleChange = args[1];
+            let email = membershipRuleChange.membership.personEmail;
+            if (membershipRuleChange && 
+                membershipRuleChange.membershipRule === "restrictedToEmailDomains") {
+                console.log(`spawn swallowed. Member: ${email} is not in allowed domains list.`);
+                } else {
+                console.log(`spawn swallowed. Space membership is missing one of `+
+                'the users specified in the `guideEmails` framework config parameter');
+                }
           }
         }
         if ((event === 'memberExits') || (event === 'memberEnters')) {
