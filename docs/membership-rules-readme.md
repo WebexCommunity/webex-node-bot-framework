@@ -112,7 +112,7 @@ And at least one of:
 The sample will only generate Webex messages if the bot/user is added to a new space with disallowed users, if the bot/user is mentioned in a space with disallowed users, or if disallowed users use the space.  Console messages will provide updates on when membership rules are taking effect.
 
 ```js
-var Framework = require('../lib/framework');
+var Framework = require('webex-node-bot-framework');
 
 var express = require('express');
 var app = express();
@@ -209,15 +209,22 @@ framework.on('membershipRulesAction', (type, event, bot, id, ...args) => {
       case ('event-swallowed'):
         if (event === 'spawn') {
           if (args.length >= 2) {
-          let actorId = args[0];
-          let membershipRuleChange = args[1];
-          let email = membershipRuleChange.membership.personEmail;
-          if (membershipRuleChange && membershipRuleChange.membershipRule === "restrictedToEmailDomains") {
-              console.log(`spawn swallowed. Dissallowed member: ${email}`);
-            } else {
-              console.log(`spawn swallowed. Space membership is missing one of `+
-              'the users specified in the `guideEmails` framework config parameter');
+            // This will be the ID or the membership of the user who added the bot
+            let actor = args[0];  
+            if (typeof(actor) == 'object') {
+                actor = actor.personEmail;
             }
+            console.log(`Membership rules prevented a bot from being added by ${actor}`)
+            // This will be the membership rules change object
+            let membershipRuleChange = args[1];
+            let email = membershipRuleChange.membership.personEmail;
+            if (membershipRuleChange && 
+                membershipRuleChange.membershipRule === "restrictedToEmailDomains") {
+                console.log(`spawn swallowed. Member: ${email} is not in allowed domains list.`);
+                } else {
+                console.log(`spawn swallowed. Space membership is missing one of `+
+                'the users specified in the `guideEmails` framework config parameter');
+                }
           }
         }
         if ((event === 'memberExits') || (event === 'memberEnters')) {
