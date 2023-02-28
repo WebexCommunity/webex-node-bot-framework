@@ -3,8 +3,9 @@
 ## v 2.4.2
 
 * Update tests and documentation for the framework's [membership rules feature](./docs/membership-rules-readme.md), while enables developers to build bots that will only work with certain users or companies.
-* Update link to repo in auto generated "Powered by Webex Node Bot Framework"  help responses.
+* Update link to repo in auto generated "Powered by Webex Node Bot Framework"  help responses. Thanks [@adamweeks](https://github.com/WebexCommunity/webex-node-bot-framework/pull/90)
 * Recent update to mongo library was causing deprecation warnings.  Updated code and docs to use the preferred `writeConcern` syntax instead of deprecated `w` in mongo connection strings and API calls.
+* Fix setting up proxy specified in framework config option `httpsProxy`.  Thanks [@Drastic](https://github.com/WebexCommunity/webex-node-bot-framework/pull/94)
 
 ## v 2.4.1
 
