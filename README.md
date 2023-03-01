@@ -73,7 +73,7 @@ Feel free to join the ["Webex Node Bot Framework" space on Webex](https://eurl.i
 ```bash
 mkdir myproj
 cd myproj
-git clone https://github.com/webex/webex-node-bot-framework
+git clone https://github.com/WebexCommunity/webex-node-bot-framework
 npm install ./webex-node-bot-framework
 ```
 
@@ -659,7 +659,7 @@ Display help for registered Framework Commands.
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [header] | <code>String</code> | <code>Usage:</code> | String to use in header before displaying help message. |
-| [footer] | <code>String</code> | <code>Powered by Webex Node Bot Framework - https://github.com/webex/webex-node-bot-framework</code> | String to use in footer before displaying help message. |
+| [footer] | <code>String</code> | <code>Powered by Webex Node Bot Framework - https://github.com/WebexCommunity/webex-node-bot-framework</code> | String to use in footer before displaying help message. |
 
 **Example**  
 ```js
