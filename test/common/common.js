@@ -570,7 +570,7 @@ module.exports = {
     let calledHearsPromise = new Promise((resolve) => {
       hearsInfo.functionId = framework.hears(hearsInfo.phrase, (b, t) => {
         assert((b.id === bot.id),
-          `bot returned in fint.hears(${hearsInfo.phrase}) is not the one expected`);
+          `bot returned in framework.hears(${hearsInfo.phrase}) is not the one expected`);
         assert(validator.objIsEqual(t, eventsData.trigger),
           `trigger returned in framework.hears(${hearsInfo.phrase}) was not as expected`);
         framework.debug(`Bot heard message "${hearsInfo.phrase}" that user posted`);
