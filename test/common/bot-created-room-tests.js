@@ -1,5 +1,6 @@
 // Variables an functions shared by all tests
 var common = require("../common/common");
+let tm = require("../common/test-messages")
 let framework = common.framework;
 let userWebex = common.userWebex;
 let User_Test_Space_Title = common.User_Test_Space_Title;
@@ -352,41 +353,8 @@ describe('User Created Room to create a Test Bot', () => {
     });
 
     describe('#user.webex.message.create()', () => {
-      // Define the messages we want to try sending to the bot
-      let testMessages = [
-        {msgText: 'hi', hearsInfo: {phrase: 'hi'}},
-        {
-          msgText: `Here is a file for ya`,
-          msgFiles: process.env.HOSTED_FILE,
-          hearsInfo: {phrase: /.*file.*/im}
-        },
-        {
-          msgText: `Here is a whole mess of stuff for ya`,
-          hearsInfo: {
-            phrase: /.*/igm,
-            helpString: '',
-            priority: 99
-          }
-        },
-        {
-          msgText: `Here is a Some Stuff for ya`,
-          hearsInfo: {
-            phrase: /.*Some Stuf.*/igm,
-            helpString: '',
-            priority: 2 // lower number == higher priority
-          }
-        }
-      ];
-
-      // Clean up the hears functions we registered
-      after(() => {
-        testMessages.forEach((testData) => {
-          framework.clearHears(testData.hearsInfo.functionId);
-        });
-      });
-
       // loop through message tests..
-      testMessages.forEach((testData) => {
+      tm.testMessages.forEach((testData) => {
         eventsData = {bot: botCreatedRoomBot};
 
         it(`user says ${testData.msgText}`, () => {
@@ -401,8 +369,13 @@ describe('User Created Room to create a Test Bot', () => {
           return common.botRespondsToTrigger(testName, framework,
             botCreatedRoomBot, eventsData);
         });
-      });
 
+        it(`clears framework.hears for ${testData.msgText}`, () => {
+          testData.hearsInfo.forEach((info) => {
+            framework.clearHears(info.functionId);
+          });
+        });
+      });
     });
 
     describe('bot.sendCard', () => {

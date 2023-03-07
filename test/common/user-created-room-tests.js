@@ -1,5 +1,6 @@
 // Variables an functions shared by all tests
 var common = require("../common/common");
+let tm = require("../common/test-messages")
 let framework = common.framework;
 let userWebex = common.userWebex;
 let User_Test_Space_Title = common.User_Test_Space_Title;
@@ -30,14 +31,6 @@ describe('User Created Rooms Tests', () => {
       return validator.isBot(b);
     }));
 
-  // // remove the hears handlers we set up for these tests
-  // after(() => {
-  //   framework.clearHears(hearsHi);
-  //   framework.clearHears(hearsFile);
-  //   framework.clearHears(hearsAnything);
-  //   framework.clearHears(hearsSomeStuff);
-  // });
-
   // Bot leaves rooms
   after(() => {
     if ((!bot) || (!userCreatedTestRoom)) {
@@ -59,44 +52,12 @@ describe('User Created Rooms Tests', () => {
   });
 
   describe('#user.webex.message.create()', () => {
-    // Define the messages we want to try sending to the bot
-    let testMessages = [
-      {msgText: 'hi', hearsInfo: {phrase: 'hi'}},
-      {
-        msgText: `Here is a file for ya`,
-        msgFiles: process.env.HOSTED_FILE,
-        hearsInfo: {phrase: /.*file.*/im}
-      },
-      {
-        msgText: `Here is a whole mess of stuff for ya`,
-        hearsInfo: {
-          phrase: /.*/im,
-          helpString: '',
-          priority: 99
-        }
-      },
-      {
-        msgText: `Here is a Some Stuff for ya`,
-        hearsInfo: {
-          phrase: /.*Some Stuf.*/im,
-          helpString: '',
-          priority: 2 // lower number == higher priority
-        }
-      }
-    ];
-
-    after(() => {
-      testMessages.forEach((testData) => {
-        framework.clearHears(testData.hearsInfo.functionId);
-      });
-    });
-
     // loop through message tests..
-    testMessages.forEach((testData) => {
+    tm.testMessages.forEach((testData) => {
       eventsData = {bot: bot};
 
       it(`user says ${testData.msgText}`, () => {
-        let testName = `user says ${testData.msgText}`;
+        let testName =`user says ${testData.msgText}`;
         return common.userSendMessage(testName, framework, userWebex,
           bot, eventsData, testData.hearsInfo,
           testData.msgText, testData.msgFiles);
@@ -106,6 +67,12 @@ describe('User Created Rooms Tests', () => {
         let testName = `bot responds to ${testData.msgText}`;
         return common.botRespondsToTrigger(testName, framework,
           bot, eventsData);
+      });
+
+      it(`clears framework.hears for ${testData.msgText}`, () => {
+        testData.hearsInfo.forEach((info) => {
+          framework.clearHears(info.functionId);
+        });
       });
     });
 

@@ -1,6 +1,7 @@
 // Variables an functions shared by all tests
 const when = require("when");
 var common = require("../common/common");
+let tm = require("../common/test-messages")
 let framework = common.framework;
 let userWebex = common.userWebex;
 let disallowedUser = common.getDisallowedUser();
@@ -29,15 +30,6 @@ paramCombos.forEach(function(paramCombo, testIndex) {
   describe(`Non Guide Creates Room with Bot for test ${testIndex + 1}`, () => {
     let userCreatedTestRoom, userCreatedRoomBot;
     let eventsData = {};
-    // Define the messages we want to try sending to the bot
-    let testMessages = [
-      {msgText: 'hi', hearsInfo: {phrase: 'hi'}},
-      {
-        msgText: `Here is a file for ya`,
-        msgFiles: process.env.HOSTED_FILE,
-        hearsInfo: {phrase: /.*file.*/im}
-      }
-    ];
 
     // Set the framework guide mode bot response params for this test
     before(() => {
@@ -101,7 +93,7 @@ paramCombos.forEach(function(paramCombo, testIndex) {
 
     describe('Non guide user iteracts with bot', () => {
       // loop through message tests..
-      testMessages.forEach((testData) => {
+      tm.testMessages.forEach((testData) => {
       
         it(`user says "${testData.msgText}" to disallowed bot`, () => {
           let testName = `user says ${testData.msgText} to disallowed bot`;
@@ -123,12 +115,10 @@ paramCombos.forEach(function(paramCombo, testIndex) {
             userCreatedRoomBot, eventsData, shouldBeAllowed);
         });
     
-      });
-      
-      it(`Removes the framework.hears() handlers setup in previous ` + `${testMessages.length * 2} tests`, () => {
-        testMessages.forEach((testData) => {
-          framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
-          framework.clearHears(testData.hearsInfo.functionId);
+        it(`clears framework.hears for ${testData.msgText}`, () => {
+          testData.hearsInfo.forEach((info) => {
+            framework.clearHears(info.functionId);
+          });
         });
       });
     });
@@ -141,7 +131,7 @@ paramCombos.forEach(function(paramCombo, testIndex) {
       });
 
       // loop through message tests..
-      testMessages.forEach((testData) => {
+      tm.testMessages.forEach((testData) => {
         eventsData = {expectHearsSwallowed: false};
 
         it(`user says ${testData.msgText}`, () => {
@@ -158,13 +148,11 @@ paramCombos.forEach(function(paramCombo, testIndex) {
             userCreatedRoomBot, eventsData, shouldBeAllowed);
         });
 
-      });
-
-      it(`Removes the framework.hears() handlers setup in previous ` + `${testMessages.length * 2} tests`, () => {
-        testMessages.forEach((testData) => {
-          framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
-          framework.clearHears(testData.hearsInfo.functionId);
-        });
+        it(`clears framework.hears for ${testData.msgText}`, () => {
+          testData.hearsInfo.forEach((info) => {
+            framework.clearHears(info.functionId);
+          });
+        }); 
       });
     });
 
@@ -180,7 +168,7 @@ paramCombos.forEach(function(paramCombo, testIndex) {
 
 
       // loop through message tests again after guide is removed
-      testMessages.forEach((testData) => {
+      tm.testMessages.forEach((testData) => {
         eventsData = {bot: userCreatedRoomBot};
     
         it(`user says "${testData.msgText}" to disallowed bot`, () => {
@@ -199,14 +187,12 @@ paramCombos.forEach(function(paramCombo, testIndex) {
           return common.botRespondsToTrigger(testName, framework,
             userCreatedRoomBot, eventsData, shouldBeAllowed);
         });
-    
-      });
-    
-      it(`Removes the framework.hears() handlers setup in previous ` + `${testMessages.length * 2} tests`, () => {
-        testMessages.forEach((testData) => {
-          framework.debug(`Cleaning up framework.hears(${testData.hearsInfo.phrase})...`);
-          framework.clearHears(testData.hearsInfo.functionId);
-        });
+
+        it(`clears framework.hears for ${testData.msgText}`, () => {
+          testData.hearsInfo.forEach((info) => {
+            framework.clearHears(info.functionId);
+          });
+        });          
       });
     });
 
