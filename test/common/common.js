@@ -571,30 +571,6 @@ module.exports = {
       eventPromises = this.getInactiveBotEventArray(testName, isMention, framework, msgObj, eventsData, hearsInfo);
     }
 
-    // // Check if this test includes any specific framework.hears() syntax
-    // if (eventsData.hearsSyntax) {
-    //   let hearsPromises = []
-    //   for (syntax in eventsData.hearsSyntax) {
-    //     let calledHearsPromise = new Promise((resolve) => {
-    //       framework.hears(syntax.phrase, (b, t) => {
-    //         framework.debug(`hears(${syntax.phrase}) fired for "${t.message.html}"`);
-    //         assert((b.id === bot.id),
-    //           `bot returned in framework.hears(${syntax.phrase}) is not the one expected`);
-    //         assert(validator.objIsEqual(t.command, syntax.command),
-    //           `trigger.command returned in framework.hears(${syntax.phrase}) was not as expected`);
-    //         assert(validator.objIsEqual(t.prompt, syntax.prompt),
-    //           `trigger.prompt returned in framework.hears(${syntax.phrase}) was not as expected`);
-    //         assert(validator.objIsEqual(t.message, eventsData.message),
-    //           `trigger.message returned in framework.hears(${syntax.phrase}) was not as expected`);
-    //         resolve(true);
-    //       }), hearsInfo.helpString, hearsInfo.priority;
-    //     });
-    //     if (bot.active) {
-    //       // Only wait for it to be called if our bot is active (not disabled for guide mode)
-    //       eventPromises.push(calledHearsPromise);
-    //     }
-    //   }
-    // } else {
     // Register the specified framework.hears handlers for the message 
     hearsInfo.forEach((info) => {
       let calledHearsPromise = new Promise((resolve) => {
