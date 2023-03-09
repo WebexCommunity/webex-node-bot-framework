@@ -39,6 +39,26 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Mocha Tests As User",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "env": {
+        "DEBUG": "framework"
+      },
+      "cwd": "${workspaceRoot}",
+      "args": [
+        "--exit",
+        "-u",
+        "bdd",
+        "--timeout",
+        "40000",
+        "--colors",
+        "${workspaceFolder}/test/integration-tests.js"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Mocha Tests Membership Rules",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "env": {

@@ -50,6 +50,11 @@ framework.hears('hello', (bot, trigger) => {
   bot.say('Hello %s!', trigger.person.displayName);
 }, '**hello** - say hello and I\'ll say hello back'); // zero is default priorty
 
+// echo user input
+framework.hears('echo', (bot, trigger) => {
+  bot.say('markdown', `You said: ${trigger.prompt}`);
+}, '**echo** - I\'ll echo back the rest of your message');
+
 // Its a good practice to handle unexpected input
 // Setting a priority > 0 means this will be called only if nothing else matches
 framework.hears(/.*/gim, (bot, trigger) => {

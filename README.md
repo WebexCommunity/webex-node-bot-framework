@@ -11,6 +11,18 @@ For developers who are familiar with flint, or who wish to port existing bots bu
 Feel free to join the ["Webex Node Bot Framework" space on Webex](https://eurl.io/#BJ7gmlSeU) to ask questions and share tips on how to leverage this framework.   This project is community supported so contributions are welcome.   If you are interested in making the framework better please see the [Contribution Guidelines](./docs/contributing.md).
 
 ## News
+* March, 2023 - Version 2.5.0 introduces two new elments of the [Trigger object](#Trigger)
+  * `trigger.command` will now contain the component of the user message that matched the `framework.hears` phrase.
+  * `trigger.prompt` will contain all of the user message that was NOT part of the command or the bot mention.
+
+This should simplify logic that uses part of the user message, for example:
+```js
+// echo user input
+framework.hears('echo', (bot, trigger) => {
+  bot.say('markdown', `You said: ${trigger.prompt}`);
+}, '**echo** - I\'ll echo back the rest of your message');
+```
+
 * May, 2020 - Version 2 introduces a some new configuration options designed to help developers restrict access to their bot.   This can be helpful during the development phase (`guideEmails` parameter) or for production bots that should be restricted for use to users that have certain email domains (`restrictedToEmailDomains` parameter).   See [Membership-Rules README](./docs/membership-rules-readme.md)
   
 * October 31, 2020 - Earlier this year, a series of blog posts were published to help developers get started building bots with the framework:
@@ -35,7 +47,7 @@ Feel free to join the ["Webex Node Bot Framework" space on Webex](https://eurl.i
   - [Overview](#overview)
   - [Authentication](#authentication)
   - [Storage](#storage)
-  - [Bot Accounts](#bot-accounts)
+  - [Bot Accounts vs. User Accounts.](#bot-accounts-vs-user-accounts)
   - [Troubleshooting](#troubleshooting)
 - [Framework Reference](#framework-reference)
   - [Classes](#classes)
@@ -132,6 +144,11 @@ framework.hears('hello', (bot, trigger) => {
   bot.say('Hello %s!', trigger.person.displayName);
 }, '**hello** - say hello and I\'ll say hello back');
 
+// echo user input
+framework.hears('echo', (bot, trigger) => {
+  bot.say('markdown', `You said: ${trigger.prompt}`);
+}, '**echo** - I\'ll echo back the rest of your message');
+
 // get help
 framework.hears('help', (bot, trigger) => {
   bot.say('markdown', framework.showHelp());
@@ -142,7 +159,7 @@ framework.hears('help', (bot, trigger) => {
 framework.hears(/.*/gim, (bot, trigger) => {
     bot.say('Sorry, I don\'t know how to respond to "%s"', trigger.message.text);
     bot.say('markdown', framework.showHelp());
-}, 99999);
+}, 99999); 
 
 // define express path for incoming webhooks
 app.post('/framework', webhook(framework));
@@ -227,10 +244,10 @@ framework.hears(phrase, (bot, trigger, id) => {
 },'This is text that describes what happens when user sends phrase to bot', priority);
 ```
 
-* `phrase` : This can be either a string or a regex pattern.
-If a string, the string is matched against the first word in the room message.
-message.
+* `phrase` : This can be either a regex pattern or a string.
 If a regex pattern is used, it is matched against the entire message text.
+If a string, the phrase is matched if it is a substring of the room message.
+(This behavior differs slightly when run with a user token, see [Differences between Bot Accounts and User Accounts](#Bot-Accounts-vs.-User-Accounts.)).
 * `bot` : The bot object that is used to execute commands when the `phrase` is
 triggered.
 * `bot.<command>` : The Bot method to execute.
@@ -290,12 +307,24 @@ See [MongoStore](#MongoStore), for details on how to configure this storage adap
 
 The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
 
-## Bot Accounts
+## Bot Accounts vs. User Accounts.
+
+Most Webex bots are built using a "[Bot Account](https://developer.webex.com/docs/bots)" that was created in [Webex For Developers - Create A Bot](https://developer.webex.com/my-apps/new/bot).   
+It is also possible to build framework based applications using a "User Account" by specifying a user token obtained via a [Webex Integration](https://developer.webex.com/docs/integrations)
 
 **When using "Bot Accounts" the major differences are:**
 
-* Webhooks for message:created only trigger when the Bot is mentioned by name
-* Unable to read messages in rooms using the Webex API
+* Webhooks and websocket events for message:created only trigger when the Bot is mentioned by name
+* Unable to read all messages in Webex space using the Webex API.
+* May request the details of individual messages via the API by specifying
+a messageId.  In group space the messageID must be for a message where the bot
+was "mentioned".  Bots can request info for any message in 1-1 spaces.
+
+**Differences with matching string phrases when using Framework with a "Bot Account":**
+
+When a `framework.hears()` is defined with a string phrase (as opposed to regex)
+the phrase will match if it is a substring of the message.   When running as a 
+user account, the phrase will match only against the first word of the message.
 
 **Differences with trigger.args using Framework with a "Bot Account":**
 
@@ -612,6 +641,15 @@ framework.hears('/say', (bot, trigger) {
 framework.hears(/(^| )beer( |.|$)/i, (bot, trigger) => {
   bot.say('Enjoy a beer, %s! 🍻', trigger.person.displayName);
 });
+```
+**Example**  
+```js
+// echo user input using trigger.prompt
+framework.hears('echo', (bot, trigger) => {
+  if (trigger.command == 'echo') {
+    bot.say('markdown', `You said: ${trigger.prompt}`);
+  }
+}, '**echo** - I\'ll echo back the rest of your message');
 ```
 **Example**  
 ```js
@@ -1421,6 +1459,8 @@ Trigger Object
 | id | <code>string</code> | Message or attachentAction ID |
 | message | <code>object</code> | message that caused this trigger (if type is 'message') |
 | phrase | <code>string</code> \| <code>regex</code> | Matched lexicon phrase if any |
+| command | <code>string</code> | Portion of message text that matched phrase. |
+| prompt | <code>string</code> | Portion of message text that was not a bot mention and did not match phrase. |
 | args | <code>array</code> | Filtered array of words in message text. |
 | attachmentAction | <code>object</code> | attachmentAction that caused this trigger (if type is 'attachmentAction') |
 | person | <code>object</code> | Person object associated with user that sent the message or action |
@@ -1864,7 +1904,7 @@ This method is exposed as bot.writeMetric(appData, actor);
 
 The MIT License (MIT)
 
-Copyright (c) 2016-2021
+Copyright (c) 2016-2023
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

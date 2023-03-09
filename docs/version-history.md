@@ -1,5 +1,11 @@
 # Version History
 
+## v 2.5.0
+* Added the new `command` and `prompt` elements to the `trigger` object that is passed as a parameter to matching `framework.hears()` callbacks.
+  * `trigger.command` will be the portion of the user message that matched the phrase specified in the `framework.hears()`
+  * `trigger.prompt` will be the remainder of the user message (minus any bot mention).
+* New tests added for this new functionality uncovered a bug in the membership-rules feature. If config option `membershipRulesStateMessageResponse` is set, a disabled bot due to membership rules can respond with a the configured message.  If multiple `hears()` phrases matched user input, the framework would send the message multiple times.  As of this release that message is only sent once per message.
+
 ## v 2.4.2
 
 * Update tests and documentation for the framework's [membership rules feature](./docs/membership-rules-readme.md), while enables developers to build bots that will only work with certain users or companies.

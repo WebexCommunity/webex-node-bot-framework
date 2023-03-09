@@ -57,10 +57,10 @@ framework.hears(phrase, (bot, trigger, id) => {
 },'This is text that describes what happens when user sends phrase to bot', priority);
 ```
 
-* `phrase` : This can be either a string or a regex pattern.
-If a string, the string is matched against the first word in the room message.
-message.
+* `phrase` : This can be either a regex pattern or a string.
 If a regex pattern is used, it is matched against the entire message text.
+If a string, the phrase is matched if it is a substring of the room message.
+(This behavior differs slightly when run with a user token, see [Differences between Bot Accounts and User Accounts](#Bot-Accounts-vs.-User-Accounts.)).
 * `bot` : The bot object that is used to execute commands when the `phrase` is
 triggered.
 * `bot.<command>` : The Bot method to execute.
@@ -120,12 +120,24 @@ See [MongoStore](#MongoStore), for details on how to configure this storage adap
 
 The redis adaptor is likely broken and needs to be updated to support the new functions.   It would be great if a flint user of redis wanted to [contribute](./contributing.md)!
 
-## Bot Accounts
+## Bot Accounts vs. User Accounts.
+
+Most Webex bots are built using a "[Bot Account](https://developer.webex.com/docs/bots)" that was created in [Webex For Developers - Create A Bot](https://developer.webex.com/my-apps/new/bot).   
+It is also possible to build framework based applications using a "User Account" by specifying a user token obtained via a [Webex Integration](https://developer.webex.com/docs/integrations)
 
 **When using "Bot Accounts" the major differences are:**
 
-* Webhooks for message:created only trigger when the Bot is mentioned by name
-* Unable to read messages in rooms using the Webex API
+* Webhooks and websocket events for message:created only trigger when the Bot is mentioned by name
+* Unable to read all messages in Webex space using the Webex API.
+* May request the details of individual messages via the API by specifying
+a messageId.  In group space the messageID must be for a message where the bot
+was "mentioned".  Bots can request info for any message in 1-1 spaces.
+
+**Differences with matching string phrases when using Framework with a "Bot Account":**
+
+When a `framework.hears()` is defined with a string phrase (as opposed to regex)
+the phrase will match if it is a substring of the message.   When running as a 
+user account, the phrase will match only against the first word of the message.
 
 **Differences with trigger.args using Framework with a "Bot Account":**
 
