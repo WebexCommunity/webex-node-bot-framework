@@ -360,8 +360,7 @@ describe('User Created Room to create a Test Bot', () => {
         it(`user says ${testData.msgText}`, () => {
           let testName = `user says ${testData.msgText}`;
           return common.userSendMessage(testName, framework, userWebex,
-            botCreatedRoomBot, eventsData, testData.hearsInfo,
-            testData.msgText, testData.msgFiles);
+            botCreatedRoomBot, eventsData, testData);
         });
 
         it(`bot responds to ${testData.msgText}`, () => {

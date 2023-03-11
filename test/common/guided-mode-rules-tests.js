@@ -103,8 +103,7 @@ paramCombos.forEach(function(paramCombo, testIndex) {
           eventsData.expectHearsSwallowed = true;
           framework.debug(`${testName} test starting...`);
           return common.userSendMessage(testName, framework, disallowedUser,
-            userCreatedRoomBot, eventsData,
-            testData.hearsInfo, testData.msgText, testData.msgFiles);
+            userCreatedRoomBot, eventsData, testData);
         });
 
         it(`bot should not respond to ${testData.msgText}`, () => {
@@ -137,8 +136,7 @@ paramCombos.forEach(function(paramCombo, testIndex) {
         it(`user says ${testData.msgText}`, () => {
           let testName = `user says ${testData.msgText}`;
           return common.userSendMessage(testName, framework, userWebex,
-            userCreatedRoomBot, eventsData, testData.hearsInfo,
-            testData.msgText, testData.msgFiles);
+            userCreatedRoomBot, eventsData, testData);
         });
 
         it(`bot should respond to ${testData.msgText}`, () => {
@@ -176,8 +174,7 @@ paramCombos.forEach(function(paramCombo, testIndex) {
           eventsData = {bot: userCreatedRoomBot};
           framework.debug(`${testName} test starting...`);
           return common.userSendMessage(testName, framework, disallowedUser,
-            userCreatedRoomBot, eventsData,
-            testData.hearsInfo, testData.msgText, testData.msgFiles);
+            userCreatedRoomBot, eventsData, testData);
         });
 
         it(`bot should not respond to ${testData.msgText}`, () => {

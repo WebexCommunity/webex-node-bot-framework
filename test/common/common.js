@@ -90,20 +90,14 @@ module.exports = {
 
   userSendsMessageAndBotMayRespond: function (testData, framework, user, bot, eventsData) {
     it(`user says ${testData.msg}`, () => {
-      let testName = `user says ${testData.msg}`;
-      let hearsInfo = [{
-        phrase: testData.msgText
-      }];
-      return common.userSendMessage(testName, framework, user, bot,
-        eventsData, hearsInfo, testData.msgText)
-        // .then((m) => {
-        //   // I think I can delete this entire handler
-        //   // These both go out of scope immediatly.
-        //   hearsFunction = hearsInfo.functionId;
-        //   message = m;
-        //   // Perhaps I want to keep it to do this?
-        //   // eventsData.message = m;
-        // });
+      let testData = {
+        msgText: `user says ${testData.msg}`,
+        hearsInfo: [{
+          phrase: testData.msgText
+        }]
+      };
+      return common.userSendMessage(testName, framework,
+        user, bot, eventsData, testData)
     });
   },
 
@@ -546,13 +540,20 @@ module.exports = {
       });
   },
 
-  userSendMessage: function (testName, framework, userWebex, bot, eventsData, hearsInfo, markdown, files) {
+  userSendMessage: function (testName, framework, userWebex, bot, eventsData, testData) {
     // We mention the bot when the test is running as a bot account
     // Only register for mention events, if we are mentioning the bot
     let isMention = false;
+    let markdown = testData.msgText
     if (framework.isBotAccount) {
-      // TODO figure out how to make support mentions in other positions than first
-      markdown = `<@personId:${bot.person.id}> ${markdown}`;
+      // Add a bot mention at the beginning of the message or position indicated
+      if ('mentionIndex' in testData) {
+        let words = markdown.split(" ");
+        words.splice(testData.mentionIndex, 0, `<@personId:${bot.person.id}>`);
+        markdown = words.join(" ");
+      } else {
+        markdown = `<@personId:${bot.person.id}> ${markdown}`;
+      }
       isMention = true;
     }
 
@@ -561,18 +562,18 @@ module.exports = {
       roomId: bot.room.id,
       markdown: markdown
     };
-    if (files) {msgObj.files = files;}
+    if ('files' in testData) {msgObj.files = testData.files;}
 
     // Set up handlers for the message events
     let eventPromises = [];
     if (bot.active) {
       eventPromises = this.registerMessageHandlers(testName, isMention, framework, bot, msgObj, eventsData);
     } else {
-      eventPromises = this.getInactiveBotEventArray(testName, isMention, framework, msgObj, eventsData, hearsInfo);
+      eventPromises = this.getInactiveBotEventArray(testName, isMention, framework, msgObj, eventsData, testData.hearsInfo);
     }
 
     // Register the specified framework.hears handlers for the message 
-    hearsInfo.forEach((info) => {
+    testData.hearsInfo.forEach((info) => {
       let calledHearsPromise = new Promise((resolve) => {
         info.functionId = framework.hears(info.phrase, (b, t) => {
           framework.debug(`Bot heard message "${t.message.text}" that user posted`);

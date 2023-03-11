@@ -116,8 +116,7 @@ describe('User Created Room to create a Test Bot', () => {
         it(`user says ${testData.msgText}`, () => {
           let testName = `user says ${testData.msgText}`;
           return common.userSendMessage(testName, framework, userWebex,
-            botCreatedRoomBot, eventsData, testData.hearsInfo,
-            testData.msgText, testData.msgFiles);
+            botCreatedRoomBot, eventsData, testData);
         });
 
         it(`bot should respond to ${testData.msgText}`, () => {
@@ -163,8 +162,7 @@ describe('User Created Room to create a Test Bot', () => {
             eventsData = {bot: botCreatedRoomBot};
             framework.debug(`${testName} test starting...`);
             return common.userSendMessage(testName, framework, userWebex,
-              botCreatedRoomBot, eventsData,
-              testData.hearsInfo, testData.msgText, testData.msgFiles);
+              botCreatedRoomBot, eventsData, testData);
           });
 
           it(`bot shouldn't respond to ${testData.msgText}`, () => {
@@ -284,8 +282,7 @@ describe('User Created Room to create a Test Bot', () => {
         it(`allowed user says ${testData.msgText}`, () => {
           let testName = `allowed user says ${testData.msgText}`;
           return common.userSendMessage(testName, framework, disallowedUser,
-            botCreatedRoomBot, eventsData, testData.hearsInfo,
-            testData.msgText, testData.msgFiles);
+            botCreatedRoomBot, eventsData, testData);
         });
 
         it(`bot shouldn't respond to ${testData.msgText} from allowed user`, () => {
@@ -326,8 +323,7 @@ describe('User Created Room to create a Test Bot', () => {
             eventsData = {bot: botCreatedRoomBot};
             framework.debug(`${testName} test starting...`);
             return common.userSendMessage(testName, framework, userWebex,
-              botCreatedRoomBot, eventsData,
-              testData.hearsInfo, testData.msgText, testData.msgFiles);
+              botCreatedRoomBot, eventsData, testData);
           });
 
           it(`bot should not respond to ${testData.msgText}`, () => {
@@ -369,8 +365,7 @@ describe('User Created Room to create a Test Bot', () => {
             eventsData = {bot: botCreatedRoomBot};
             framework.debug(`${testName} test starting...`);
             return common.userSendMessage(testName, framework, userWebex,
-              botCreatedRoomBot, eventsData,
-              testData.hearsInfo, testData.msgText, testData.msgFiles);
+              botCreatedRoomBot, eventsData, testData);
           });
 
           it(`bot should respond to ${testData.msgText}`, () => {

@@ -4,11 +4,13 @@
  * 
  * @property {string} msgText - message user will send in the test
  * @property {string} msgFiles - url to a file to include in message
+ * @property {int} mentionIndex - 0 index word position where bot mention should be added
+ *                                if not set, bot mention is inserted before msgText
  * @property {array} hearsInfo - array of objects that describes a 
  *                                hears() handler to register for the test
  * 
- * @namespace {object} hearsInfo
- * Object to describe how to register a hears() handler.  Only phrase is required
+ * @namespace {object} hearsInfo[]
+ * Array of object to describe how to register hears() handler.  Only phrase is required
  * @property {string | regex} phrase - phrase for hears handler
  * @property {string} helpstring - help message to register with handler
  * @property {integer} priority - priority of hears handler
@@ -98,7 +100,30 @@ let testMessages = [
           //priority: 100 // lower number == higher priority
         }
       ]
-    }
+    },
+    {
+      msgText: `hello. please echo this is the echo message`,
+      // This will result in "hello. please @bot echo this is the echo message"
+      mentionIndex: 2,
+      hearsInfo: [
+        {
+          phrase: /(^| )echo/i,
+          command: ' echo',
+          prompt: 'hello. please this is the echo message',
+          helpString: '',
+          // Will fix multiple different priority tests in subsequent PR
+          // priority: 2 // lower number == higher priority
+        },
+        {
+          phrase: /.*/,
+          command: 'hello. please echo this is the echo message',
+          prompt: '',
+          helpString: 'This is the catch all',
+          // Will fix multiple different priority tests in subsequent PR
+          //priority: 100 // lower number == higher priority
+        }
+      ]
+    }    
   ];
 
 module.exports =  {testMessages}
