@@ -22,6 +22,9 @@
  * - bot-membership-rules-tests.js  
  * - guide-mode-rules-tests.jus                           
  * - user-created-room-tests.js
+ * 
+ * During iterative development is may be helpful to comment out all but one or
+ * two problematic phrases while running tests
  */
 
 // TODO - Add some hearsInfo phrases that should not match and update the test
@@ -81,19 +84,19 @@ let testMessages = [
       ]
     },
     {
-      msgText: `just do it`,
+      msgText: `just do it man`,
       hearsInfo: [
         {
           phrase: /(^| )do it($| )/i,
-          command: ' do it',
-          prompt: 'just',
+          command: ' do it ',
+          prompt: 'man',
           helpString: '',
           // Will fix multiple different priority tests in subsequent PR
           // priority: 2 // lower number == higher priority
         },
         {
           phrase: /.*/,
-          command: 'just do it',
+          command: 'just do it man',
           prompt: '',
           helpString: 'This is the catch all',
           // Will fix multiple different priority tests in subsequent PR
@@ -107,9 +110,32 @@ let testMessages = [
       mentionIndex: 2,
       hearsInfo: [
         {
-          phrase: /(^| )echo/i,
-          command: ' echo',
-          prompt: 'hello. please this is the echo message',
+          phrase: /(^| )echo( |$)/i,
+          command: ' echo ',
+          prompt: 'this is the echo message',
+          helpString: '',
+          // Will fix multiple different priority tests in subsequent PR
+          // priority: 2 // lower number == higher priority
+        },
+        {
+          phrase: /.*/,
+          command: 'hello. please echo this is the echo message',
+          prompt: '',
+          helpString: 'This is the catch all',
+          // Will fix multiple different priority tests in subsequent PR
+          //priority: 100 // lower number == higher priority
+        }
+      ]
+    },    
+    {
+      msgText: `hello. please echo this is the echo message`,
+      // This will result in "hello. please echo this is the echo message @bot"
+      mentionIndex: 7,
+      hearsInfo: [
+        {
+          phrase: /(^| )echo( |$)/i,
+          command: ' echo ',
+          prompt: 'this is the echo message',
           helpString: '',
           // Will fix multiple different priority tests in subsequent PR
           // priority: 2 // lower number == higher priority

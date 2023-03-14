@@ -135,9 +135,11 @@ was "mentioned".  Bots can request info for any message in 1-1 spaces.
 
 **Differences with matching string phrases when using Framework with a "Bot Account":**
 
-When a `framework.hears()` is defined with a string phrase (as opposed to regex)
-the phrase will match if it is a substring of the message.   When running as a 
-user account, the phrase will match only against the first word of the message.
+* When running as a bot account and a `framework.hears()` is defined with a string phrase (as opposed to regex) the framework will convert the string to regex, for example: "string"
+is converted to /(^| )string( |$)/i in order to see if the string exists as a substring
+of the message.
+* When running as a user account, a string phrase will match only against the first word of the message.
+* Regex phrases behave the same in a `framework.hears() for both Bot and User accounts
 
 **Differences with trigger.args using Framework with a "Bot Account":**
 
@@ -149,7 +151,6 @@ symbol and the word. With bot accounts, this behaves a bit differently.
 * If defining a `framework.hears()` using a string (not regex), `trigger.args` is a
   filtered array of words from the message that begins *after* the first match of
   bot mention.
-
 * If defining a framework.hears() using regex, the trigger.args array is the entire
   message.
 
