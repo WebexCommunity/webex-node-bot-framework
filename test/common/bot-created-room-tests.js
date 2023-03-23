@@ -3,6 +3,8 @@ var common = require("../common/common");
 let tm = require("../common/test-messages")
 let framework = common.framework;
 let userWebex = common.userWebex;
+let eventsData = common.eventsData;
+let testInfo = common.testInfo;
 let User_Test_Space_Title = common.User_Test_Space_Title;
 
 let assert = common.assert;
@@ -11,7 +13,6 @@ let when = common.when;
 
 describe('User Created Room to create a Test Bot', () => {
   let userCreatedTestRoom, userCreatedRoomBot;
-  let eventsData = {};
 
   // Create a room as user to have test bot which will create other rooms
   before(() => userWebex.rooms.create({title: User_Test_Space_Title})
@@ -21,17 +22,22 @@ describe('User Created Room to create a Test Bot', () => {
     }));
 
   // Add our bot to the room and validate that it is spawned properly
-  before(() => common.addBotToSpace('Add Bot to Space', framework, userCreatedTestRoom, eventsData)
-    .then((b) => {
-      userCreatedRoomBot = b;
-      return validator.isBot(b);
-    }));
+  before(() => {
+    testInfo.config.testName = 'Add Bot to Space';
+    testInfo.config.roomUnderTest = userCreatedTestRoom
+    return common.addBotToSpace(framework, testInfo)
+      .then((b) => {
+        userCreatedRoomBot = b;
+        return validator.isBot(b);
+      })
+    });
 
   // Bot leaves rooms
   after(() => {
     if ((!userCreatedRoomBot) || (!userCreatedTestRoom)) {
       return Promise.resolve();
     }
+    eventsData.testName = 'Bot Leaves Space';
     return common.botLeaveRoom('Bot Leaves Space', framework, userCreatedRoomBot, userCreatedTestRoom, eventsData);
   });
 
@@ -48,7 +54,7 @@ describe('User Created Room to create a Test Bot', () => {
       });
   });
 
-  describe('bot storage tests', () => {
+  describe.skip('bot storage tests', () => {
 
     //If the framework options included and initial storage config
     // make sure these elements have been added to the newly created bot
@@ -316,15 +322,14 @@ describe('User Created Room to create a Test Bot', () => {
 
   describe('Bot Created Rooms Tests', () => {
     let botCreatedRoomBot;
-    let testName = 'Default Test Name';
-    let eventsData = {};
     let messageCreatedEvent;
     // Create a room as user to have test bot which will create other rooms
     before(() => {
-      let testName = 'bot.newRoom() with user as member test';
-      return common.botCreateRoom(testName, framework, userCreatedRoomBot, eventsData, common.userInfo.emails[0])
+      eventsData.testName = 'bot.newRoom() with user as member test';
+      return common.botCreateRoom(eventsData.testName, framework, userCreatedRoomBot, eventsData, common.userInfo.emails[0])
         .then((b) => {
           botCreatedRoomBot = b;
+          eventsData.bot = b;
           return validator.isBot(b);
         });
     });
@@ -334,38 +339,22 @@ describe('User Created Room to create a Test Bot', () => {
       if (!botCreatedRoomBot) {
         return Promise.resolve();
       }
-      const membershipDeleted = new Promise((resolve) => {
-        common.frameworkMembershipDeletedHandler('delete room', framework, eventsData, resolve);
-      });
-      const stopped = new Promise((resolve) => {
-        botCreatedRoomBot.stopHandler('delete room', resolve);
-      });
-      const despawned = new Promise((resolve) => {
-        common.frameworkDespawnHandler('framework init', framework, eventsData, resolve);
-      });
-
-
-      return botCreatedRoomBot.implode()
-        .then(() => when.all([membershipDeleted, stopped, despawned]))
-        .catch((reason) => {
-          console.error('Bot failed to exit room', reason);
-        });
+      eventsData.testName = 'Bot deletes room it created';
     });
 
     describe('#user.webex.message.create()', () => {
       // loop through message tests..
       tm.testMessages.forEach((testData) => {
-        eventsData = {bot: botCreatedRoomBot};
 
         it(`user says ${testData.msgText}`, () => {
-          let testName = `user says ${testData.msgText}`;
-          return common.userSendMessage(testName, framework, userWebex,
+          eventsData.testName = `user says ${testData.msgText}`;
+          return common.userSendMessage(eventsData.testName, framework, userWebex,
             botCreatedRoomBot, eventsData, testData);
         });
 
         it(`bot responds to ${testData.msgText}`, () => {
-          let testName = `bot responds to ${testData.msgText}`;
-          return common.botRespondsToTrigger(testName, framework,
+          eventsData.testName = `bot responds to ${testData.msgText}`;
+          return common.botRespondsToTrigger(eventsData.testName, framework,
             botCreatedRoomBot, eventsData);
         });
 

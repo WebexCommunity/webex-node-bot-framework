@@ -2,6 +2,7 @@ const assert = require('assert');
 const when = require('when');
 const validator = require('../../lib/validator');
 var _ = require('lodash');
+const { doesNotMatch } = require('assert');
 
 const User_Test_Space_Title = 'Framework User Created Test Room';
 const Bot_Test_Space_Title = 'Framework Bot Created Test Room';
@@ -22,19 +23,30 @@ module.exports = {
   setDisallowedUserPerson: function (p) {
     this.disallowedUserPerson = p;
   },
+
+  // Default value if setter is not called
+  preMochaTimeout: 35000,
+  setMochaTimeout: function(t) {
+    // We will timeout 80% faster than Mocha
+    this.preMochaTimeout = t - t/10*2;   
+  },
   getDisallowedUser: function () {
     return (this.disallowedUserSDK);
   },
 
+
   // Common Tasks used by tests
   initFramework: function (testName, framework, userWebex) {
+    let eventsData = this.eventsData
+    eventsData.testName = testName;
+    initEventsData(this.eventsData);
     console.log('In initFramework...');
     // Wait for framework to generate events that indicate it started succesfully
     const started = new Promise((resolve) => {
-      this.frameworkStartHandler(testName, framework, resolve);
+      this.frameworkStartHandler(testName, framework, eventsData, resolve);
     });
     const initialized = new Promise((resolve) => {
-      this.frameworkInitializedHandler(testName, framework, resolve);
+      this.frameworkInitializedHandler(testName, framework, eventsData, resolve);
     });
 
     framework.start()
@@ -46,7 +58,7 @@ module.exports = {
     let userInfoIsReady = userWebex.people.get('me');
     console.log('Waiting for framework initialization to complete...');
     // Now wait until framework is initialized
-    return when.all([started, initialized])
+    return waitForPromisesWithTimeout([started, initialized], this.preMochaTimeout, eventsData)
       .then(() => {
         if (framework.getWebexSDK().config.defaultMercuryOptions) {
           return Promise.reject(new Error(`Framework initialized but has a proxy config when none was set!`));
@@ -68,27 +80,44 @@ module.exports = {
         assert(validator.isPerson(person),
           'getPerson did not return a valid person');
         this.botForUser1on1Space = cleanupFromPreviousTests(framework, this.userInfo);
+
+        // All went well, we are ready to start running tests
+        // Each test should register listeners for all framework generated events.
+        // This catch-all listener will detect any events that don't have listeners
+        registerUnexpectedEventsHandler(framework, eventsData);
+
         return when(true);
-      })
-      .catch((e) => {
-        console.error(`Setup failed: ${e.message}`);
-        return Promise.reject(e);
       });
   },
 
   stopFramework: function (testName, framework) {
     if (framework) {
+      eventsData = this.eventsData;
       const stopped = new Promise((resolve) => {
-        this.frameworkStopHandler(testName, framework, resolve);
+        this.frameworkStopHandler(testName, framework, eventsData, resolve);
       });
 
+      // remove the catch-all listener
+      removeUnexpectedEventsHandler(framework);
       return framework.stop()
         .then(() => when(stopped))
-        .catch((e) => console.error(`Failled during framework.stop(): ${e.message}`));
+        .catch((e) => console.error(`Failed during framework.stop(): ${e.message}`));
     }
   },
 
   userSendsMessageAndBotMayRespond: function (testData, framework, user, bot, eventsData) {
+    initEventsData(eventsData);
+    let spawnEvents = [];
+    if (shouldFail) {
+      spawnEvents = this.registerMembershipEventsForDectivatedBot(testName, framework, '', eventsData);
+    } else {
+      spawnEvents.push(new Promise((resolve) => {
+        this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
+      }));
+      spawnEvents.push(new Promise((resolve) => {
+        this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
+      }));
+    }
     it(`user says ${testData.msg}`, () => {
       let testData = {
         msgText: `user says ${testData.msg}`,
@@ -101,28 +130,29 @@ module.exports = {
     });
   },
 
-  addBotToSpace: function (testName, framework, userCreatedTestRoom, eventsData, shouldFail, userSDK) {
+  addBotToSpace: function (framework, testInfo, shouldFail, userSDK) {
+    // Configure this test to Wait for the events associated with a new membership
+    initEventsData(testInfo);
     let spawnEvents = [];
-    // Wait for the events associated with a new membership before completing test..
     if (shouldFail) {
-      spawnEvents = this.registerMembershipEventsForDectivatedBot(testName, framework, '', eventsData);
+      spawnEvents = this.registerMembershipEventsForDectivatedBot(testInfo.config.testName, framework, '', testInfo);
     } else {
       spawnEvents.push(new Promise((resolve) => {
-        this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
+        this.frameworkMembershipCreatedHandler(testInfo.config.testName, framework, testInfo, resolve);
       }));
       spawnEvents.push(new Promise((resolve) => {
-        this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
+        this.frameworkSpawnedHandler(testInfo.config.testName, framework, testInfo, resolve);
       }));
     }
 
     let theUser = this.userWebex;
-    if (userSDK) {
-      theUser = userSDK;
+    if (testInfo.config.userUnderTest) {
+      theUser = testInfo.config.userUnderTest;
     }
 
     // Add the bot to our user created space
     return theUser.memberships.create({
-      roomId: userCreatedTestRoom.id,
+      roomId: testInfo.config.roomUnderTest.id,
       personId: framework.person.id
     })
       .then((m) => {
@@ -130,26 +160,21 @@ module.exports = {
         return assert(validator.isMembership(membership),
           'create memebership did not return a valid membership');
       })
-      // Wait for framework's membershipCreated event
-      .then(() => when.all(spawnEvents)
-        .then(() => {
-          assert((eventsData.membership.id === membership.id),
-            'Membership from framework event does not match the one returned by API');
-          userCreatedRoomBot = eventsData.bot;
-          this.createBotEventHandlers(userCreatedRoomBot);
-          if (!shouldFail) {
-            assert(framework.getBotByRoomId(userCreatedRoomBot.room.id),
-              'After spawn new bot is not in framework\'s bot array');
-          }
-          return userCreatedRoomBot;
-        })
-        .catch((e) => {
-          console.error(`Bot spawn test failed: ${e.message}`);
-          return Promise.reject(e);
-        }));
+      // Wait for the expected events
+      .then(() => waitForPromisesWithTimeout(spawnEvents, this.preMochaTimeout, testInfo)
+      .then(() => {
+        userCreatedRoomBot = testInfo.bot;
+        this.createBotEventHandlers(userCreatedRoomBot);
+        if (!shouldFail) {
+          assert(framework.getBotByRoomId(userCreatedRoomBot.room.id),
+            'After spawn new bot is not in framework\'s bot array');
+        }
+        return userCreatedRoomBot;
+      }).then((bot) => checkInterimEventsData(testInfo, bot)));
   },
 
   botAddUsersToSpace: function (testName, framework, bot, userEmails, eventsData) {
+    initEventsData(eventsData);
     eventsData.disallowedUserEmail = [];
     let guideAdded = false;
     if (framework.options.restrictedToEmailDomains) {
@@ -169,9 +194,9 @@ module.exports = {
     }
 
     let eventPromises = [];
-    if ((bot.active) && (!eventsData.disallowedUserEmail.length)) {
+    if (bot.active) {
       // Active bot should behave normally when a non restricted member enters
-      eventPromises = this.registerMembershipHandlers(testName, framework, bot, eventsData);
+      eventPromises = this.registerMembershipHandlers(testName, framework, bot, userEmails, eventsData);
     } else if ((!bot.active) && (guideAdded)) {
       // Inactive bot should do a membership rules spawn when guide enters
       // This will fail if the space also includes restricted domain users -- not currently in tests
@@ -183,19 +208,17 @@ module.exports = {
       // This membership will trigger a membership rules "despawn"
       eventPromises = this.registerMembershipEventsForDectivatedBot(testName, framework, eventsData.disallowedUserEmail, eventsData);
     }
-
     // Add the users to the space with the bot
     return bot.add(userEmails)
       .then((emails) => {
         // Todo update this to check each email
         assert((emails.length === userEmails.length),
-          `bot.add did not add all the requested users in test "${testName}`);
+          `bot.add did not add all the requested users in test "${testName}"`);
         // Wait for all the event handlers to fire
-        return when.all(eventPromises);
-      })
-      .catch((e) => {
-        console.error(`"${testName}" failed: ${e.message}`);
-        return Promise.reject(e);
+        return waitForPromisesWithTimeout(eventPromises, this.preMochaTimeout, eventsData);
+      }).then(() => {
+        delete eventsData.multipleEvents;
+        return checkInterimEventsData(eventsData);
       });
   },
 
@@ -213,6 +236,7 @@ module.exports = {
 
   botRemoveUserFromSpace: function (testName, framework, bot, userEmail, eventsData,
     numDisallowedUsersInSpace, isDisallowedUser) {
+    initEventsData(eventsData);
     let eventPromises = [];
     let guideRemoved = false;
     if ((framework.options.guideEmails) &&
@@ -236,20 +260,17 @@ module.exports = {
       .then((emails) => {
         // Todo update this to check each email
         assert((emails[0] === userEmail),
-          `bot.remove did not remove the requested users in test "${testName}`);
+          `bot.remove did not remove the requested users in test "${testName}"`);
         if (isDisallowedUser) {
           eventsData.disallowedUserEmail = this.disallowedUserPerson.emails[0];
         }
         // Wait for all the event handlers to fire
-        return when.all(eventPromises);
-      })
-      .catch((e) => {
-        console.error(`"${testName}" failed: ${e.message}`);
-        return Promise.reject(e);
-      });
+        return waitForPromisesWithTimeout(eventPromises, this.preMochaTimeout, eventsData);
+      }).then(() => checkInterimEventsData(eventsData));
   },
 
   registerMembershipHandlers: function (testName, framework, bot, eventsData) {
+    initEventsData(eventsData);
     let eventPromises = [];
     // These events should occur with a new membership
     eventPromises.push(new Promise((resolve) => {
@@ -266,6 +287,7 @@ module.exports = {
   },
 
   registerMembershipEventsForGuideAdded: function (testName, framework, disallowedEmails, eventsData) {
+    initEventsData(eventsData);
     let eventPromises = [];
     let swallowedEvents;
     // These events should occur with a new membership that adds a guide 
@@ -300,6 +322,7 @@ module.exports = {
   },
 
   registerMembershipEventsForInactiveBot: function (testName, framework, disallowedEmails, eventsData) {
+    initEventsData(eventsData);
     let eventPromises = [];
     let swallowedEvents;
     // These events should occur when a new member will not change a bot's inactive status
@@ -368,19 +391,67 @@ module.exports = {
     return (eventPromises);
   },
 
-  registerMembershipHandlers: function (testName, framework, bot, eventsData) {
+  registerMembershipHandlers: function (testName, framework, bot, userEmails, eventsData) {
     let eventPromises = [];
-    // These events should occur with a new membership
-    eventPromises.push(new Promise((resolve) => {
-      this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
-    }));
-    eventPromises.push(new Promise((resolve) => {
-      this.frameworkMemberEntersHandler(testName, framework, eventsData, resolve);
-    }));
-    eventPromises.push(new Promise((resolve) => {
-      bot.memberEntersHandler(testName, eventsData, resolve);
-    }));
+    let swallowedEvents = [];
+    let disallowedMemberAdded = false;
+    eventsData.multipleEvents = {};
+    userEmails.forEach((userEmail) => {
+      // MembershipCreated events occur for all scenarios
+      if (!eventsData.multipleEvents?.membershipCreated) {
+        eventPromises.push(new Promise((resolve) => {
+          this.frameworkMembershipCreatedHandler(testName, framework, eventsData, resolve);
+        }));
+        eventsData.multipleEvents.membershipCreated = 1;
+      } else {
+        eventsData.multipleEvents.membershipCreated += 1;
+      }
 
+      if ((!disallowedMemberAdded) && (!eventsData.disallowedUserEmail.includes(userEmail))) {
+        // These events should occur with a regular new membership to an active room
+        if (!eventsData.multipleEvents?.memberEnters) {
+          eventPromises.push(new Promise((resolve) => {
+            this.frameworkMemberEntersHandler(testName, framework, eventsData, resolve);
+          }));
+          eventPromises.push(new Promise((resolve) => {
+            bot.memberEntersHandler(testName, eventsData, resolve);
+          }));
+          eventsData.multipleEvents.memberEnters = 1;
+          eventsData.multipleEvents.botMemberEnters = 1;
+        } else {
+          eventsData.multipleEvents.memberEnters += 1;
+          eventsData.multipleEvents.botMemberEnters += 1;
+        }
+      } else if ((!disallowedMemberAdded) && (eventsData.disallowedUserEmail.includes(userEmail))) {
+        // These events occur when a disallowed user is added to an enabled bot
+        // It will also generate a despawn event with the membership of the dissallowed user
+        eventPromises.push(new Promise((resolve) => {
+          this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
+        }));
+        if (framework.membershipRulesStateMessageResponse) {
+          eventPromises.push(new Promise((resolve) => {
+            this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+          }));            
+        }
+        // Finally, we will get some membership-rules events, 
+        swallowedEvents.push('memberEnters');
+        swallowedEvents.push('despawn')
+        disallowedMemberAdded = true;
+      } else {
+        // These events occur when a user is added to a disabled bot
+        swallowedEvents.push('memberEnters'); 
+      }
+    });
+    // If we are generating any swallowed memberships rules events wait for them
+    if (swallowedEvents.length) {
+      eventPromises.push(new Promise((resolve) => {
+        this.frameworkMembershipRulesEventHandler(testName, framework,
+          swallowedEvents, eventsData,
+          false, /* don't error on unexpected swallowed events */
+          resolve);
+      }));
+
+    }
     return (eventPromises);
   },
 
@@ -444,6 +515,13 @@ module.exports = {
       eventPromises.push(new Promise((resolve) => {
         this.frameworkSpawnedHandler(testName, framework, eventsData, resolve);
       }));
+      // If configured to get a "now active" message, wait for messageCreated event
+      if (framework.membershipRulesAllowedResponse) {
+        eventPromises.push(new Promise((resolve) => {
+          this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+        }));
+        eventsData.checkMembershipRulesAllowedResponse = true;    
+      }
       // Finally, we will get some membership-rules events, a "swallowed" memberExits
       // and a message about the re-spawning
       eventPromises.push(new Promise((resolve) => {
@@ -461,14 +539,15 @@ module.exports = {
     return (eventPromises);
   },
   
-  botLeaveRoom: function (testName, framework, bot, roomToLeave, eventsData) {
+  botLeaveRoom: function (testName, framework, bot, eventsData) {
+    initEventsData(eventsData);
     let leaveRoomEvents = [];
     leaveRoomEvents.push(new Promise((resolve) => {
       this.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
     }));
     if (bot.active) {
       leaveRoomEvents.push(new Promise((resolve) => {
-        bot.stopHandler(testName, resolve);
+        bot.stopHandler(testName, eventsData, resolve);
       }));
       leaveRoomEvents.push(new Promise((resolve) => {
         this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
@@ -483,15 +562,14 @@ module.exports = {
           resolve);
       }));
     }
-
+  
     return bot.exit()
-      .then(() => when.all(leaveRoomEvents)
-        .catch((e) => {
-          console.error(`Bot failed to exit room: ${e.message}`);
-        }));
+      .then(() => waitForPromisesWithTimeout(leaveRoomEvents, this.preMochaTimeout, eventsData)
+        .then(() => checkInterimEventsData(eventsData)));
   },
 
   botCreateRoom: function (testName, framework, bot, eventsData, members) {
+    initEventsData(eventsData);
     // Wait for the events associated with a new membership before completing test..
     const roomCreated = new Promise((resolve) => {
       this.frameworkRoomCreatedHandler(testName, framework, eventsData, resolve);
@@ -511,20 +589,20 @@ module.exports = {
         assert(validator.isRoom(b.room),
           `Room returned by bot.newRoom is not valid.`);
         this.createBotEventHandlers(b);
-        return when(roomCreated);
+        return waitForPromisesWithTimeout([roomCreated], this.preMochaTimeout, eventsData)
       })
       // Wait for framework's membershipCreated event
       .then(() => {
         assert((eventsData.room.id == botCreatedRoomBot.room.id),
           'Room from framework roomCreated event does not match ' +
           'the one in the bot returned by newRoom()');
-        return when(membershipCreatedEvent);
+        return waitForPromisesWithTimeout([membershipCreatedEvent], this.preMochaTimeout, eventsData)
       })
       .then(() => {
         assert((eventsData.membership.id === botCreatedRoomBot.membership.id),
           'Membership from framework membershipCreated event does not match ' +
           'the one in the bot returned by newRoom()');
-        return when(spawned);
+        return waitForPromisesWithTimeout([spawned], this.preMochaTimeout, eventsData);
       })
       // Wait for framework's spawned event
       .then(() => {
@@ -534,13 +612,11 @@ module.exports = {
           'After spawn new bot is not in framework\'s bot array');
         return when(botCreatedRoomBot);
       })
-      .catch((e) => {
-        console.error(`Bot newRoom() test failed: ${e.message}`);
-        return Promise.reject(e);
-      });
+      .then((bot) => checkInterimEventsData(eventsData, bot));
   },
 
   userSendMessage: function (testName, framework, userWebex, bot, eventsData, testData) {
+    initEventsData(eventsData);
     // We mention the bot when the test is running as a bot account
     // Only register for mention events, if we are mentioning the bot
     let isMention = false;
@@ -576,13 +652,15 @@ module.exports = {
     testData.hearsInfo.forEach((info) => {
       let calledHearsPromise = new Promise((resolve) => {
         info.functionId = framework.hears(info.phrase, (b, t) => {
+          eventsData.out.got.push(`hears(${info.phrase})`);
           framework.debug(`Bot heard message "${t.message.text}" that user posted`);
           assert((b.id === bot.id),
             `bot returned in framework.hears(${info.phrase}) is not the one expected`);
           assert(validator.objIsEqual(t, eventsData.trigger),
             `trigger returned in framework.hears(${info.phrase}) was not as expected`);
           assert(validator.objIsEqual(t.message, eventsData.message),
-          `trigger.message returned in framework.hears(${info.phrase}) was not as expected`);
+          `trigger.message returned in framework.hears(${info.phrase}) was not as expected\n
+            got: "${t.message.text}", expected: ${eventsData.message.text}`);
           if (("command" in info) && ("prompt" in info)) {
             assert(t.command == info.command,
               `trigger.command returned in framework.hears(${info.phrase}) was not as expected`);
@@ -593,11 +671,13 @@ module.exports = {
         }, info.helpString, info.priority);
       });
       if (bot.active) {
-        // Only wait for it to be called if our bot is active (not disabled for guide mode)
+        // Only wait for it to be called if our bot is active (not disabled by membership rules)
+        eventsData.in.expected.push(`hears(${info.phrase})`);
+        framework.debug(`Adding framework.hears(${info.phrase}) for test "${testName}"`)
         eventPromises.push(calledHearsPromise);
       }
     });
-//    }
+
 
     // kick it all off with a message
     return userWebex.messages.create(msgObj)
@@ -606,58 +686,96 @@ module.exports = {
         assert(validator.isMessage(message),
           `Test:${testName} create message did not return a valid message`);
         // Wait for all the event handlers and the heard handler to fire
-        // I thought I needed to do this...
-        //eventsData.message = m;
-        return when.all(eventPromises);
+        return waitForPromisesWithTimeout(eventPromises, this.preMochaTimeout, eventsData);
       })
-      .then(() => when(message))
-      .catch((e) => {
-        console.error(`${testName} failed: ${e.message}`);
-        return Promise.reject(e);
-      });
+      .then(() => checkInterimEventsData(eventsData))
   },
 
   botRespondsToTrigger: function (testName, framework, bot, eventsData, shouldBeAllowed) {
-    if ((shouldBeAllowed !== undefined) && (shouldBeAllowed) && (!bot.active)) {
-      return new Error(`${testName} failed.  Expected bot to be in disallowed state but it wasn't.`);
+    initEventsData(eventsData);
+    let botResponse = '';
+    if (shouldBeAllowed == undefined) {
+      shouldBeAllowed = true;
     }
     if (!eventsData.trigger) {
       if (bot.active) {
         // This can occur if the previous tests failed
-        return new Error(`${testName} didn\'t run.  No trigger to respond to`);
+        return when.reject(new Error(`${testName} didn\'t run.  No trigger to respond to`));
       } else {
-        framework.debug(`${testName}: no trigger to respond to...expected when bot is in disabled state.`);
-        return when(true);
+        // No trigger with a deactivated bot is normal.
+        botResponse = 'Membership Rules should have prevented this message from being sent!'
       }
+    } else {
+      // Builds the response based on the trigger
+      let trigger = eventsData.trigger;
+      botResponse = `I heard the entry from ${trigger.person.displayName}:\n`;
+      botResponse += (trigger.message.text) ? `* text: ${trigger.message.text}\n` : '';
+      botResponse += (trigger.message.html) ? `* html: ${trigger.message.html}\n` : '';
     }
-    // Builds the response based on the trigger
-    let trigger = eventsData.trigger;
-    botReply = `I heard the entry from ${trigger.person.displayName}:\n`;
-    botReply += (trigger.message.text) ? `* text: ${trigger.message.text}\n` : '';
-    botReply += (trigger.message.html) ? `* html: ${trigger.message.html}\n` : '';
-    framework.debug(botReply);
+    framework.debug(botResponse);
 
-    // Wait for the events associated with a new message before completing test..
-    messageCreatedEvent = new Promise((resolve) => {
-      this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
-    });
+    if (bot.active) {
+      messageCreatedEvent = new Promise((resolve) => {
+        this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+      });
+    }
 
-    return bot.say(botReply)
+    return bot.say(botResponse)
       .then((m) => {
         message = m;
         assert(validator.isMessage(message),
           `${testName}: create message did not return a valid message`);
-        return when.all([messageCreatedEvent]);
+        return waitForPromisesWithTimeout([messageCreatedEvent], this.preMochaTimeout, eventsData);
       })
       .then(() => {
-        assert(validator.objIsEqual(message, eventsData.message),
-          `${testName}: message returned by API did not match the one from the messageCreated event`);
-        return when(true);
-      })
-      .catch((e) => {
+        if (!shouldBeAllowed) {
+          let msg = `${testName} failed: bot.say() was successful but should have failed.`
+          console.error(msg);
+          return when.reject(new Error(msg));
+        }
+        return checkInterimEventsData(eventsData);
+      }).catch((e) => {
+        if (!shouldBeAllowed) {
+          // bot.say correctly failed due to membership rules
+          return when.resolve(true)
+        }
         console.error(`${testName} failed: ${e.message}`);
-        return Promise.reject(e);
+        return when.reject(new Error(e));
       });
+  },
+
+  botDeletesRoom: function(testName, framework, botCreatedRoomBot, eventsData, numOtherUsers) {
+    initEventsData(eventsData);
+    let implodeEvents = [];
+    implodeEvents.push(new Promise((resolve) => {
+      this.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
+    }));
+    if (numOtherUsers) {
+      // wait for membershipDeleted from the bot and all other users
+      eventsData.multipleEvents = {};
+      eventsData.multipleEvents.membershipDeleted = 1 + numOtherUsers;
+    }
+    if (botCreatedRoomBot.active) {
+      implodeEvents.push(new Promise((resolve) => {
+        botCreatedRoomBot.stopHandler(testName, eventsData, resolve);
+      }));
+      implodeEvents.push(new Promise((resolve) => {
+        this.frameworkDespawnHandler(testName, framework, eventsData, resolve);
+      }));
+    } else {
+      // Our real despawn event will be "swallowed" if membership rules already did it
+      implodeEvents.push(new Promise((resolve) => {
+        this.frameworkMembershipRulesEventHandler(eventsData.testName, 
+          framework, ['despawn'], eventsData, false, resolve);
+      }));
+    }
+  
+    return botCreatedRoomBot.implode()
+      .then(() => waitForPromisesWithTimeout(implodeEvents, this.preMochaTimeout, eventsData)
+      .then(() => {
+        delete eventsData.multipleEvents;
+        return checkInterimEventsData(eventsData);
+      }));
   },
 
   registerMessageHandlers: function (testName, isMention, framework, bot, msg, eventsData) {
@@ -667,6 +785,7 @@ module.exports = {
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
     }));
+
     if (isMention) {
       eventPromises.push(new Promise((resolve) => {
         this.frameworkMentionedHandler(testName, framework, eventsData, resolve);
@@ -713,7 +832,7 @@ module.exports = {
     }
     if (this.framework.membershipRulesStateMessageResponse) {
       // Wait for the bot to respond with the an "Ignoring input" type message
-      eventsData.msgSentToDisabledGuideModeBot = true;
+      eventsData.msgSentToDisabledBot = true;
     }
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(testName, framework,
@@ -724,24 +843,32 @@ module.exports = {
 
     return eventPromises;
   },
+
+
   // Framework Event Handlers
 
-  frameworkStartHandler: function (testName, framework, promiseResolveFunction) {
+  frameworkStartHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('start');
     this.framework.once('start', (id) => {
+      eventsData.out.got.push('start');
       framework.debug(`Framework start event occurred in test ${testName}`);
       promiseResolveFunction(assert(id === framework.id));
     });
   },
 
-  frameworkInitializedHandler: function (testName, framework, promiseResolveFunction) {
+  frameworkInitializedHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('initialized');
     this.framework.once('initialized', (id) => {
+      eventsData.out.got.push('initialized');
       framework.debug(`Framework initiatlized event occurred in test:${testName}`);
       promiseResolveFunction(assert(id === framework.id));
     });
   },
 
   frameworkSpawnedHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('spawn');
     this.framework.once('spawn', (bot, frameworkId, addedBy) => {
+      eventsData.out.got.push('spawn');
       framework.debug(`Framework spawned  event occurred in test ${testName}`);
       eventsData.bot = bot;
       assert((frameworkId === framework.id),
@@ -755,7 +882,9 @@ module.exports = {
   },
 
   frameworkRoomCreatedHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('roomCreated');
     this.framework.once('roomCreated', (room, id) => {
+      eventsData.out.got.push('roomCreated');
       framework.debug(`Framework roomCreated event occurred in test ${testName}`);
       eventsData.room = room;
       assert((id === framework.id),
@@ -766,7 +895,9 @@ module.exports = {
   },
 
   frameworkRoomUpdatedEventHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('roomUpdated');
     this.framework.once('roomUpdated', (room, id) => {
+      eventsData.out.got.push('roomUpdated');
       framework.debug(`Framework roomUpdated event occurred in test ${testName}`);
       eventsData.room = room;
       assert((id === framework.id),
@@ -777,7 +908,9 @@ module.exports = {
   },
 
   frameworkRoomRenamedEventHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('roomRenamed');
     this.framework.once('roomRenamed', (bot, room, id) => {
+      eventsData.out.got.push('roomRenamed');
       framework.debug(`Framework roomRenamed event occurred in test ${testName}`);
       eventsData.room = room;
       assert((eventsData.bot.id == bot.id),
@@ -790,17 +923,31 @@ module.exports = {
   },
 
   frameworkMembershipCreatedHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('membershipCreated');
     this.framework.once('membershipCreated', (membership, id) => {
+      eventsData.out.got.push('membershipCreated');
       framework.debug(`Framework membershipCreated event occurred in test ${testName}`);
       eventsData.membership = membership;
       assert(validator.isMembership(membership),
         'membershipCreated event did not include a valid membership');
-      promiseResolveFunction(assert(id === framework.id));
+      if (eventsData.multipleEvents?.membershipCreated) {
+        if (--eventsData.multipleEvents.membershipCreated > 0) {
+          // Need more events to emit before resolving promise, register another handler
+          this.frameworkMembershipCreatedHandler(testName, framework, eventsData, promiseResolveFunction);
+        } else {
+          delete eventsData.multipleEvents.membershipCreated
+          promiseResolveFunction(assert(id === framework.id));
+        }    
+      } else {
+        promiseResolveFunction(assert(id === framework.id));
+      }
     });
   },
 
   frameworkMembershipUpdatedHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('membershipCreated');
     this.framework.once('membershipUpdated', (membership, id) => {
+      eventsData.out.got.push('membershipCreated');
       framework.debug(`Framework membershipUpdated event occurred in test ${testName}`);
       eventsData.membership = membership;
       assert(validator.isMembership(membership),
@@ -810,15 +957,17 @@ module.exports = {
   },
 
   frameworkMessageCreatedEventHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('messageCreated');
     this.framework.once('messageCreated', (message, id) => {
+      eventsData.out.got.push('messageCreated');
       framework.debug(`Framework messageCreated event occurred in test ${testName}`);
       eventsData.message = message;
       assert((id === framework.id),
         'id returned in framework.on("messageCreated") is not the one expected');
-      if (eventsData.msgSentToDisabledGuideModeBot) {
+      if (eventsData.msgSentToDisabledBot) {
         // This event occured when a user sent a message to a disallowed bot
         // Register this handler again so that we wait for the bot's automated response
-        delete eventsData.msgSentToDisabledGuideModeBot;
+        delete eventsData.msgSentToDisabledBot;
         this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, promiseResolveFunction);
         // It's possible for the response to come back before the original message
         if (message.markdown != framework.membershipRulesStateMessageResponse) {
@@ -828,24 +977,24 @@ module.exports = {
         return
       } else if (eventsData.checkMembershipRulesDisallowedResponse) {
         delete eventsData.checkMembershipRulesDisallowedResponse;
-        // Assert that the disabled Guide Mode bot is sending the configured 
-        // when added to a room with no guides or when the last guide is removed from a room
+        // Assert that the a bot is sending the configured membership
+        // rules message when a membership change puts it in disabled mode
         assert((message.markdown == framework.membershipRulesDisallowedResponse),
-          `Guide mode bot added to space with no guides responded to a membership change with "${message.markdown}",
+          `Bot disabled due to membership change responded with "${message.markdown}",
            expected "${framework.membershipRulesDisallowedResponse}".`); 
       } else if (eventsData.checkMembershipRulesStateMessageResponse) {
         delete eventsData.checkMembershipRulesStateMessageResponse;
-        // Assert that the disabled Guide Mode bot is sending the configured 
+        // Assert that the disabled membership rules bot is sending the configured 
         // response after being mentiond
         assert((message.markdown == framework.membershipRulesStateMessageResponse),
-          `Guide mode bot in space with no guides responded to a message with "${message.markdown}",
+          `Disabled bot responded to a message with "${message.markdown}",
            expected "${framework.membershipRulesStateMessageResponse}".`); 
       } else if (eventsData.checkMembershipRulesAllowedResponse) {
         delete eventsData.checkMembershipRulesAllowedResponse;
         // Assert that the disabled Guide Mode bot is sending the configured 
         // response when guide is added to a previously unguided room
         assert((message.markdown == framework.membershipRulesAllowedResponse),
-          `Guide mode bot responded to a guide being added with "${message.markdown}",
+          `Bot responded to a membership change which re-enabled it with "${message.markdown}",
           expected "${framework.membershipRulesAllowedResponse}".`); 
         }
       promiseResolveFunction(assert(validator.isMessage(message),
@@ -854,7 +1003,9 @@ module.exports = {
   },
 
   frameworkMessageDeletedEventHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('membershipDeleted');
     this.framework.once('messageDeleted', (message, id) => {
+      eventsData.out.got.push('membershipDeleted');
       framework.debug(`Framework messageDeleted event occurred in test ${testName}`);
       eventsData.message = message;
       promiseResolveFunction(assert((id === framework.id),
@@ -863,7 +1014,9 @@ module.exports = {
   },
 
   frameworkMentionedHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('mentioned');
     this.framework.once('mentioned', (bot, trigger, id) => {
+      eventsData.out.got.push('mentioned');
       framework.debug(`Framework mentioned event occurred in test ${testName}`);
       assert(validator.isBot(bot),
         'mentioned event did not include a valid bot');
@@ -879,7 +1032,9 @@ module.exports = {
   },
 
   frameworkMessageHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('message(framework)');
     this.framework.once('message', (bot, trigger, id) => {
+      eventsData.out.got.push('message(framework)');
       framework.debug(`Framework message event occurred in test ${testName}`);
       assert(validator.isBot(bot),
         'message event did not include a valid bot');
@@ -895,7 +1050,9 @@ module.exports = {
   },
 
   frameworkFilesHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('files(framework)');
     this.framework.once('files', (bot, trigger, id) => {
+      eventsData.out.got.push('files(framework)');
       framework.debug(`Framework files event occurred in test ${testName}`);
       assert(validator.isBot(bot),
         'files event did not include a valid bot');
@@ -911,7 +1068,9 @@ module.exports = {
   },
 
   frameworkMemberEntersHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('memberEnters(framework)');
     this.framework.once('memberEnters', (bot, membership, id) => {
+      eventsData.out.got.push('memberEnters(framework)');
       framework.debug(`Framework memberEnters event occurred in test ${testName}`);
       assert(validator.isBot(bot),
         'bot in memberEnters event did not include a valid bot');
@@ -924,12 +1083,24 @@ module.exports = {
         'membership returned in framework.on("memberEnters") is not valid');
       assert((id === framework.id),
         'id returned in framework.on("memberEnters") is not the one expected');
-      promiseResolveFunction(true);
+      if (!eventsData.multipleEvents?.memberEnters) {
+        if (--eventsData.multipleEvents.memberEnters > 0) {
+          // Need more events to emit before resolving promise, register another handler
+          this.frameworkMemberEntersHandler(testName, framework, eventsData, promiseResolveFunction);
+        } else {
+          delete eventsData.multipleEvents.memberEnters;
+          promiseResolveFunction(true);
+        } 
+      } else {
+        promiseResolveFunction(true);
+      }
     });
   },
 
   frameworkMemberAddedAsModeratorHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('memberAddedAsModerator(framework)');
     this.framework.once('memberAddedAsModerator', (bot, membership, id) => {
+      eventsData.out.got.push('memberEnters(framework)');
       framework.debug(`Framework memberAddedAsModerator event occurred in test ${testName}`);
       assert(validator.isBot(bot),
         'bot in memberAddedAsModerator event did not include a valid bot');
@@ -946,7 +1117,9 @@ module.exports = {
   },
 
   frameworkMemberExitsHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('memberExits(framework)');
     this.framework.once('memberExits', (bot, membership, id) => {
+      eventsData.out.got.push('memberExits(framework)');
       framework.debug(`Framework memberExits event occurred in test ${testName}`);
       assert(validator.isBot(bot),
         'bot in memberExits event did not include a valid bot');
@@ -963,19 +1136,34 @@ module.exports = {
   },
 
   frameworkMembershipDeletedHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('membershipDeleted');
     this.framework.once('membershipDeleted', (membership, id) => {
+      eventsData.out.got.push('membershipDeleted');
       framework.debug(`Framework membershipDeleted event occurred in test ${testName}`);
       assert(id === framework.id);
       assert(validator.isMembership(membership),
         'membership returned in framework.on("membershipDeleted") is not valid');
       eventsData.membership = membership;
-      promiseResolveFunction(assert(validator.isMembership(membership),
-        'membershipDeleted event did not include a valid membership'));
+      assert(validator.isMembership(membership),
+        'membershipDeleted event did not include a valid membership')
+      if (eventsData.multipleEvents?.membershipDeleted) {
+        if (--eventsData.multipleEvents.membershipDeleted > 0) {
+          this.frameworkMembershipDeletedHandler(testName, framework, 
+            eventsData, promiseResolveFunction);
+        } else {
+          delete eventsData.multipleEvents.membershipDeleted;
+          promiseResolveFunction(true);
+        }
+      } else {
+        promiseResolveFunction(true);
+      }
     });
   },
 
   frameworkAttachementActionEventHandler: function (testName, framework, cardSendingBot, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('attachmentAction');
     this.framework.once('attachmentAction', (bot, trigger, id) => {
+      eventsData.out.got.push('attachmentAction');
       framework.debug(`Framework attachmentAction event occurred in test ${testName}`);
       assert(id === framework.id);
       assert(bot.id === cardSendingBot.id,
@@ -990,8 +1178,14 @@ module.exports = {
     });
   },
 
-  frameworkMembershipRulesEventHandler: function (testName, framework, expectedEvents, eventsData, failOnUnexpectedEvents, promiseResolveFunction) {
+  frameworkMembershipRulesEventHandler: function (testName, framework, expectedEvents, eventsData, failOnUnexpectedEvents, promiseResolveFunction, recursive=false) {
+    if (!recursive) {
+      expectedEvents.forEach((event) => {
+        eventsData.in.expected.push(`membershipRules:${event}`);
+      });  
+    }
     this.framework.once('membershipRulesAction', (type, event, bot, id, ...args) => {
+      eventsData.out.got.push(`membershipRules:${event}`);
       framework.debug(`Framework membershipRulesAction of type ${type} occurred in test ${testName}`);
       if ((eventsData.bot) && (eventsData.bot.id))   {
         assert(id === eventsData.bot.id,
@@ -1046,7 +1240,8 @@ module.exports = {
       }
       if (expectedEvents.length) {
         // Register handler for next event
-        this.frameworkMembershipRulesEventHandler(testName, framework, expectedEvents, eventsData, failOnUnexpectedEvents, promiseResolveFunction);
+        this.frameworkMembershipRulesEventHandler(testName, framework, expectedEvents, eventsData, 
+          failOnUnexpectedEvents, promiseResolveFunction, /*recursive =*/true);
       } else {
         promiseResolveFunction(true);
       }
@@ -1054,7 +1249,9 @@ module.exports = {
   },
 
   frameworkDespawnHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('despawn');    
     this.framework.once('despawn', (bot, id, removedBy, membershipRuleChange) => {
+      eventsData.out.got.push('despawn');    
       framework.debug(`Framework despawn event occurred in test ${testName}`);
       assert((eventsData.bot.id === bot.id),
         `${testName} failure processing "despawn": bot.id did not match expected`);
@@ -1082,8 +1279,10 @@ module.exports = {
     });
   },
 
-  frameworkStopHandler: function (testName, framework, promiseResolveFunction) {
+  frameworkStopHandler: function (testName, framework, eventsData, promiseResolveFunction) {
+    eventsData.in.expected.push('despawn');    
     this.framework.once('stop', (id) => {
+      eventsData.out.got.push('despawn');    
       framework.debug(`Framework stop event occurred in test ${testName}`);
       promiseResolveFunction(assert(id === framework.id));
     });
@@ -1107,7 +1306,9 @@ module.exports = {
     };
 
     activeBot.messageHandler = function (testName, eventsData, promiseResolveFunction) {
+      eventsData.in.expected.push('message(bot)');    
       activeBot.once('message', (bot, trigger, id) => {
+        eventsData.out.got.push('message(bot)');    
         this.framework.debug(`Bot message event occurred in test ${testName}`);
         assert(validator.isBot(bot),
           'message event did not include a valid bot');
@@ -1122,7 +1323,9 @@ module.exports = {
     };
 
     activeBot.filesHandler = function (testName, eventsData, promiseResolveFunction) {
+      eventsData.in.expected.push('files(bot)');    
       activeBot.once('files', (bot, trigger, id) => {
+        eventsData.out.got.push('files(bot)');    
         this.framework.debug(`Bot files event occurred in test ${testName}`);
         assert(validator.isBot(bot),
           'files event did not include a valid bot');
@@ -1137,7 +1340,9 @@ module.exports = {
     };
 
     activeBot.memberEntersHandler = function (testName, eventsData, promiseResolveFunction) {
+      eventsData.in.expected.push('memberEnters(bot)');    
       activeBot.once('memberEnters', (bot, membership) => {
+        eventsData.out.got.push('memberEnters(bot)');    
         this.framework.debug(`Bot memberEnters event occurred in test ${testName}`);
         assert(validator.isBot(bot),
           'bot memberEnters event did not include a valid bot');
@@ -1147,12 +1352,24 @@ module.exports = {
           'membership returned in framework.on("memberEnters") is not the one expected');
         assert(validator.isMembership(membership),
           'membership returned in framework.on("memberEnters") is not valid');
-        promiseResolveFunction(true);
-      });
+        if (!eventsData.multipleEvents?.botMemberEnters) {
+          if (--eventsData.multipleEvents.botMemberEnters > 0) {
+            // Need more events to emit before resolving promise, register another handler
+            activeBot.memberEntersHandler(testName, eventsData, promiseResolveFunction);
+          } else {
+            delete eventsData.multipleEvents.botMemberEnters;
+            promiseResolveFunction(true);
+          } 
+        } else {
+          promiseResolveFunction(true);
+        }
+        });
     };
 
     activeBot.memberAddedAsModerator = function (testName, eventsData, promiseResolveFunction) {
+      eventsData.in.expected.push('memberAddedAsModerator(bot)');    
       activeBot.once('memberAddedAsModerator', (bot, membership) => {
+        eventsData.out.got.push('memberAddedAsModerator(bot)');    
         this.framework.debug(`Bot memberAddedAsModerator event occurred in test ${testName}`);
         assert(validator.isBot(bot),
           'bot memberAddedAsModerator event did not include a valid bot');
@@ -1167,7 +1384,9 @@ module.exports = {
     };
 
     activeBot.memberExitsHandler = function (testName, eventsData, promiseResolveFunction) {
+      eventsData.in.expected.push('memberExits(bot)');    
       activeBot.once('memberExits', (bot, membership) => {
+        eventsData.out.got.push('memberExits(bot)');    
         this.framework.debug(`Bot memberExits event occurred in test ${testName}`);
         assert(validator.isBot(bot),
           'bot memberExits event did not include a valid bot');
@@ -1181,8 +1400,10 @@ module.exports = {
       });
     };
 
-    activeBot.stopHandler = function (testName, promiseResolveFunction) {
+    activeBot.stopHandler = function (testName, eventsData, promiseResolveFunction) {
+      eventsData.in.expected.push('stop(bot)');    
       activeBot.once('stop', (bot) => {
+        eventsData.out.got.push('stop(bot)');    
         this.framework.debug(`Bot stop event occurred in test ${testName}`);
         assert(validator.isBot(bot),
           'bot event did not include a valid bot');
@@ -1192,6 +1413,40 @@ module.exports = {
       });
     };
   },
+
+  // External Helper function to through all the messages in test-data
+  // Helper function to iterate through test messages
+  runMessages: function(testMessages, framework, eventsData, user, botShouldRespond) {
+    let behavior = 'should'
+    if (!botShouldRespond) {
+      behavior += ' not'
+    }
+      testMessages.forEach((testData) => {
+        let userMsgTest = `user says ${testData.msgText}`;
+        let botResponseTest = `bot ${behavior} to ${testData.msgText}`;
+
+        // describe((`${userMsgTest} and bot ${behavior} respond`), () => {
+
+          it(userMsgTest, () => {
+            eventsData.testName = userMsgTest;
+            return this.userSendMessage(eventsData.testName, framework, user,
+              eventsData.bot, eventsData, testData);
+          });
+
+          it(botResponseTest, () => {
+            eventsData.testName = botResponseTest;
+            return this.botRespondsToTrigger(eventsData.testName, framework,
+              eventsData.bot, eventsData, botShouldRespond);
+          });
+
+          it(`clears framework.hears for ${testData.msgText}`, () => {
+            testData.hearsInfo.forEach((info) => {
+              framework.clearHears(info.functionId);
+            });
+          });
+        });
+  },
+
 
   // Additional framework events to-do
   // attachmentAction
@@ -1204,6 +1459,13 @@ module.exports = {
   Bot_Test_Space_Title: Bot_Test_Space_Title,
   botForUser1on1Space: '',
 
+  // TEMP: testInfo is a copy of eventsData
+  // Eventually get rid of eventsData and use testInfo everywhere!
+  eventsData: {
+    config: {}
+  },
+  testInfo: this.eventsData,
+
   // Common helpers
   assert: assert,
   when: when,
@@ -1213,6 +1475,128 @@ module.exports = {
 };
 
 // Internal Helper functions
+
+function initEventsData(eventsData) {
+  eventsData.in = {};
+  eventsData.in.expected = [];
+  eventsData.out = {};
+  eventsData.out.got = [];
+  eventsData.out.unexpectedEventMessage = [];
+}
+
+function registerUnexpectedEventsHandler (framework, eventsData) {
+  // if (!('catchAllRegistered' in eventsData)) {
+  //   eventsData.catchAllRegistered = 0;
+  // }
+//  if (!eventsData.catchAllRegistered) {
+    framework.debug('Setting a catch-all events listener to detect malformed tests');
+    framework.onAny((eventName, ...args) => {
+      if (eventName == 'log') {
+        framework.debug(args[0]);
+      } else {
+        let msg = `Got a ${eventName} in test:"${eventsData.testName}"`
+        if (eventName == 'membershipRulesAction') {
+          msg = `Got a ${eventName} of type:${args[0]}`;
+          if (('event-swallowed' == args[0]) || ('state-change' == args[0])) {
+            msg += `:${args[1]}`;
+          }
+          msg += ` in test:"${eventsData.testName}"`
+        }
+        console.log(msg);
+        if (framework.listenerCount(eventName) == 0) {
+          let msg = `Got an unhandled event ${eventName} in test:"${eventsData.testName}"`
+          console.error(msg);
+          console.error(args[0]);
+          eventsData.out.unexpectedEventMessage.push(msg);
+        }
+      }
+    });
+  //   eventsData.catchAllRegistered = 1;
+  // } else {
+  //   eventsData.catchAllRegistered += 1;
+  // }
+}
+
+function removeUnexpectedEventsHandler(framework) {
+// if ("catchAllRegistered" in eventsData) {
+//   if (eventsData.catchAllRegistered) {
+//     eventsData.catchAllRegistered -= 1;
+//   }
+//   if (eventsData.catchAllRegistered == 1) {
+    framework.offAny();
+    framework.debug('Clearing the catch-all events listener as final test spot bot leaves');
+//     catchAllRegistered = 0;
+//   }
+// } else {
+//   return when.reject(new Error('No catch-all events handler was set for these tests!'));
+}
+
+
+
+function checkInterimEventsData(eventsData, retVal=null) {
+  let msg = '';
+  if (eventsData.out.unexpectedEventMessage.length) {
+    eventsData.out.unexpectedEventMessage.forEach((message) => {
+      msg += `${message}\n`;
+    });
+    return when.reject(new Error(msg));
+  }
+  return when.resolve(retVal);
+}
+
+function difference(ar1, ar2) {
+  const ar2Count = ar2.reduce((acc, val) => {
+    acc[val] = (acc[val] || 0) + 1;
+    return acc;
+  }, {});
+
+  return ar1.filter((val) => {
+    if (ar2Count[val] > 0) {
+      ar2Count[val]--;
+      return false;
+    }
+    return true;
+  });
+}
+function checkEventsDataAfterFailure(e, ed) {
+  if (ed.out.unexpectedEventMessage.length) {
+    return checkInterimEventsData(ed);
+  }
+  if (e.message === 'Timeout expired') {
+    let result = difference(ed.in.expected, ed.out.got);
+    let msg = `Timed out while wait for framework events in test:${ed.testName}!\n`
+    if (result.length) {
+      msg += ` -- Expected: ${ed.in.expected}\n`;
+      msg += ` -- Got: ${ed.out.got}\n`;
+      msg += ` -- Missing: ${result}`;
+    } else {
+      msg += `-- Could not identify reason for timeout failure in test: ${ed.testName}`;
+    }
+    console.error(msg);
+    return when.reject(new Error(msg));
+  } else {
+    return when.reject(e);
+  }
+}
+
+
+function waitForPromisesWithTimeout(promiseArray, preMochaTimeout, eventsData) {
+  eventPromises = Promise.all(promiseArray);
+  timeoutPromise = new Promise((resolve, reject) => {
+    timeoutId = setTimeout(() => {
+      return reject(new Error('Timeout expired'));
+    }, preMochaTimeout);
+  });
+
+  return Promise.race([
+    eventPromises.then(() => clearTimeout(timeoutId)),
+    Promise.race([eventPromises, timeoutPromise]).catch((error) => {
+      return checkEventsDataAfterFailure(error, eventsData)
+    }),
+  ]);  
+}
+
+
 
 // Delete spaces leftover from previous test runs
 // Aslo Check if the test bot already has a 1-1 space with the test user

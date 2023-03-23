@@ -1,8 +1,10 @@
 // Variables an functions shared by all tests
+const { doesNotMatch } = require("assert");
 var common = require("../common/common");
 let tm = require("../common/test-messages")
 let framework = common.framework;
 let userWebex = common.userWebex;
+let testInfo = common.eventsData;
 let disallowedUser = common.getDisallowedUser();
 let User_Test_Space_Title = common.User_Test_Space_Title;
 
@@ -12,7 +14,6 @@ let when = common.when;
 
 describe('User Created Room to create a Test Bot', () => {
   let userCreatedTestRoom, userCreatedRoomBot;
-  let eventsData = {};
   // Create a room as user to have test bot which will create other rooms
   before(() => userWebex.rooms.create({title: User_Test_Space_Title})
     .then((r) => {
@@ -21,18 +22,24 @@ describe('User Created Room to create a Test Bot', () => {
     }));
 
   // Add our bot to the room and validate that it is spawned properly
-  before(() => common.addBotToSpace('Add Bot to Space', framework, userCreatedTestRoom, eventsData)
-    .then((b) => {
-      userCreatedRoomBot = b;
-      return validator.isBot(b);
-    }));
+  before(() => {
+    testInfo.config.testName = 'Add Bot to Space';
+    testInfo.config.roomUnderTest = userCreatedTestRoom;
+    return common.addBotToSpace(framework, testInfo)
+      .then((b) => {
+        userCreatedRoomBot = b;
+        return validator.isBot(b);
+      })
+  });
 
   // Bot leaves rooms
   after(() => {
     if ((!userCreatedRoomBot) || (!userCreatedTestRoom)) {
       return Promise.resolve();
     }
-    return common.botLeaveRoom('Bot Leaves Space', framework, userCreatedRoomBot, userCreatedTestRoom, eventsData);
+    testInfo.testName = 'Bot Leaves Space';
+    testInfo.bot = userCreatedRoomBot;
+    return common.botLeaveRoom('Bot Leaves Space', framework, userCreatedRoomBot, testInfo);
   });
 
   // User deletes room -- cleanup
@@ -48,17 +55,16 @@ describe('User Created Room to create a Test Bot', () => {
       });
   });
 
-  describe('Bot Creates Room and Adds Memeber', () => {
+  describe('Bot Creates Room and Adds Member', () => {
     let botCreatedTestRoom, botCreatedRoomBot;
-    let testName = 'Bot Creates Room and Adds Member';
-    let eventsData = {};
     // Create a room as user to have test bot which will create other rooms
     before(() => {
-      let testName = 'empty bot.newRoom() test';
-      return common.botCreateRoom(testName, framework, userCreatedRoomBot, eventsData)
+      testInfo.testName = 'Bot creates new room test';
+      return common.botCreateRoom(testInfo.testName, framework, userCreatedRoomBot, testInfo)
         .then((b) => {
           botCreatedRoomBot = b;
           botCreatedTestRoom = b.room;
+          testInfo.bot = b;
           return when(botCreatedRoomBot);
         });
     });
@@ -68,117 +74,79 @@ describe('User Created Room to create a Test Bot', () => {
       if ((!botCreatedRoomBot) || (!botCreatedTestRoom)) {
         return Promise.resolve();
       }
-      const membershipDeleted = new Promise((resolve) => {
-        common.frameworkMembershipDeletedHandler(testName, framework, eventsData, resolve);
-      });
-      let despawned, stopped;
-      if (botCreatedRoomBot.active) {
-        stopped = new Promise((resolve) => {
-          botCreatedRoomBot.stopHandler('testName', resolve);
-        });
-        despawned = new Promise((resolve) => {
-          common.frameworkDespawnHandler(testName, framework, eventsData, resolve);
-        });
-      } else {
-        // Our real despawn event will be "swallowed" if membership rules already did it
-        stopped = Promise.resolve(true);
-        despawned = new Promise((resolve) => {
-          common.frameworkMembershipRulesEventHandler(testName, framework, ['despawn'], eventsData, false, resolve);
-        });
-      }
-      return botCreatedRoomBot.implode()
-        .then(() => when.all([membershipDeleted, stopped, despawned]))
-        .catch((reason) => {
-          console.error('Bot failed to exit room', reason);
-        });
+      testInfo.testName = 'bot deletes room it created'
+      return common.botDeletesRoom(testInfo.testName, framework, 
+        botCreatedRoomBot, testInfo, /*numOtherUsers == */1);
     });
 
-    describe('Bot adds allowed user to space who iteracts with bot', () => {
+    describe('Bot adds and removes allowed user to space who iteracts with bot', () => {
       before(() => {
-        testName = 'adds an allowed user to the room';
-        return common.botAddUsersToSpace(testName, framework, botCreatedRoomBot,
-          [common.userInfo.emails[0]], eventsData);
+        testInfo.testName = 'bot adds an allowed user to the room';
+        return common.botAddUsersToSpace(testInfo.testName, framework, botCreatedRoomBot,
+          [common.userInfo.emails[0]], testInfo);
       });
 
       after(() => {
-        testName = "removes allowed user from the room";
-        return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
-          common.userInfo.emails[0], eventsData, 
+        testInfo.testName = "removes allowed user from the room";
+        return common.botRemoveUserFromSpace(testInfo.testName, framework, botCreatedRoomBot,
+          common.userInfo.emails[0], testInfo, 
           0, /* numDisallowedUsersInSpace */
           false, /* isDisallowedUser */);
       });
 
 
       // loop through message tests..
-      tm.testMessages.forEach((testData) => {
-        eventsData = {bot: botCreatedRoomBot};
-
-        it(`user says ${testData.msgText}`, () => {
-          let testName = `user says ${testData.msgText}`;
-          return common.userSendMessage(testName, framework, userWebex,
-            botCreatedRoomBot, eventsData, testData);
-        });
-
-        it(`bot should respond to ${testData.msgText}`, () => {
-          let testName = `bot should respond to ${testData.msgText}`;
-          let shouldBeAllowed = true;
-          return common.botRespondsToTrigger(testName, framework,
-            botCreatedRoomBot, eventsData, shouldBeAllowed);
-        });
-
-        it(`clears framework.hears for ${testData.msgText}`, () => {
-          testData.hearsInfo.forEach((info) => {
-            framework.clearHears(info.functionId);
-          });
-        });
-
-      });
-
+        common.runMessages(tm.testMessages,framework, testInfo, 
+          userWebex, /* botShouldRespond = */true);
 
       describe('Adds and removes a disallowed user to the space', () => {
         before(() => {
-          testName = 'adds a disallowed user to the room';
-          return common.botAddUsersToSpace(testName, framework, botCreatedRoomBot,
-            [common.disallowedUserPerson.emails[0]], eventsData)
+          testInfo.testName = 'adds a disallowed user to the room';
+          return common.botAddUsersToSpace(testInfo.testName, framework, botCreatedRoomBot,
+            [common.disallowedUserPerson.emails[0]], testInfo)
             .then(() => {
               assert((!botCreatedRoomBot.active),
                 "After adding dissallowed user, bot did move to inactive state.");
             });
         });
 
-        after(() => {
-          testName = "removes a disallowed user from the room";
-          return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
-            common.disallowedUserPerson.emails[0], eventsData,
+        // TODO -- replace this with a botDeletesRoom to test deleting a room with an inactive bot
+        // If I do this I have to repeat having the bot create the room again
+        after('removes the disallowed user to re-enable room',() => {
+          testInfo.testName = 'removes the disallowed user to re-enable room';
+          return common.botRemoveUserFromSpace(testInfo.testName, framework, botCreatedRoomBot,
+            common.disallowedUserPerson.emails[0], testInfo,
             1, /* numDisallowedUsersInSpace */
             true, /* isDisallowedUser */);
         });
 
-        // loop through message tests..
-        tm.testMessages.forEach((testData) => {
+      // loop through message tests..
+      common.runMessages(tm.testMessages,framework, testInfo, 
+        userWebex, /* botShouldRespond = */false);
+      // // loop through message tests..
+      //   tm.testMessages.forEach((testData) => {
 
-          it(`user says "${testData.msgText}" to disallowed bot`, () => {
-            let testName = `user says ${testData.msgText} to disallowed bot`;
-            eventsData = {bot: botCreatedRoomBot};
-            framework.debug(`${testName} test starting...`);
-            return common.userSendMessage(testName, framework, userWebex,
-              botCreatedRoomBot, eventsData, testData);
-          });
+      //     it(`user says "${testData.msgText}" to disallowed bot`, () => {
+      //       testInfo.testName = `user says ${testData.msgText} to disallowed bot`;
+      //       framework.debug(`${testInfo.testName} test starting...`);
+      //       return common.userSendMessage(testInfo.testName, framework, userWebex,
+      //         botCreatedRoomBot, testInfo, testData);
+      //     });
 
-          it(`bot shouldn't respond to ${testData.msgText}`, () => {
-            let testName = `bot shouldn't respond to "${testData.msgText}"`;
-            let shouldBeAllowed = false;
-            framework.debug(`${testName} test starting...`);
-            return common.botRespondsToTrigger(testName, framework,
-              botCreatedRoomBot, eventsData, shouldBeAllowed);
-          });
+      //     it(`bot shouldn't respond to ${testData.msgText}`, () => {
+      //       testInfo.testName = `bot shouldn't respond to "${testData.msgText}"`;
+      //       let shouldBeAllowed = false;
+      //       framework.debug(`${testInfo.testName} test starting...`);
+      //       return common.botRespondsToTrigger(testInfo.testName, framework,
+      //         botCreatedRoomBot, testInfo, shouldBeAllowed);
+      //     });
 
-          it(`clears framework.hears for ${testData.msgText}`, () => {
-            testData.hearsInfo.forEach((info) => {
-              framework.clearHears(info.functionId);
-            });
-          });
-        });
+      //     it(`clears framework.hears for ${testData.msgText}`, () => {
+      //       testData.hearsInfo.forEach((info) => {
+      //         framework.clearHears(info.functionId);
+      //       });
+      //     });
+      //   });
 
         it(`validates that bot.say() fails in disallowed state`, () => {
           botCreatedRoomBot.say('This message should never be seen')
@@ -193,7 +161,7 @@ describe('User Created Room to create a Test Bot', () => {
 
         it(`validates that bot.reply() fails in disallowed state`, () => {
           // Use the last posted message as the parent...
-          botCreatedRoomBot.reply(eventsData.message, 'This message should never be seen')
+          botCreatedRoomBot.reply(testInfo.message, 'This message should never be seen')
             .then(() => {
               return when.reject('bot.reply() should have failed but did not');
             })
@@ -241,7 +209,7 @@ describe('User Created Room to create a Test Bot', () => {
             });
         });
 
-        it(`validates that bot.dn fails with disallowed user email`, () => {
+        it(`validates that bot.dm fails with disallowed user email`, () => {
           return botCreatedRoomBot.dm(common.disallowedUserPerson.emails[0])
             .then(() => {
               return when.reject('bot.dm() should have failed but did not');
@@ -252,7 +220,7 @@ describe('User Created Room to create a Test Bot', () => {
             });
         });
 
-        it(`validates that bot.dn fails with disallowed personId`, () => {
+        it(`validates that bot.dm fails with disallowed personId`, () => {
           return botCreatedRoomBot.dm(common.disallowedUserPerson.id)
             .then(() => {
               return when.reject('bot.dm() should have failed but did not');
@@ -269,44 +237,46 @@ describe('User Created Room to create a Test Bot', () => {
     describe('Bot adds allowed and 2 disallowed users to space who iteract with bot', () => {
 
       before(() => {
-        testName = 'adds an allowed user to the room';
-        return common.botAddUsersToSpace(testName, framework, botCreatedRoomBot,
+        testInfo.testName = 'adds one allowed to disallowed users to the room';
+        return common.botAddUsersToSpace(testInfo.testName, framework, botCreatedRoomBot,
           [common.userInfo.emails[0], common.disallowedUserPerson.emails[0],
-            process.env.ANOTHER_DISALLOWED_USERS_EMAIL], eventsData);
+            process.env.ANOTHER_DISALLOWED_USERS_EMAIL], testInfo);
       });
 
-      // loop through message tests from disallowed user
-      tm.testMessages.forEach((testData) => {
-        eventsData = {bot: botCreatedRoomBot};
+      // loop through message tests..
+      common.runMessages(tm.testMessages,framework, testInfo, 
+        disallowedUser, /* botShouldRespond = */false);
+    // // loop through message tests from disallowed user
+    //   tm.testMessages.forEach((testData) => {
 
-        it(`allowed user says ${testData.msgText}`, () => {
-          let testName = `allowed user says ${testData.msgText}`;
-          return common.userSendMessage(testName, framework, disallowedUser,
-            botCreatedRoomBot, eventsData, testData);
-        });
+    //     it(`allowed user says ${testData.msgText}`, () => {
+    //       testInfo.testName = `allowed user says ${testData.msgText}`;
+    //       return common.userSendMessage(testInfo.testName, framework, disallowedUser,
+    //         botCreatedRoomBot, testInfo, testData);
+    //     });
 
-        it(`bot shouldn't respond to ${testData.msgText} from allowed user`, () => {
-          let testName = `bot shouldn't respond to ${testData.msgText} from allowed user`;
-          let shouldBeAllowed = false;
-          return common.botRespondsToTrigger(testName, framework,
-            botCreatedRoomBot, eventsData, shouldBeAllowed);
-        });
+    //     it(`bot shouldn't respond to ${testData.msgText} from allowed user`, () => {
+    //       testInfo.testName = `bot shouldn't respond to ${testData.msgText} from allowed user`;
+    //       let shouldBeAllowed = false;
+    //       return common.botRespondsToTrigger(testInfo.testName, framework,
+    //         botCreatedRoomBot, testInfo, shouldBeAllowed);
+    //     });
 
-        it(`clears framework.hears for ${testData.msgText}`, () => {
-          testData.hearsInfo.forEach((info) => {
-            framework.clearHears(info.functionId);
-          });
-        });
+    //     it(`clears framework.hears for ${testData.msgText}`, () => {
+    //       testData.hearsInfo.forEach((info) => {
+    //         framework.clearHears(info.functionId);
+    //       });
+    //     });
 
-      });
+    //   });
 
 
       describe('Removes the first disallowed user to the space', () => {
 
         before(() => {
-          testName = "removes a disallowed user from the room";
-          return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
-            process.env.ANOTHER_DISALLOWED_USERS_EMAIL, eventsData,
+          testInfo.testName = 'Removes the first disallowed user to the space';
+          return common.botRemoveUserFromSpace(testInfo.testName, framework, botCreatedRoomBot,
+            process.env.ANOTHER_DISALLOWED_USERS_EMAIL, testInfo,
             2, /* numDisallowedUsersInSpace */
             true, /* isDisallowedUser */)
             .then(() => {
@@ -315,40 +285,42 @@ describe('User Created Room to create a Test Bot', () => {
             });
         });
 
-        // loop through message tests..
-        tm.testMessages.forEach((testData) => {
+      // loop through message tests..
+      common.runMessages(tm.testMessages,framework, testInfo, 
+        userWebex, /* botShouldRespond = */false);
+      // // loop through message tests..
+      //   tm.testMessages.forEach((testData) => {
 
-          it(`user says "${testData.msgText}" to disallowed bot`, () => {
-            let testName = `user says ${testData.msgText} to disallowed bot`;
-            eventsData = {bot: botCreatedRoomBot};
-            framework.debug(`${testName} test starting...`);
-            return common.userSendMessage(testName, framework, userWebex,
-              botCreatedRoomBot, eventsData, testData);
-          });
+      //     it(`user says "${testData.msgText}" to disallowed bot`, () => {
+      //       testInfo.testName = `user says ${testData.msgText} to disallowed bot`;
+      //       framework.debug(`${testInfo.testName} test starting...`);
+      //       return common.userSendMessage(testInfo.testName, framework, userWebex,
+      //         botCreatedRoomBot, testInfo, testData);
+      //     });
 
-          it(`bot should not respond to ${testData.msgText}`, () => {
-            let testName = `bot should not respond to "${testData.msgText}"`;
-            let shouldBeAllowed = false;
-            framework.debug(`${testName} test starting...`);
-            return common.botRespondsToTrigger(testName, framework,
-              botCreatedRoomBot, eventsData, shouldBeAllowed);
-          });
+      //     it(`bot should not respond to ${testData.msgText}`, () => {
+      //       testInfo.testName = `bot should not respond to "${testData.msgText}"`;
+      //       let shouldBeAllowed = false;
+      //       framework.debug(`${testInfo.testName} test starting...`);
+      //       return common.botRespondsToTrigger(testInfo.testName, framework,
+      //         botCreatedRoomBot, testInfo, shouldBeAllowed);
+      //     })
 
-          it(`clears framework.hears for ${testData.msgText}`, () => {
-            testData.hearsInfo.forEach((info) => {
-              framework.clearHears(info.functionId);
-            });
-          });
-        });
+      //     it(`clears framework.hears for ${testData.msgText}`, () => {
+      //       testData.hearsInfo.forEach((info) => {
+      //         framework.clearHears(info.functionId);
+      //       });
+      //     });
+      //   });
 
       });
 
       describe('Removes the last disallowed user to the space', () => {
 
         before(() => {
-          testName = "removes a disallowed user from the room";
-          return common.botRemoveUserFromSpace(testName, framework, botCreatedRoomBot,
-            common.disallowedUserPerson.emails[0], eventsData,
+          testInfo.testName = 'Removes the last disallowed user to the space';
+          return common.botRemoveUserFromSpace(testInfo.testName, framework, botCreatedRoomBot,
+            common.disallowedUserPerson.emails[0], testInfo,
             1, /* numDisallowedUsersInSpace */
             true, /* isDisallowedUser */)
             .then(() => {
@@ -357,34 +329,37 @@ describe('User Created Room to create a Test Bot', () => {
             });
         });
 
-        // loop through message tests..
-        tm.testMessages.forEach((testData) => {
+      // loop through message tests..
+      common.runMessages(tm.testMessages,framework, testInfo, 
+        userWebex, /* botShouldRespond = */true);
+      // loop through message tests..
+        // tm.testMessages.forEach((testData) => {
 
-          it(`user says "${testData.msgText}" to disallowed bot`, () => {
-            let testName = `user says ${testData.msgText} to disallowed bot`;
-            eventsData = {bot: botCreatedRoomBot};
-            framework.debug(`${testName} test starting...`);
-            return common.userSendMessage(testName, framework, userWebex,
-              botCreatedRoomBot, eventsData, testData);
-          });
+        //   it(`user says "${testData.msgText}" to allowed bot`, () => {
+        //     testInfo.testName = `user says ${testData.msgText} to disallowed bot`;
+        //     framework.debug(`${testInfo.testName} test starting...`);
+        //     return common.userSendMessage(testInfo.testName, framework, userWebex,
+        //       botCreatedRoomBot, testInfo, testData);
+        //   });
 
-          it(`bot should respond to ${testData.msgText}`, () => {
-            let testName = `bot should respond to "${testData.msgText}"`;
-            let shouldBeAllowed = true;
-            framework.debug(`${testName} test starting...`);
-            return common.botRespondsToTrigger(testName, framework,
-              botCreatedRoomBot, eventsData, shouldBeAllowed);
-          });
+        //   it(`bot should respond to ${testData.msgText}`, () => {
+        //     testInfo.testName = `bot should respond to "${testData.msgText}"`;
+        //     let shouldBeAllowed = true;
+        //     framework.debug(`${testInfo.testName} test starting...`);
+        //     return common.botRespondsToTrigger(testInfo.testName, framework,
+        //       botCreatedRoomBot, testInfo, shouldBeAllowed);
+        //   });
 
-          it(`clears framework.hears for ${testData.msgText}`, () => {
-            testData.hearsInfo.forEach((info) => {
-              framework.clearHears(info.functionId);
-            });
-          });  
+        //   it(`clears framework.hears for ${testData.msgText}`, () => {
+        //     testData.hearsInfo.forEach((info) => {
+        //       framework.clearHears(info.functionId);
+        //     });
+        //   });  
 
-        });
+        // });
 
       });
     });
   });
 });
+

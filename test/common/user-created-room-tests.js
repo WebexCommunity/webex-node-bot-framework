@@ -3,6 +3,8 @@ var common = require("../common/common");
 let tm = require("../common/test-messages")
 let framework = common.framework;
 let userWebex = common.userWebex;
+let testInfo = common.eventsData;
+
 let User_Test_Space_Title = common.User_Test_Space_Title;
 
 let assert = common.assert;
@@ -23,13 +25,17 @@ describe('User Created Rooms Tests', () => {
     }));
 
   // Add our bot to the room and validate that it is spawned properly
-  before(() => common.addBotToSpace('Add bot to user created room', framework, userCreatedTestRoom, eventsData)
-    .then((b) => {
-      bot = b;
-      assert((eventsData.addedBy === common.userInfo.id),
-        'after user added bot to test space, addedBy ID did not match the test webex user\'s');
-      return validator.isBot(b);
-    }));
+    before(() => {
+      testInfo.config.testName = 'Add bot to user created room';
+      testInfo.config.roomUnderTest = userCreatedTestRoom;
+      return common.addBotToSpace(framework, testInfo)
+        .then((b) => {
+          bot = b;
+          assert((testInfo.addedBy === common.userInfo.id),
+            'after user added bot to test space, addedBy ID did not match the test webex user\'s');
+          return validator.isBot(b);
+        });
+    });
 
   // Bot leaves rooms
   after(() => {

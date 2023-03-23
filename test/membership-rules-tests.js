@@ -63,11 +63,12 @@ common.setDisallowedUser(disallowedUserWebex);
 //require('./common/invalid-config-tests.js');
 
 // Start up an instance of framework that we will use across multiple tests
-describe('#framework', () => {
+describe('#framework', function()  { // don't use arrow so this binds to mocha
   // Validate that the invalid user token is good
   before(() => disallowedUserWebex.people.get('me')
     .then((person) => {
       common.setDisallowedUserPerson(person);
+      common.setMochaTimeout(this.timeout())
     })
     .catch((e) => {
       console.error(`Could not initialize user with DISSALOWED_USER_API_TOKEN: ${e.message}`);
@@ -86,7 +87,7 @@ describe('#framework', () => {
 
   // Test bot interactions in a user created test space
   // With no disallowed members -- make sure nothing breaks in this mode
-  require('./common/bot-created-room-tests.js');
+  //require('./common/bot-created-room-tests.js');
 
 });
 

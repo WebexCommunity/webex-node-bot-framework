@@ -2,6 +2,8 @@
 var common = require("../common/common");
 let framework = common.framework;
 let userWebex = common.userWebex;
+let testInfo = common.eventsData;
+
 let User_Test_Space_Title = common.User_Test_Space_Title;
 
 let assert = common.assert;
@@ -21,7 +23,9 @@ describe('User Created Room to create a Test Bot', () => {
     }));
 
   // Add our bot to the room and validate that it is spawned properly
-  before(() => common.addBotToSpace('Add Bot to Space', framework, userCreatedTestRoom, eventsData)
+  testInfo.config.testName = 'Add Bot to Space';
+  testInfo.config.roomUnderTest = userCreatedTestRoom;
+  before(() => common.addBotToSpace(framework, testInfo)
     .then((b) => {
       userCreatedRoomBot = b;
       return validator.isBot(b);

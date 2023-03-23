@@ -31,7 +31,10 @@
 // framework to check that the appropriate ones have (or have not) been called
  
 let testMessages = [
-    {msgText: 'hi', hearsInfo: [{phrase: 'hi'}]},
+    {
+      msgText: 'hi', 
+      hearsInfo: [{phrase: 'hi'}]
+    },
     {
       msgText: `Here is a file for ya`,
       msgFiles: process.env.HOSTED_FILE,

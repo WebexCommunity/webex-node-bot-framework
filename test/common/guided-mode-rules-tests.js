@@ -4,6 +4,8 @@ var common = require("../common/common");
 let tm = require("../common/test-messages")
 let framework = common.framework;
 let userWebex = common.userWebex;
+let testInfo = common.testInfo;
+
 let disallowedUser = common.getDisallowedUser();
 let User_Test_Space_Title = common.User_Test_Space_Title;
 
@@ -63,12 +65,17 @@ paramCombos.forEach(function(paramCombo, testIndex) {
 
     // Add our bot to the room and validate that no spawn event occurs
     // since our bot should not work in when added to a space without a guide
-    before(() => common.addBotToSpace('Add Bot to Space', framework,
-      userCreatedTestRoom, eventsData, /*shouldFail = */ true, disallowedUser)
-      .then((b) => {
-        userCreatedRoomBot = b;
-        eventsData.bot = b;
-      }));
+    before(() => {
+      testInfo.config.testName = 'Disallowed User Adds Bot to Space';
+      testInfo.config.roomUnderTest = userCreatedTestRoom;
+      testInfo.config.userUnderTest = disallowedUser;
+      return common.addBotToSpace(framework, testInfo, /*shouldFail = */ true)
+        .then((b) => {
+          userCreatedRoomBot = b;
+          testInfo.bot = b;
+          eventsData.bot = b;
+        });
+      });
 
     // Bot leaves rooms
     after(() => {
@@ -210,12 +217,18 @@ describe(`Non Guide Creates Room with Bot to validate bot won't communicate proa
 
   // Add our bot to the room and validate that no spawn event occurs
   // since our bot should not work in when added to a space without a guide
-  before(() => common.addBotToSpace('Add Bot to Space', framework,
-    userCreatedTestRoom, eventsData, /*shouldFail = */ true, disallowedUser)
-    .then((b) => {
-      userCreatedRoomBot = b;
-      eventsData.bot = b;
-    }));
+  before(() => {
+    testInfo.config.testName = 'Disallowed User Adds Bot to Space';
+    testInfo.config.roomUnderTest = userCreatedTestRoom;
+    testInfo.config.userUnderTest = disallowedUser;
+    return common.addBotToSpace(framework, testInfo, /*shouldFail = */ true)
+      .then((b) => {
+        userCreatedRoomBot = b;
+        testInfo.bot = b;
+        eventsData.bot = b;
+      });
+    });
+
 
   // Bot leaves rooms
   after(() => {
