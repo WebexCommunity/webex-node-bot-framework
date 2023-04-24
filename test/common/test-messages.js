@@ -29,8 +29,10 @@
 
 // TODO - Add some hearsInfo phrases that should not match and update the test
 // framework to check that the appropriate ones have (or have not) been called
+var common = require("../common/common");
  
-let testMessages = [
+module.exports = {
+  testMessages: [
     {
       msgText: 'hi', 
       hearsInfo: [{phrase: 'hi'}]
@@ -153,6 +155,49 @@ let testMessages = [
         }
       ]
     }    
-  ];
+  ],
 
-module.exports =  {testMessages}
+  // External Helper function to iterate through all the user sent msg tests 
+  runUserMessageTests: function(framework, testInfo, testMessages, botShouldRespond=true) {
+    let behavior = 'should'
+    if (!botShouldRespond) {
+      behavior += ' not'
+    }
+      testMessages.forEach((testData) => {
+        let userMsgTest = `user says ${testData.msgText}`;
+        let botResponseTest = `bot ${behavior} respond to ${testData.msgText}`;
+
+        
+          // Don't use ES6 arrow functions to access mocha as this
+          it(userMsgTest, function() {
+            testInfo.config.testName = userMsgTest;
+            if ((testInfo.config?.isDirectTest) && (!common?.botForUser1on1Space)) {
+              this.skip();
+            }        
+            return common.userSendMessage(framework, testInfo, testData)
+              .then((trigger) => {
+                testInfo.config.priorTestsTrigger = trigger;
+              })
+          });
+
+          it(botResponseTest, function() {
+            testInfo.config.testName = botResponseTest;
+            if ((testInfo.config?.isDirectTest) && (!common?.botForUser1on1Space)) {
+              this.skip();
+            }        
+            return common.botRespondsToTrigger(framework,
+              testInfo, botShouldRespond);
+          });
+
+          it(`clears framework.hears for ${testData.msgText}`, function() {
+            if ((testInfo.config?.isDirectTest) && (!common?.botForUser1on1Space)) {
+              this.skip();
+            }        
+            delete testInfo.config.priorTestsTrigger;
+            testData.hearsInfo.forEach((info) => {
+              framework.clearHears(info.functionId);
+            });
+          });
+        });
+  },
+}

@@ -62,12 +62,12 @@ describe('#framework', () => {
   // beforeEach(() => {
   //   message = {};
   //   // Wait for the events associated with a new message before completing test..
-  //   eventsData = {};
+  //   testInfo = {};
   //   messageCreatedEvent = new Promise((resolve) => {
-  //     common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
+  //     common.frameworkMessageCreatedEventHandler(testName, framework, testInfo, resolve);
   //   });
   //   frameworkMessageEvent = new Promise((resolve) => {
-  //     common.frameworkMessageHandler(testName, framework, eventsData, resolve);
+  //     common.frameworkMessageHandler(testName, framework, testInfo, resolve);
   //   });
   // });
 

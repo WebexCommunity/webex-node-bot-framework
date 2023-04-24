@@ -60,10 +60,9 @@ common.setFramework(framework);
 common.setUser(validUserWebex);
 common.setDisallowedUser(disallowedUserWebex);
 
-//require('./common/invalid-config-tests.js');
-
 // Start up an instance of framework that we will use across multiple tests
 describe('#framework', function()  { // don't use arrow so this binds to mocha
+  common.setMochaTimeout(this.timeout())
   // Validate that the invalid user token is good
   before(() => disallowedUserWebex.people.get('me')
     .then((person) => {
