@@ -1,6 +1,6 @@
 {
   "name": "webex-node-bot-framework",
-  "version": "2.4.2",
+  "version": "2.5.0",
   "description": "Webex Teams Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "test-late-discovery": "node_modules/.bin/mocha test/late-discovery-tests.js --timeout 50000 --exit",
     "test-membership-rules": "node_modules/.bin/mocha test/membership-rules-tests.js --timeout 50000 --exit",
     "test-guide-mode-rules": "node_modules/.bin/mocha test/guide-rules-tests.js --timeout 50000 --exit",
-    "test-all": "node_modules/.bin/mocha test/bot-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/invalid-config-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/integration-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/mongo-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/late-discovery-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/guide-rules-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/membership-rules-tests.js --timeout 50000 --exit",
+    "test-all": "node_modules/.bin/mocha test/bot-tests.js --timeout 50000 --exit  && node_modules/.bin/mocha test/guide-rules-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/membership-rules-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/invalid-config-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/integration-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/mongo-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/late-discovery-tests.js --timeout 50000 --exit",
     "build": "cd docs && ./build.sh && cd .."
   },
   "repository": {

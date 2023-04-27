@@ -47,6 +47,11 @@ framework.hears('hello', (bot, trigger) => {
   bot.say('Hello %s!', trigger.person.displayName);
 }, '**hello** - say hello and I\'ll say hello back');
 
+// echo user input
+framework.hears('echo', (bot, trigger) => {
+  bot.say('markdown', `You said: ${trigger.prompt}`);
+}, '**echo** - I\'ll echo back the rest of your message');
+
 // get help
 framework.hears('help', (bot, trigger) => {
   bot.say('markdown', framework.showHelp());
@@ -57,7 +62,7 @@ framework.hears('help', (bot, trigger) => {
 framework.hears(/.*/gim, (bot, trigger) => {
     bot.say('Sorry, I don\'t know how to respond to "%s"', trigger.message.text);
     bot.say('markdown', framework.showHelp());
-}, 99999);
+}, 99999); 
 
 // define express path for incoming webhooks
 app.post('/framework', webhook(framework));

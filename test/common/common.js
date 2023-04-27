@@ -90,16 +90,14 @@ module.exports = {
 
   userSendsMessageAndBotMayRespond: function (testData, framework, user, bot, eventsData) {
     it(`user says ${testData.msg}`, () => {
-      let testName = `user says ${testData.msg}`;
-      let hearsInfo = {
-        phrase: testData.msgText
+      let testData = {
+        msgText: `user says ${testData.msg}`,
+        hearsInfo: [{
+          phrase: testData.msgText
+        }]
       };
-      return common.userSendMessage(testName, framework, user, bot,
-        eventsData, hearsInfo, testData.msgText)
-        .then((m) => {
-          hearsFunction = hearsInfo.functionId;
-          message = m;
-        });
+      return common.userSendMessage(testName, framework,
+        user, bot, eventsData, testData)
     });
   },
 
@@ -542,12 +540,20 @@ module.exports = {
       });
   },
 
-  userSendMessage: function (testName, framework, userWebex, bot, eventsData, hearsInfo, markdown, files) {
+  userSendMessage: function (testName, framework, userWebex, bot, eventsData, testData) {
     // We mention the bot when the test is running as a bot account
     // Only register for mention events, if we are mentioning the bot
     let isMention = false;
+    let markdown = testData.msgText
     if (framework.isBotAccount) {
-      markdown = `<@personId:${bot.person.id}> ${markdown}`;
+      // Add a bot mention at the beginning of the message or position indicated
+      if ('mentionIndex' in testData) {
+        let words = markdown.split(" ");
+        words.splice(testData.mentionIndex, 0, `<@personId:${bot.person.id}>`);
+        markdown = words.join(" ");
+      } else {
+        markdown = `<@personId:${bot.person.id}> ${markdown}`;
+      }
       isMention = true;
     }
 
@@ -556,39 +562,52 @@ module.exports = {
       roomId: bot.room.id,
       markdown: markdown
     };
-    if (files) {msgObj.files = files;}
+    if ('files' in testData) {msgObj.files = testData.files;}
 
     // Set up handlers for the message events
     let eventPromises = [];
     if (bot.active) {
       eventPromises = this.registerMessageHandlers(testName, isMention, framework, bot, msgObj, eventsData);
     } else {
-      eventPromises = this.getInactiveBotEventArray(testName, isMention, framework, msgObj, eventsData);
+      eventPromises = this.getInactiveBotEventArray(testName, isMention, framework, msgObj, eventsData, testData.hearsInfo);
     }
 
-    // Register the framework.hears handler for this message 
-    let calledHearsPromise = new Promise((resolve) => {
-      hearsInfo.functionId = framework.hears(hearsInfo.phrase, (b, t) => {
-        assert((b.id === bot.id),
-          `bot returned in framework.hears(${hearsInfo.phrase}) is not the one expected`);
-        assert(validator.objIsEqual(t, eventsData.trigger),
-          `trigger returned in framework.hears(${hearsInfo.phrase}) was not as expected`);
-        framework.debug(`Bot heard message "${hearsInfo.phrase}" that user posted`);
-        resolve(true);
-      }), hearsInfo.helpString, hearsInfo.priority;
+    // Register the specified framework.hears handlers for the message 
+    testData.hearsInfo.forEach((info) => {
+      let calledHearsPromise = new Promise((resolve) => {
+        info.functionId = framework.hears(info.phrase, (b, t) => {
+          framework.debug(`Bot heard message "${t.message.text}" that user posted`);
+          assert((b.id === bot.id),
+            `bot returned in framework.hears(${info.phrase}) is not the one expected`);
+          assert(validator.objIsEqual(t, eventsData.trigger),
+            `trigger returned in framework.hears(${info.phrase}) was not as expected`);
+          assert(validator.objIsEqual(t.message, eventsData.message),
+          `trigger.message returned in framework.hears(${info.phrase}) was not as expected`);
+          if (("command" in info) && ("prompt" in info)) {
+            assert(t.command == info.command,
+              `trigger.command returned in framework.hears(${info.phrase}) was not as expected`);
+            assert(t.prompt == info.prompt,
+              `trigger.prompt returned in framework.hears(${info.phrase}) was not as expected`);
+          }
+          resolve(true);
+        }, info.helpString, info.priority);
+      });
+      if (bot.active) {
+        // Only wait for it to be called if our bot is active (not disabled for guide mode)
+        eventPromises.push(calledHearsPromise);
+      }
     });
-    if (bot.active) {
-      // Only wait for it to be called if our bot is active (not disabled for guide mode)
-      eventPromises.push(calledHearsPromise);
-    }
+//    }
 
-    // kick it off with a message
+    // kick it all off with a message
     return userWebex.messages.create(msgObj)
       .then((m) => {
         message = m;
         assert(validator.isMessage(message),
           `Test:${testName} create message did not return a valid message`);
         // Wait for all the event handlers and the heard handler to fire
+        // I thought I needed to do this...
+        //eventsData.message = m;
         return when.all(eventPromises);
       })
       .then(() => when(message))
@@ -674,14 +693,18 @@ module.exports = {
     return eventPromises;
   },
 
-  getInactiveBotEventArray: function (testName, isMention, framework, msgObj, eventsData) {
+  getInactiveBotEventArray: function (testName, isMention, framework, msgObj, eventsData, hearsInfo) {
     let eventPromises = [];
+    let swallowedEventsArray = []
 
     // Wait for the events associated with a new message before completing test..
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
     }));
-    swallowedEventsArray = ['hears', 'message'];
+    swallowedEventsArray = ['message'];
+    hearsInfo.forEach(() => {
+      swallowedEventsArray.push('hears')
+    });
     if (isMention) {
       swallowedEventsArray.push('mentioned');
     }
@@ -796,8 +819,12 @@ module.exports = {
         // This event occured when a user sent a message to a disallowed bot
         // Register this handler again so that we wait for the bot's automated response
         delete eventsData.msgSentToDisabledGuideModeBot;
-        eventsData.checkMembershipRulesStateMessageResponse = true;
         this.frameworkMessageCreatedEventHandler(testName, framework, eventsData, promiseResolveFunction);
+        // It's possible for the response to come back before the original message
+        if (message.markdown != framework.membershipRulesStateMessageResponse) {
+          // If this isn't the disabled message from the bot check it on the next event
+          eventsData.checkMembershipRulesStateMessageResponse = true;
+        }
         return
       } else if (eventsData.checkMembershipRulesDisallowedResponse) {
         delete eventsData.checkMembershipRulesDisallowedResponse;

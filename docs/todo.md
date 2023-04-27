@@ -54,8 +54,12 @@ node-flint provides a storage system to allow developers to store and retrieve d
 
 ## Improving the tests
 
-- [ ] Add a ability to create a bot and user on the fly for the tests
+- [ ] Add an ability to create a bot and user on the fly for the tests
 - [x] Add test case for attachmentAction events
-- [ ] Refactor the tests so the framework.isBotAccount variable is used to determine if mentions are needed in the user messages
+- [x] Refactor the tests so the framework.isBotAccount variable is used to determine if mentions are needed in the user messages
 - [x] Break out the tests so they aren't in one monolithic file but don't create a new framework each time
 - [ ] Track and report the number of times each flint event was tested, to catch gaps in event validation
+- [ ] Add test for setAuthorizer and clearAuthorizer.  Clean up authorizer logic in framework.js so it's more readable.
+- [ ] Configure tests to add the bot mention in places other than the beginning of the message
+- [ ] Ensure tests with multiple hears handlers are called in the order of the specified priority
+- [ ] Add a test to validate generated help messages

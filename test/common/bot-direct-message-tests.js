@@ -19,13 +19,6 @@ describe('Bot interacts with user in 1-1 space', () => {
   let origFormat = framework.messageFormat;
   framework.messageFormat = 'markdown';
 
-  // if (!common.botForUser1on1Space) {
-  //   console.error('No 1-1 space to run direct message tests.  This isn\'t bad, it just is...');
-  //   console.error('If you want to run the direct message tests, manually create a 1-1 space with your test bot and test user.');
-  //   return;
-  // }
-
-
   let messageCreatedEvent, frameworkMessageEvent, botMessageEvent;
   // Before running tests check if the test bot exists in a 1-1 space with test user
   // If not generate an info message that 1-1 tests will be skipped
@@ -100,11 +93,15 @@ describe('Bot interacts with user in 1-1 space', () => {
     testName = 'hears the user without needing to be mentioned';
     // Wait for the hears event associated with the input text
     const heard = new Promise((resolve) => {
-      framework.hears(/^DM: hi.*/igm, (b, t) => {
+      framework.hears(/^DM: hi, /i, (b, t) => {
         assert((b.id === common.botForUser1on1Space.id),
           'bot returned in fint.hears("hi") is not the one expected');
         assert(validator.objIsEqual(t, eventsData.trigger),
           'trigger returned in framework.hears(/^hi.*/) was not as expected');
+        assert(t.command == 'DM: Hi, ',
+          `trigger.command returned in framework.hears(/^DM: hi, /) was not as expected`);
+        assert(t.prompt == 'this is a message with no mentions.',
+          `trigger.prompt returned in framework.hears(/^DM: hi, /) was not as expected`);
         trigger = t;
         framework.debug('Bot heard message  that user posted');
         resolve(true);
