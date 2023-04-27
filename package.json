@@ -4,14 +4,14 @@
   "description": "Webex Teams Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha test/bot-tests.js --timeout 50000 --exit",
-    "test-invalid-config": "node_modules/.bin/mocha test/invalid-config-tests.js --timeout 50000 --exit",
-    "test-as-user": "node_modules/.bin/mocha test/integration-tests.js --timeout 50000 --exit",
-    "test-mongo": "node_modules/.bin/mocha test/mongo-tests.js --timeout 50000 --exit",
-    "test-late-discovery": "node_modules/.bin/mocha test/late-discovery-tests.js --timeout 50000 --exit",
-    "test-membership-rules": "node_modules/.bin/mocha test/membership-rules-tests.js --timeout 50000 --exit",
-    "test-guide-mode-rules": "node_modules/.bin/mocha test/guide-rules-tests.js --timeout 50000 --exit",
-    "test-all": "node_modules/.bin/mocha test/bot-tests.js --timeout 50000 --exit  && node_modules/.bin/mocha test/guide-rules-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/membership-rules-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/invalid-config-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/integration-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/mongo-tests.js --timeout 50000 --exit && node_modules/.bin/mocha test/late-discovery-tests.js --timeout 50000 --exit",
+    "test": "node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit",
+    "test-invalid-config": "node_modules/.bin/mocha test/invalid-config-tests.js --timeout 10000 --exit",
+    "test-as-user": "RUN_TEST_AS_USER=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit",
+    "test-mongo": "RUN_MONGO_TESTS=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit",
+    "test-late-discovery": "node_modules/.bin/mocha test/late-discovery-tests.js --timeout 10000 --exit",
+    "test-membership-rules": "node_modules/.bin/mocha test/membership-rules-tests.js --timeout 10000 --exit",
+    "test-guide-mode-rules": "node_modules/.bin/mocha test/guide-rules-tests.js --timeout 10000 --exit",
+    "test-all": "node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/guide-rules-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/membership-rules-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/invalid-config-tests.js --timeout 10000 --exit && RUN_MONGO_TESTS=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && RUN_TEST_AS_USER=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/late-discovery-tests.js --timeout 10000 --exit",
     "build": "cd docs && ./build.sh && cd .."
   },
   "repository": {

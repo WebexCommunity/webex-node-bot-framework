@@ -4,7 +4,22 @@
 * Added the new `command` and `prompt` elements to the `trigger` object that is passed as a parameter to matching `framework.hears()` callbacks.
   * `trigger.command` will be the portion of the user message that matched the phrase specified in the `framework.hears()`
   * `trigger.prompt` will be words in the message that follow the command (minus any bot mention).
-* New tests added for this new functionality uncovered a bug in the membership-rules feature. If config option `membershipRulesStateMessageResponse` is set, a disabled bot due to membership rules can respond with a the configured message.  If multiple `hears()` phrases matched user input, the framework would send the message multiple times.  As of this release that message is only sent once per message.
+* Clarified `bot.reply()` docs.  This method supports a reply to a reply if the replyTo parameter is a message object.
+* Updated from EventEmitter to EventEmitter2 class. This was done to support new tests, but if desired it now allows developers to write catch all event handlers in the form:
+```js
+framework.onAny((eventName, ...args) => {
+  if (eventName == 'log') {
+    console.log(`Got a framework log event: "${args[0]}"`);
+    return;
+  } else {
+    // Handle other events as desired
+  }
+}
+```
+* This release includes a major overhaul of the tests in the hopes that it is easier for contributors to understand, run, and create new tests.   Improvements include:
+  * Tests fail if unexpected events occur while waiting for expected events, with an error message describing what event was unexpected.  This uses the new `framework.onAny()` capability.  See the `registerUnexpectedEventsHandler()` in [test/common/common.js](../test/common/common.js)
+  * When tests timeout while waiting for expected events, details are now provided on which events were expected, which arrived, and which were missing.
+  * Better code reuse and [documentation](../docs/tests.md).  
 
 ## v 2.4.2
 
