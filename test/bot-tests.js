@@ -6,7 +6,7 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
-let MongoStore = {}
+let MongoStore = {};
 
 // Initialize the framework and user objects once for all the tests
 let framework, userWebex;
@@ -149,4 +149,3 @@ process.on('SIGINT', function () {
     process.exit();
   });
 });
-
