@@ -4,6 +4,7 @@
 * Added the new `command` and `prompt` elements to the `trigger` object that is passed as a parameter to matching `framework.hears()` callbacks.
   * `trigger.command` will be the portion of the user message that matched the phrase specified in the `framework.hears()`
   * `trigger.prompt` will be words in the message that follow the command (minus any bot mention).
+* Added a new `supressDirectSpaceSpawnFailures` framework config option.  By default this is set to `true`, and the error messages that occur during startup when the bot is in 1-1 spaces with disabled webex users are supressed.   Set to `false` to restore old behavior.
 * Clarified `bot.reply()` docs.  This method supports a reply to a reply if the replyTo parameter is a message object.
 * Updated from EventEmitter to EventEmitter2 class. This was done to support new tests, but if desired it now allows developers to write catch all event handlers in the form:
 ```js
