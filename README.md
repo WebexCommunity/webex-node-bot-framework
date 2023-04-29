@@ -11,7 +11,7 @@ For developers who are familiar with flint, or who wish to port existing bots bu
 Feel free to join the ["Webex Node Bot Framework" space on Webex](https://eurl.io/#BJ7gmlSeU) to ask questions and share tips on how to leverage this framework.   This project is community supported so contributions are welcome.   If you are interested in making the framework better please see the [Contribution Guidelines](./docs/contributing.md).
 
 ## News
-* March, 2023 - Version 2.5.0 introduces two new elments of the [Trigger object](#Trigger)
+* May, 2023 - Version 2.5.0 introduces two new elments of the [Trigger object](#Trigger)
   * `trigger.command` will now contain the component of the user message that matched the `framework.hears` phrase.
   * `trigger.prompt` will contain all of the user message that was NOT part of the command or the bot mention.
 
@@ -22,6 +22,8 @@ framework.hears('echo', (bot, trigger) => {
   bot.say('markdown', `You said: ${trigger.prompt}`);
 }, '**echo** - I\'ll echo back the rest of your message');
 ```
+
+This release also includes updated [Contribution Guidelines](./docs/contributing.md) including details on [running the tests](./tests.md)
 
 * May, 2020 - Version 2 introduces a some new configuration options designed to help developers restrict access to their bot.   This can be helpful during the development phase (`guideEmails` parameter) or for production bots that should be restricted for use to users that have certain email domains (`restrictedToEmailDomains` parameter).   See [Membership-Rules README](./docs/membership-rules-readme.md)
   
