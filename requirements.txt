@@ -1,0 +1,27 @@
+OK @Adam Weeks, let's nail down some definition of done for this.   Here are some proposed messages and the corresponding values that one would expect in the new trigger.prompt and trigger.command values for various framework.hears phrases:
+
+"@bot echo this is the echo message"
+
+framework.hears("echo", ....)
+trigger.command: "echo"
+trigger.prompt: "this is the echo message"
+framework.hears(/.*/, ....)
+trigger.command: "echo this is the echo message"
+trigger.prompt: ""
+"@bot do it
+
+framework.hears("do it", ....)
+trigger.command: "do it"
+trigger.prompt: ""
+framework.hears(/.*/, ....)
+trigger.command: "do it"
+trigger.prompt: ""
+"hello. please @bot echo this is the echo message"
+
+framework.hears("echo", ....)
+trigger.command: "echo"
+trigger.prompt: "hello. please this is the echo message"
+framework.hears(/.*/, ....)
+trigger.command: "hello. please echo this is the echo message"
+trigger.prompt: ""
+Can anyone thing of some other examples we should think through?

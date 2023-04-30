@@ -21,33 +21,16 @@ module.exports = {
           return when(botCreatedRoomBot);
         });
     });
-
-    // Bot gets number of users in room
-    after('bot gets memebership count for room it will delete', () => {
-        if ((!botCreatedRoomBot) || (!botCreatedTestRoom)) {
-          return Promise.resolve();
-        }
-        testInfo.config.testName = 'bot gets memebership count for room it will delete'
-        testInfo.config.botUnderTest = botCreatedRoomBot;
-        testInfo.config.roomUnderTest = botCreatedTestRoom;
-        return framework.webex.memberships.list({roomId: botCreatedTestRoom.id})
-          .then((memberships) => {
-            otherMembersLeftInRoom = memberships.items.length - 1;
-            return when(true);
-          }).catch((e) => {
-            e.message = `Failed to get bot created room membership before deleting it: ${e.message}`;
-            return when.reject(e);
-          });
-      });
       
-
     // Bot deletes room
     after('bot deletes room it created',() => {
       if ((!botCreatedRoomBot) || (!botCreatedTestRoom)) {
         return Promise.resolve();
       }
       testInfo.config.testName = 'bot deletes room it created'
-      return common.botDeletesSpace(framework, testInfo, otherMembersLeftInRoom);
+      testInfo.config.botUnderTest = botCreatedRoomBot;
+      testInfo.config.roomUnderTest = botCreatedTestRoom;
+      return common.botDeletesSpace(framework, testInfo);
     });
   }
 }

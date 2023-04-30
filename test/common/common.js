@@ -1,5 +1,6 @@
 const assert = require('assert');
 const when = require('when');
+const sequence = require('when/sequence');
 const validator = require('../../lib/validator');
 let fs = require('fs');
 var _ = require('lodash');
@@ -94,14 +95,13 @@ module.exports = {
         this.userPerson = person;
         myAssert(testInfo, validator.isPerson(person),
           'getPerson did not return a valid person');
-        this.botForUser1on1Space = cleanupFromPreviousTests(framework, this.userPerson);
-
         // All went well, we are ready to start running tests
         // Each test should register listeners for all framework generated events.
         // This catch-all listener will detect any events that don't have listeners
         registerUnexpectedEventsHandler(framework, testInfo);
 
-        return when(true);
+        // Finally, see if there is a 1-1 space between test bot and test user
+        return this.cleanupFromPreviousTestsAndFindDirectSpace(framework, this.userPerson);
       });
   },
 
@@ -907,35 +907,48 @@ module.exports = {
 
   botDeletesSpace: function(framework, testInfo, numOtherUsers) {
     initTestInfo(testInfo);
-    let implodeEvents = [];
-    implodeEvents.push(new Promise((resolve) => {
-      this.frameworkMembershipDeletedHandler(framework, testInfo, resolve);
-    }));
-    if (numOtherUsers) {
-      // wait for membershipDeleted from the bot and all other users
-      testInfo.multipleEvents = {};
-      testInfo.multipleEvents.membershipDeleted = 1 + numOtherUsers;
-    }
-    if (testInfo.config.botUnderTest.active) {
-      implodeEvents.push(new Promise((resolve) => {
-        testInfo.config.botUnderTest.stopHandler(testInfo, resolve);
-      }));
-      implodeEvents.push(new Promise((resolve) => {
-        this.frameworkDespawnHandler(framework, testInfo, resolve);
-      }));
-    } else {
-      // Our real despawn event will be "swallowed" if membership rules already did it
-      implodeEvents.push(new Promise((resolve) => {
-        this.frameworkMembershipRulesEventHandler(framework, ['despawn'], testInfo, false, resolve);
-      }));
-    }
-  
-    return testInfo.config.botUnderTest.implode()
-      .then(() => waitForPromisesWithTimeout(implodeEvents, this.preMochaTimeout, testInfo)
-      .then(() => {
-        delete testInfo.multipleEvents;
-        return checkInterimtestInfo(testInfo);
-      }));
+    let room = testInfo.config.roomUnderTest;
+    myAssert(testInfo, validator.isRoom(room),
+        'Invalid testInfo.config.roomUnderTest in common.botDeletesSpace()');
+    return framework.webex.memberships.list({roomId: room.id})
+      .then((memberships) => memberships.items.length - 1)
+      .catch((e) => {
+        e.message = `Bot failed to get memberships from "${room.title}" before deleting it: ${e.message}`;
+        return when.reject(e);
+      })
+      .then((numOtherUsers) => {
+        let implodeEvents = [];
+        implodeEvents.push(new Promise((resolve) => {
+          this.frameworkMembershipDeletedHandler(framework, testInfo, resolve);
+        }));
+        if (numOtherUsers) {
+          // wait for membershipDeleted from the bot and all other users
+          testInfo.multipleEvents = {};
+          testInfo.multipleEvents.membershipDeleted = 1 + numOtherUsers;
+          framework.debug(`Expecting a total of ${testInfo.multipleEvents.membershipDeleted} ` +
+            `MembershipDeleted events to occur when bot deletes "${room.title}"`);
+        }
+        if (testInfo.config.botUnderTest.active) {
+          implodeEvents.push(new Promise((resolve) => {
+            testInfo.config.botUnderTest.stopHandler(testInfo, resolve);
+          }));
+          implodeEvents.push(new Promise((resolve) => {
+            this.frameworkDespawnHandler(framework, testInfo, resolve);
+          }));
+        } else {
+          // Our real despawn event will be "swallowed" if membership rules already did it
+          implodeEvents.push(new Promise((resolve) => {
+            this.frameworkMembershipRulesEventHandler(framework, ['despawn'], testInfo, false, resolve);
+          }));
+        }
+      
+        return testInfo.config.botUnderTest.implode()
+          .then(() => waitForPromisesWithTimeout(implodeEvents, this.preMochaTimeout, testInfo)
+          .then(() => {
+            delete testInfo.multipleEvents;
+            return checkInterimtestInfo(testInfo);
+          }));
+      });
   },
 
   registerMessageHandlers: function (isMention, framework, msg, testInfo) {
@@ -1588,11 +1601,55 @@ module.exports = {
   testInfo: {
     config: {}
   },
-  
+
+  // Internal function to delete spaces leftover from previous test runs
+  //and check if the test bot already has a 1-1 space with the test user
+  cleanupFromPreviousTestsAndFindDirectSpace: function(framework, user) {
+    let botForUser1on1Space = null;
+    let leftoverTestSpaceBots = [];
+    for (let bot of framework.bots) {
+      assert(validator.isBot(bot),
+        'bot in framework.bots did not validate preoprly!');
+      if ((bot.room.title === User_Test_Space_Title) ||
+        (bot.room.title === Bot_Test_Space_Title)) {
+          leftoverTestSpaceBots.push(bot);
+      } else if (bot.room.type == 'direct') {
+        if (bot.isDirectTo == user.emails[0]) {
+          framework.debug(`Found existing direct space with ${bot.room.title}.  Will run direct message tests.`);
+          this.botForUser1on1Space = bot;
+        }
+      }
+    }
+    if (leftoverTestSpaceBots.length) {
+      let delete_promises = []
+      framework.debug(`Removing ${leftoverTestSpaceBots.length} rooms left over from previous test...`);
+      delete_promises = _.map(leftoverTestSpaceBots, b => {
+        let testInfo = {
+          config: {
+            testName: 'Bot delete leftover test space',
+            botUnderTest: b,
+            roomUnderTest: b.room,
+          }
+        };
+        this.createBotEventHandlers(b);
+        return () => this.botDeletesSpace(framework, testInfo);
+      });
+      return sequence(delete_promises)
+        .then(() => when(true))
+        .catch(e => {
+          framework.debug(e.message);
+          return when(true);
+        })
+      .then(() => when(true));
+    } else {
+      return when(true);
+    }      
+  },
 
   // Common helpers
   assert: assert,
   when: when,
+  sequence: sequence,
   validator: validator,
   _: _
 
@@ -1624,7 +1681,6 @@ function registerUnexpectedEventsHandler (framework, testInfo) {
         }
         msg += ` in test:"${testInfo.config.testName}"`
       }
-      framework.debug(msg);
       if ((framework.listenerCount(eventName) == 0) && 
         (testInfo.config.testName != "framework init")) {
         console.error(msg);
@@ -1724,26 +1780,6 @@ function myAssert (thisInfo, eval, msg) {
 }
 
 
-// Delete spaces leftover from previous test runs
-// Aslo Check if the test bot already has a 1-1 space with the test user
-function cleanupFromPreviousTests(framework, user) {
-  botForUser1on1Space = null;
-  for (let bot of framework.bots) {
-    assert(validator.isBot(bot),
-      'bot in framework.bots did not validate preoprly!');
-    if ((bot.room.title === User_Test_Space_Title) ||
-      (bot.room.title === Bot_Test_Space_Title)) {
-      framework.debug('Removing room left over from previous test...');
-      bot.getWebexSDK().rooms.remove(bot.room);
-    } else if (bot.room.type == 'direct') {
-      if (bot.isDirectTo == user.emails[0]) {
-        framework.debug(`Found existing direct space with ${bot.room.title}.  Will run direct message tests.`);
-        botForUser1on1Space = bot;
-      }
-    }
-  }
-  return botForUser1on1Space;
-}
 
 function asUserCleanupFromPreviousTests(userWebex, framework) {
   // Todo -- handle paginated responses...
