@@ -65,9 +65,9 @@ if (process.env.RUN_TEST_AS_USER) {
       process.exit();
     }
   } else {
-  console.log('***********************************');
-  console.log('* Framework tests with bot token...');
-  console.log('***********************************\n');
+    console.log('***********************************');
+    console.log('* Framework tests with bot token...');
+    console.log('***********************************\n');
   }
   if ((typeof process.env.BOT_API_TOKEN !== 'string') &&
   (typeof process.env.USER_API_TOKEN !== 'string') &&
@@ -100,18 +100,18 @@ userWebex = Webex.init(userOptions);
 
 // Load the common module which includes functions and variables
 // shared by multiple tests
-var common = require("./common/common");
+var common = require('./common/common');
 common.setFramework(framework);
 common.setUser(userWebex);
 
 // Start up an instance of framework that we will use across multiple tests
 describe('#framework', function()  { // don't use arrow so this binds to mocha
-  common.setMochaTimeout(this.timeout())
+  common.setMochaTimeout(this.timeout());
   if (process.env.RUN_MONGO_TESTS) {
     before(() => {
       if ('mongoUri' in mConfig) {
         // Load and initalize the mongo storage driver
-        mongoStore = new MongoStore(mConfig);
+        let mongoStore = new MongoStore(mConfig);
         // Wait for the connection to the DB to initialize before starting framework
         return mongoStore.initialize()
           .then(() => framework.storageDriver(mongoStore))
@@ -120,7 +120,7 @@ describe('#framework', function()  { // don't use arrow so this binds to mocha
             return Promise.reject(e);
           });
       } else {
-        return Promise.reject(new Error(`Invalid mongo configuration`));
+        return Promise.reject(new Error('Invalid mongo configuration'));
       }
     });
   }

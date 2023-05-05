@@ -6,6 +6,7 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
+var common = require('./common/common');
 
 console.log('************************************');
 console.log('* Framework guided mode rules tests...');
@@ -13,13 +14,14 @@ console.log('************************************\n');
 
 // Initialize the framework and user objects once for all the tests
 let framework;
+let frameworkOptions = {};
 require('dotenv').config();
 if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   (typeof process.env.VALID_USER_API_TOKEN === 'string') &&
   (typeof process.env.DISALLOWED_USER_API_TOKEN === 'string') &&
   (typeof process.env.ANOTHER_DISALLOWED_USERS_EMAIL === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
-  frameworkOptions = { token: process.env.BOT_API_TOKEN };
+  frameworkOptions.token = process.env.BOT_API_TOKEN;
   if (typeof process.env.INIT_STORAGE === 'string') {
     try {
       frameworkOptions.initBotStorageData = JSON.parse(process.env.INIT_STORAGE);
@@ -31,12 +33,6 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
       process.exit(-1);
     }
   }
-  
-  // Enable Message Process Speed Profiling in tests
-  frameworkOptions.profileMsgProcessingTime = true;
-  framework = new Framework(frameworkOptions);
-  validUserWebex = Webex.init({ credentials: {access_token: process.env.VALID_USER_API_TOKEN }});
-  disallowedUserWebex = Webex.init({ credentials: {access_token: process.env.DISALLOWED_USER_API_TOKEN }});
 } else {
   console.error('Missing required environment variables:\n' +
     '- BOT_API_TOKEN -- token associatd with an existing bot\n' +
@@ -48,9 +44,14 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   process.exit(-1);
 }
 
-// Load the common module which includes functions and variables
-// shared by multiple tests
-var common = require("./common/common");
+  
+// Enable Message Process Speed Profiling in tests
+frameworkOptions.profileMsgProcessingTime = true;
+framework = new Framework(frameworkOptions);
+
+// Initialize the SDK for the valid and dissallowed test users and set them in the test's common object
+let validUserWebex = Webex.init({ credentials: {access_token: process.env.VALID_USER_API_TOKEN }});
+let disallowedUserWebex = Webex.init({ credentials: {access_token: process.env.DISALLOWED_USER_API_TOKEN }});
 common.setFramework(framework);
 common.setUser(validUserWebex);
 common.setDisallowedUser(disallowedUserWebex);
@@ -58,7 +59,7 @@ common.setDisallowedUser(disallowedUserWebex);
 
 // Start up an instance of framework that we will use across multiple tests
 describe('#framework', function()  { // don't use arrow so this binds to mocha
-  common.setMochaTimeout(this.timeout())
+  common.setMochaTimeout(this.timeout());
   // We will use the "valid user" as the guide
   before(() => validUserWebex.people.get('me')
     .then((person) => {

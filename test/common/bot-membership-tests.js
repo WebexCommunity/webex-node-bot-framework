@@ -1,16 +1,16 @@
-const when = require("when");
+const when = require('when');
 const assert = require('assert');
 const validator = require('../../lib/validator');
 // Variables an functions shared by all tests
-var common = require("../common/common");
+var common = require('../common/common');
 let framework = common.framework;
 let testInfo = common.testInfo;
 
 
 describe('User Created Room to create a Test Bot', () => {
   // Add the common setup/tear down logic for initial test space
- let userCreatedSpace = require('../common/before-after-user-created-room.js');
- userCreatedSpace.registerBeforeAndAfterHooks();
+  let userCreatedSpace = require('../common/before-after-user-created-room.js');
+  userCreatedSpace.registerBeforeAndAfterHooks();
 
   describe('Bot Created Space for membership tests', () => {
     // Add the common setup/tear down logic for initial test space
@@ -26,8 +26,7 @@ describe('User Created Room to create a Test Bot', () => {
         let storagePromises = [];
         let initValues = [];
 
-        if (typeof framework.initBotStorageData === 'object') {
-        } else {
+        if (typeof framework.initBotStorageData !== 'object') {
           framework.debug('Skipping init storage test as not initial storage was found');
           return when(true);
         }
@@ -46,7 +45,7 @@ describe('User Created Room to create a Test Bot', () => {
             assert(((initValues.length === storagePromises.length)),
               `bot initial storage tests did not find all ${initValues.length} key/value pairs`);
             let objCount = 0;
-            for (result of initValues) {
+            for (let result of initValues) {
               if (typeof result.value === 'object') {
                 objCount += 1; //indexOf is sketchy with objects
                 continue;
@@ -76,8 +75,8 @@ describe('User Created Room to create a Test Bot', () => {
       //If so check what data was avaiable after the spawn event
       it('sets and checks some storage elements', () => {
         testInfo.config.testName = 'sets and checks some storage elements';
-        testString = 'testStringVal';
-        testObject = {key1: 'val1', key2: 'val2'};
+        let testString = 'testStringVal';
+        let testObject = {key1: 'val1', key2: 'val2'};
 
         return testInfo.config.botUnderTest.store('testString', testString)
           .then(() => testInfo.config.botUnderTest.store('testObject', testObject))
@@ -116,8 +115,8 @@ describe('User Created Room to create a Test Bot', () => {
 
       it('sets elements without waiting', () => {
         testInfo.config.testName = 'sets elements without waiting';
-        testString = 'testStringVal';
-        testObject = {key1: 'val1', key2: 'val2'};
+        let testString = 'testStringVal';
+        let testObject = {key1: 'val1', key2: 'val2'};
         let storagePromises = [];
 
         storagePromises.push(testInfo.config.botUnderTest.store('testString', testString));
@@ -132,7 +131,7 @@ describe('User Created Room to create a Test Bot', () => {
           .then((storedValues) => {
             assert(((typeof storedValues === 'object') && (storedValues.length === 2)),
               'bot.recall tests did not resolve promises as expected!');
-            for (result of storedValues) {
+            for (let result of storedValues) {
               if (typeof result === 'string') {
                 assert((result === testString),
                   `${testInfo.config.testName}: Expected bot.recall('testString') to return ${testString}, got ${result}`);
@@ -200,7 +199,7 @@ describe('User Created Room to create a Test Bot', () => {
       });
 
       it('tries to write bot metrics', () => {
-        testInfo.config.testName = `tries to write bot metrics'`;
+        testInfo.config.testName = 'tries to write bot metrics\'';
 
         return testInfo.config.botUnderTest.writeMetric({event: 'frameworkUnitTestWithActor'}, common.userPerson)
           .then((result) => {
@@ -224,7 +223,7 @@ describe('User Created Room to create a Test Bot', () => {
       });
 
       it('tries to write bot metrics with actorId', () => {
-        testInfo.config.testName = `tries to write bot metrics with actorId`;
+        testInfo.config.testName = 'tries to write bot metrics with actorId';
 
         return testInfo.config.botUnderTest.writeMetric({event: 'frameworkUnitTestWithActorId'}, common.userPerson.id)
           .then((result) => {
@@ -248,7 +247,7 @@ describe('User Created Room to create a Test Bot', () => {
       });
 
       it('tries to write bot metrics no actor info', () => {
-        testInfo.config.testName = `tries to write bot metrics with actorId`;
+        testInfo.config.testName = 'tries to write bot metrics with actorId';
 
         return testInfo.config.botUnderTest.writeMetric({event: 'frameworkUnitTestWithNoActorInfo'})
           .then((result) => {
@@ -326,11 +325,11 @@ describe('User Created Room to create a Test Bot', () => {
           testInfo.config.testName = 'renames the test room';
 
           // Wait for the events associated with a new message before completing test..
-          roomUpdatedEvent = new Promise((resolve) => {
+          let roomUpdatedEvent = new Promise((resolve) => {
             common.frameworkRoomUpdatedEventHandler(framework, testInfo, resolve);
           });
 
-          roomRenamedEvent = new Promise((resolve) => {
+          let roomRenamedEvent = new Promise((resolve) => {
             common.frameworkRoomRenamedEventHandler(framework, testInfo, resolve);
           });
 

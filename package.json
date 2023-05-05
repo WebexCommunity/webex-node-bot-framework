@@ -59,6 +59,7 @@
   "devDependencies": {
     "doctoc": "^2.2.0",
     "dotenv": "^10.0.0",
+    "eslint": "^8.39.0",
     "jsdoc-to-markdown": "^7.1.1",
     "mocha": "^10.0.0"
   }

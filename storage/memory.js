@@ -6,7 +6,7 @@ const _ = require('lodash');
 module.exports = exports = function () {
   // define memstore object
   let memStore = {};
-  const name = "memory";
+  const name = 'memory';
 
   return {
     /**

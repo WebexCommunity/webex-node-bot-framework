@@ -10,18 +10,24 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
+var common = require('./common/common');
+let assert = common.assert;
+let validator = common.validator;
+let when = common.when;
+
 
 console.log('**********************************************');
 console.log('* Framework tests with late space discovery...');
 console.log('**********************************************\n');
 
 // Initialize the framework and user objects once for all the tests
-let framework, userWebex;
+let framework;
+let frameworkOptions = {};
 require('dotenv').config();
 if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   (typeof process.env.USER_API_TOKEN === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
-  frameworkOptions = { token: process.env.BOT_API_TOKEN };
+  frameworkOptions.token = process.env.BOT_API_TOKEN;
   // This is the key to these tests, we wont discover any spaces on 
   // startup, just when a message:created event occurs
   frameworkOptions.maxStartupSpaces = 0;
@@ -29,8 +35,6 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   frameworkOptions.profileMsgProcessingTime = true;
 
   framework = new Framework(frameworkOptions);
-  let userOptions = {credentials: {access_token: process.env.USER_API_TOKEN}};
-  userWebex = Webex.init(userOptions);
 } else {
   console.error('Missing required environment variables:\n' +
     '- BOT_API_TOKEN -- token associatd with an existing bot\n' +
@@ -40,22 +44,17 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   process.exit(-1);
 }
 
-
-// Load the common module which includes functions and variables
-// shared by multiple tests
-var common = require("./common/common");
+// Initialize the SDK for the user and set them in the test's common object
+let userOptions = {credentials: {access_token: process.env.USER_API_TOKEN}};
+let userWebex = Webex.init(userOptions);
 common.setFramework(framework);
 common.setUser(userWebex);
-let assert = common.assert;
-let validator = common.validator;
-let when = common.when;
 
-
-
-// Start up an instance of framework that we will use across multiple tests
+// Initialize the instance of framework that we will use across multiple tests
 describe('#framework', () => {
   let testName = 'creates a bot just in time after message';
   // Validate that framework starts and that we have a valid user
+  // TODO add code to validate that we have a one on on space. If not exit the test?
   before(() => common.initFramework('framework init', framework, userWebex));
 
   // Setup the promises for the events that come from user input that mentions a bot
@@ -88,11 +87,10 @@ describe('#framework', () => {
     // As the user, send the message, mentioning the bot
     return userWebex.messages.create({
       toPersonId: framework.person.id,
-      markdown: `Hi, this is a message with **no mentions**.`
+      markdown: 'Hi, this is a message with **no mentions**.'
     })
       .then((m) => {
-        message = m;
-        assert(validator.isMessage(message),
+        assert(validator.isMessage(m),
           'create message did not return a valid message');
         // Wait for all the event handlers and the heard handler to fire
         return when(heard);

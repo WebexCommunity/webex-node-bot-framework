@@ -1,10 +1,10 @@
 // Variables an functions shared by all tests
-var common = require("../common/common");
+var common = require('../common/common');
 let framework = common.framework;
 let userWebex = common.userWebex;
 let testInfo = common.testInfo;
-let tm = require("../common/test-messages")
-let btm = require("../common/bot-test-messages")
+let tm = require('../common/test-messages');
+let btm = require('../common/bot-test-messages');
 
 let assert = common.assert;
 let validator = common.validator;
@@ -30,7 +30,7 @@ describe('Bot interacts with user in 1-1 space', () => {
       console.error('No 1-1 space to run direct message tests.  This isn\'t bad, it just is...');
       console.error('Since 1-1 spaces can never be removed the tests will not create one.');
       console.error('If you want to run the direct message tests, manually create a 1-1 space with your test bot and test user.');
-      console.error('Otherwise, seeing a bunch of skipped tests is the expected result.')
+      console.error('Otherwise, seeing a bunch of skipped tests is the expected result.');
       return;
     } else {
       testInfo.config.botUnderTest = common.botForUser1on1Space;
@@ -64,7 +64,7 @@ describe('Bot interacts with user in 1-1 space', () => {
         })
         .catch((e) => {
           return Promise.reject(new Error(`Did not find persistent config "frameworkTestRuns": ${e.message}` +
-            ` This is expected the first time the test is run`));
+            ' This is expected the first time the test is run'));
         });
     } else {
       framework.debug('Skipping persistent storage test for non Mongo storage provider');
@@ -74,18 +74,18 @@ describe('Bot interacts with user in 1-1 space', () => {
 
 
   // TODO - Add code to skip these if no 1-1 space exists
-  testInfo
+  testInfo;
   describe('Run standard user and bot message tests in 1-1 space', () => {
     describe('User sends message and bot may respond', () => {
       // loop through user message tests..
       tm.runUserMessageTests(framework, testInfo, tm.testMessages);
-        ///* botShouldRespond = */true);
+      ///* botShouldRespond = */true);
     });
   
     describe('bot sends messages', () => {
       // loop through bot message tests..
       btm.runBotMessageTests(framework, testInfo, btm.botTestMessages); 
-        ///* shouldFail = */false);
+      ///* shouldFail = */false);
     });
   
   });
@@ -126,15 +126,15 @@ describe('Bot interacts with user in 1-1 space', () => {
       // Wait for the hears event associated with the input text
       const heard = new Promise((resolve) => {
         framework.hears(/^DM: hi, /i, (b, t) => {
-          testInfo.out.got.push(`hears(/^DM: hi, /i)`);
+          testInfo.out.got.push('hears(/^DM: hi, /i)');
           assert((b.id === common.botForUser1on1Space.id),
             'bot returned in fint.hears("hi") is not the one expected');
           assert(validator.objIsEqual(t, testInfo.out.trigger),
             'trigger returned in framework.hears(/^hi.*/) was not as expected');
           assert(t.command == 'DM: Hi, ',
-            `trigger.command returned in framework.hears(/^DM: hi, /) was not as expected`);
+            'trigger.command returned in framework.hears(/^DM: hi, /) was not as expected');
           assert(t.prompt == 'this is a message with no mentions.',
-            `trigger.prompt returned in framework.hears(/^DM: hi, /) was not as expected`);
+            'trigger.prompt returned in framework.hears(/^DM: hi, /) was not as expected');
           trigger = t;
           framework.debug('Bot heard message  that user posted');
           resolve(true);
@@ -144,7 +144,7 @@ describe('Bot interacts with user in 1-1 space', () => {
       // As the user, send the message, mentioning the bot
       return userWebex.messages.create({
         roomId: common.botForUser1on1Space.room.id,
-        markdown: `DM: Hi, this is a message with **no mentions**.`
+        markdown: 'DM: Hi, this is a message with **no mentions**.'
       })
         .then((m) => {
           message = m;
@@ -198,12 +198,10 @@ describe('Bot interacts with user in 1-1 space', () => {
 
       testName = 'bot responds with a direct mention via personId';
       // send the bots response
-      let msg = 'I heard you - by personId this time.';
+      let msg = 'I heard you - by personId this time -';
       let personId = common.userPerson.id;
-      if ((trigger.message) && (trigger.person) &&
-        (trigger.message.markdown) && (trigger.person.emails[0])) {
+      if ((trigger.message) && (trigger.person) && (trigger.message.markdown)) {
         msg += ` say: "${trigger.message.markdown}"`;
-        email = trigger.person.emails[0];
       } else {
         console.error('Could not read previous test trigger object.  Did the test fail?');
       }

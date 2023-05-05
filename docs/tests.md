@@ -25,7 +25,14 @@ Each tests reads in an environment to discover how to configure itself.   The fo
 |DEBUG             | framework| Optionally set DEBUG=framework for extended debug output during the test run.  
 
 # Test Details
-The following tests are availabe:
+The following tests are available.  Before running the tests ensure that you have installed the dependencies needed to run them:
+
+```bash
+npm i --only=dev 
+npm run test
+```
+(note: the dependencies only need to be installed once)
+
 
 - ## bot-tests  
     - This is the bare minimum set of tests that should be run before submitting a PR.

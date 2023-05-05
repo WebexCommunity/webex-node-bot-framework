@@ -1,5 +1,5 @@
 // Common Before and After logic for the initial test room
-let common = require("../common/common");
+let common = require('../common/common');
 let framework = common.framework;
 let testInfo = common.testInfo;
 let when = common.when;
@@ -7,7 +7,6 @@ let when = common.when;
 module.exports = {
   registerBeforeAndAfterHooks: function() {
     let botCreatedTestRoom, botCreatedRoomBot;
-    let otherMembersLeftInRoom = 0;
     
     // Create a room as user to have test bot which will create other rooms
     before('Bot creates new room test', () => {
@@ -27,11 +26,11 @@ module.exports = {
       if ((!botCreatedRoomBot) || (!botCreatedTestRoom)) {
         return Promise.resolve();
       }
-      testInfo.config.testName = 'bot deletes room it created'
+      testInfo.config.testName = 'bot deletes room it created';
       testInfo.config.botUnderTest = botCreatedRoomBot;
       testInfo.config.roomUnderTest = botCreatedTestRoom;
       return common.botDeletesSpace(framework, testInfo);
     });
   }
-}
+};
 

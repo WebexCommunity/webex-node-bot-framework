@@ -1,8 +1,7 @@
 // Variables an functions shared by all tests
-const when = require("when");
-var common = require("../common/common");
-let tm = require("../common/test-messages")
-let btm = require("../common/bot-test-messages")
+var common = require('../common/common');
+let tm = require('../common/test-messages');
+let btm = require('../common/bot-test-messages');
 
 let framework = common.framework;
 let testInfo = common.testInfo;
@@ -11,18 +10,18 @@ let User_Test_Space_Title = common.User_Test_Space_Title;
 
 let validator = common.validator;
 
-paramCombos = [
+let paramCombos = [
   {},
-  {"membershipRulesDisallowedResponse": ""},
-  {"membershipRulesDisallowedResponse": "",
-   "membershipRulesStateMessageResponse": ""},
-  {"membershipRulesDisallowedResponse": "",
-   "membershipRulesStateMessageResponse": "",
-   "membershipRulesAllowedResponse": ""},
-  {"membershipRulesDisallowedResponse": "No guides in this space, so I ain't working",
-   "membershipRulesStateMessageResponse": "Can't answer ya pal. No guides in this space",
-   "membershipRulesAllowedResponse": "Yay, there is a guide here.  I can work now!"}
- ]
+  {'membershipRulesDisallowedResponse': ''},
+  {'membershipRulesDisallowedResponse': '',
+    'membershipRulesStateMessageResponse': ''},
+  {'membershipRulesDisallowedResponse': '',
+    'membershipRulesStateMessageResponse': '',
+    'membershipRulesAllowedResponse': ''},
+  {'membershipRulesDisallowedResponse': 'No guides in this space, so I ain\'t working',
+    'membershipRulesStateMessageResponse': 'Can\'t answer ya pal. No guides in this space',
+    'membershipRulesAllowedResponse': 'Yay, there is a guide here.  I can work now!'}
+];
 
 paramCombos.forEach(function(paramCombo, testIndex) {
   describe(`Non Guide Creates Room with Bot for test ${testIndex + 1}`, () => {
@@ -35,17 +34,17 @@ paramCombos.forEach(function(paramCombo, testIndex) {
       if (framework.membershipRulesDisallowedResponse) {
         console.log(`     - When bot is added to a space with no guides, framework responds with "${framework.membershipRulesDisallowedResponse}"`);  
       } else {
-        console.log(`     - Framework will not respond when bot is added to a space with no guides`);  
+        console.log('     - Framework will not respond when bot is added to a space with no guides');  
       }
       if (framework.membershipRulesStateMessageResponse) {
         console.log(`     - When bot is mentioned in a space with no guides, framework responds with "${framework.membershipRulesStateMessageResponse}"`);  
       } else {
-        console.log(`     - Framework will not respond when bot mentioned in a space with no guides`);  
+        console.log('     - Framework will not respond when bot mentioned in a space with no guides');  
       }
       if (framework.membershipRulesAllowedResponse) {
         console.log(`     - When a guide enters a previously unguided space, framework will respond with "${framework.membershipRulesAllowedResponse}"`);  
       } else {
-        console.log(`     - Framework will not respond when a guide enters a previously unguided space`);  
+        console.log('     - Framework will not respond when a guide enters a previously unguided space');  
       }
     });
 
@@ -54,7 +53,7 @@ paramCombos.forEach(function(paramCombo, testIndex) {
       .then((r) => {
         testInfo.config.roomUnderTest = r;
         testInfo.config.userUnderTest = disallowedUser;
-          return validator.isRoom(r);
+        return validator.isRoom(r);
       }));
 
     // Add our bot to the room and validate that no spawn event occurs
@@ -65,10 +64,11 @@ paramCombos.forEach(function(paramCombo, testIndex) {
         .then((b) => {
           testInfo.config.botUnderTest = b;
         });
-      });
+    });
 
     // Bot leaves rooms
     after(() => {
+      //TODO add code to validate that testInfo.config.botUnderTest is set.
       testInfo.config.testName = 'Bot Leaves Space';
       return common.botLeaveSpace(framework, testInfo);
     });
@@ -113,7 +113,7 @@ paramCombos.forEach(function(paramCombo, testIndex) {
     describe('Bot removes guide user from space and other user iteracts with it', () => {
 
       before(() => {
-        testName = "removes guide user from the room";
+        testInfo.config.testName = 'removes guide user from the room';
         return common.botRemoveUserFromSpace(framework, testInfo,
           common.userPerson.emails[0], 1, /* numDisallowedUsersInSpace */
           false, /* isDisallowedUser */);

@@ -12,9 +12,9 @@ The initial goal of the project was to support the basic framework initiation an
 - [ ] Add tests for moderator functions using integration token
 - [ ] Add tests for bot.getMessages using integration token
 - [x] Add tests for bot.dm (only if test bot and user already have a 1-1 space)
-- [ ] Add tests for bot.uploadStream, bot.messageStreamRoom, bot.upload
-- [ ] Add tests for bot.censor
-- [ ] Add tests for bot.roomRename
+- [x] Add tests for bot.uploadStream, bot.messageStreamRoom, bot.upload
+- [x] Add tests for bot.censor
+- [x] Add tests for bot.roomRename
 - [ ] Expand tests for bot.newRoom to exercise an array of users to be added, and with the moderator flag on
 - [ ] Add convenience functions promised in the migration readme
 - [ ] Re-add support for retries after 429, was in sparky, but is not in webex sdk
@@ -22,16 +22,16 @@ The initial goal of the project was to support the basic framework initiation an
 
 ## Documentation
 
-- [ ] Ensure all the samples work
+- [x] Ensure all the samples work
 - [ ] Update the core readme to discuss how the framework starts up
-- [ ] Update the core readme to discuss websockets vs. webhooks
+- [x] Update the core readme to discuss websockets vs. webhooks
 
 ## Modifications to the framework
 
 - [x] Rename from flint to framework
-- [ ] Get rid fo flint pass through functions that are natively supported by the webex sdk
+- [x] Get rid fo flint pass through functions that are natively supported by the webex sdk
 - [x] Update contribution doc to explain how to run tests
-- [ ] Add retry logic for pagination
+- [x] Add retry logic for pagination
 - [ ] Add retry logic for 429s
 - [ ] Build a webex-node-integration-framework around this framework that demonstrates OAuth token management and creates a unique framework instance for each authorized user
 
@@ -54,12 +54,15 @@ node-flint provides a storage system to allow developers to store and retrieve d
 
 ## Improving the tests
 
-- [ ] Add an ability to create a bot and user on the fly for the tests
+- [ ] Add an ability to create a bot and user on the fly for the tests so tester doesn't have to set tokens first
 - [x] Add test case for attachmentAction events
 - [x] Refactor the tests so the framework.isBotAccount variable is used to determine if mentions are needed in the user messages
 - [x] Break out the tests so they aren't in one monolithic file but don't create a new framework each time
 - [ ] Track and report the number of times each flint event was tested, to catch gaps in event validation
 - [ ] Add test for setAuthorizer and clearAuthorizer.  Clean up authorizer logic in framework.js so it's more readable.
-- [ ] Configure tests to add the bot mention in places other than the beginning of the message
-- [ ] Ensure tests with multiple hears handlers are called in the order of the specified priority
+- [x] Configure tests to add the bot mention in places other than the beginning of the message
+- [x] Ensure tests with multiple hears handlers are called in the order of the specified priority
 - [ ] Add a test to validate generated help messages
+- [x] Refactor tests to reduce redundant code
+- [x] Update tests to provide more info on which events did not occur when tests timeout
+- [x] Add code to handle unexpected events and fail tests when unexpected events occur

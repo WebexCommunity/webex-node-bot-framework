@@ -1,27 +1,27 @@
 // Variables and functions shared by all tests
-let common = require("../common/common");
-let tm = require("../common/test-messages")
-let btm = require("../common/bot-test-messages")
+let common = require('../common/common');
+let tm = require('../common/test-messages');
+let btm = require('../common/bot-test-messages');
 
 let framework = common.framework;
 let testInfo = common.testInfo;
 
 
 describe('User Created Room to create a Test Bot', () => {
-   // Add the common setup/tear down logic for initial test space
+  // Add the common setup/tear down logic for initial test space
   let userCreatedSpace = require('../common/before-after-user-created-room.js');
   userCreatedSpace.registerBeforeAndAfterHooks();
 
   describe('User sends message and bot may respond', () => {
     // loop through user message tests..
     tm.runUserMessageTests(framework, testInfo, tm.testMessages);
-      ///* botShouldRespond = */true);
+    ///* botShouldRespond = */true);
   });
 
   describe('bot sends messages', () => {
     // loop through bot message tests..
     btm.runBotMessageTests(framework, testInfo, btm.botTestMessages); 
-      ///* shouldFail = */false);
+    ///* shouldFail = */false);
   });
 
   describe('Bot Created Rooms Tests', () => {
@@ -37,7 +37,7 @@ describe('User Created Room to create a Test Bot', () => {
       });
 
       after(() => {
-        testInfo.config.testName = "removes allowed user from the room";
+        testInfo.config.testName = 'removes allowed user from the room';
         return common.botRemoveUserFromSpace(framework, testInfo, common.userPerson.emails[0], 
           0, /* numDisallowedUsersInSpace */
           false, /* isDisallowedUser */);
@@ -50,11 +50,11 @@ describe('User Created Room to create a Test Bot', () => {
     
       describe('bot sends messages', () => {
         // loop through bot message tests..
-        btm.runBotMessageTests(framework, testInfo, btm.botTestMessages) 
-          ///* shouldFail = */false);
+        btm.runBotMessageTests(framework, testInfo, btm.botTestMessages); 
+        ///* shouldFail = */false);
       });
     
-    })
+    });
   });
 
 });

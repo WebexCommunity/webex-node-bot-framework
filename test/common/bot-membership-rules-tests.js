@@ -1,7 +1,7 @@
 // Variables an functions shared by all tests
-var common = require("../common/common");
-let tm = require("../common/test-messages")
-let btm = require("../common/bot-test-messages")
+var common = require('../common/common');
+let tm = require('../common/test-messages');
+let btm = require('../common/bot-test-messages');
 
 let framework = common.framework;
 let userWebex = common.userWebex;
@@ -28,7 +28,7 @@ describe('User Created Room to create a Test Bot', () => {
       });
 
       after(() => {
-        testInfo.config.testName = "removes allowed user from the room";
+        testInfo.config.testName = 'removes allowed user from the room';
         return common.botRemoveUserFromSpace(framework, testInfo, common.userPerson.emails[0], 
           0, /* numDisallowedUsersInSpace */
           false, /* isDisallowedUser */);
@@ -47,8 +47,8 @@ describe('User Created Room to create a Test Bot', () => {
           return common.botAddUsersToSpace(framework, testInfo,
             [common.disallowedUserPerson.emails[0]])
             .then(() => {
-              assert((!botCreatedRoomBot.active),
-                "After adding dissallowed user, bot did move to inactive state.");
+              assert((!testInfo.config.botUnderTest.active),
+                'After adding dissallowed user, bot did not move to inactive state.');
             });
         });
 
@@ -101,8 +101,8 @@ describe('User Created Room to create a Test Bot', () => {
             2, /* numDisallowedUsersInSpace */
             true, /* isDisallowedUser */)
             .then(() => {
-              assert((!botCreatedRoomBot.active),
-                "After removing only the first dissallowed user, bot returned to active state.");
+              assert((!testInfo.config.botUnderTest.active),
+                'After removing only the first dissallowed user, bot returned to active state.');
             });
         });
 
@@ -124,8 +124,8 @@ describe('User Created Room to create a Test Bot', () => {
             1, /* numDisallowedUsersInSpace */
             true, /* isDisallowedUser */)
             .then(() => {
-              assert(botCreatedRoomBot.active,
-                "After removing dissallowed user, bot did not return to active state.");
+              assert(testInfo.config.botUnderTest.active,
+                'After removing dissallowed user, bot did not return to active state.');
             });
         });
 

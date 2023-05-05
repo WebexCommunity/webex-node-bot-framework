@@ -51,7 +51,7 @@ module.exports = {
 
   // Common Tasks used by tests
   initFramework: function (testName, framework, userWebex) {
-    let testInfo = this.testInfo
+    let testInfo = this.testInfo;
     testInfo.config.testName = testName;
     initTestInfo(this.testInfo);
     console.log('In initFramework...');
@@ -75,7 +75,7 @@ module.exports = {
     return waitForPromisesWithTimeout([started, initialized], this.preMochaTimeout, testInfo)
       .then(() => {
         if (framework.getWebexSDK().config.defaultMercuryOptions) {
-          return Promise.reject(new Error(`Framework initialized but has a proxy config when none was set!`));
+          return Promise.reject(new Error('Framework initialized but has a proxy config when none was set!'));
         }
         myAssert(testInfo, validator.isFramework(framework),
           'Framework did not initialize succesfully');
@@ -121,30 +121,6 @@ module.exports = {
     }
   },
 
-  userSendsMessageAndBotMayRespond: function (testData, framework, user, bot, testInfo) {
-    initTestInfo(testInfo);
-    let spawnEvents = [];
-    if (shouldFail) {
-      spawnEvents = this.registerMembershipEventsForDectivatedBot(framework, '', testInfo);
-    } else {
-      spawnEvents.push(new Promise((resolve) => {
-        this.frameworkMembershipCreatedHandler(framework, testInfo, resolve);
-      }));
-      spawnEvents.push(new Promise((resolve) => {
-        this.frameworkSpawnedHandler(framework, testInfo, resolve);
-      }));
-    }
-    it(`user says ${testData.msg}`, () => {
-      let testData = {
-        msgText: `user says ${testData.msg}`,
-        hearsInfo: [{
-          phrase: testData.msgText
-        }]
-      };
-      return this.userSendMessage(framework, testInfo, testData)
-    });
-  },
-
   userSendsAttachmentActionAndBotMayRespond: function (framework, testInfo, cardMsgId, inputs,) {
     initTestInfo(testInfo);
     let attachmentAction;
@@ -164,7 +140,7 @@ module.exports = {
       .then((a) => {
         attachmentAction = a;
         assert(validator.isAttachmentAction(attachmentAction),
-          `attachmentAction returned by sdk.attachmentActions.create() was not valid`);
+          'attachmentAction returned by sdk.attachmentActions.create() was not valid');
         return waitForPromisesWithTimeout([attachmentActionEvent], this.preMochaTimeout, testInfo);
       })
       .then(() => {
@@ -175,7 +151,7 @@ module.exports = {
       });
   },
 
-  addBotToSpace: function (framework, testInfo, shouldFail, userSDK) {
+  addBotToSpace: function (framework, testInfo, shouldFail) {
     // Configure this test to Wait for the events associated with a new membership
     initTestInfo(testInfo);
     let spawnEvents = [];
@@ -201,21 +177,20 @@ module.exports = {
       personId: framework.person.id
     })
       .then((m) => {
-        membership = m;
-        return myAssert(testInfo, validator.isMembership(membership),
+        return myAssert(testInfo, validator.isMembership(m),
           'create memebership did not return a valid membership');
       })
       // Wait for the expected events
       .then(() => waitForPromisesWithTimeout(spawnEvents, this.preMochaTimeout, testInfo)
-      .then(() => {
-        userCreatedRoomBot = testInfo.out.newBot;
-        this.createBotEventHandlers(userCreatedRoomBot);
-        if (!shouldFail) {
-          myAssert(testInfo, framework.getBotByRoomId(userCreatedRoomBot.room.id),
-            'After spawn new bot is not in framework\'s bot array');
-        }
-        return userCreatedRoomBot;
-      }).then((bot) => checkInterimtestInfo(testInfo, bot)));
+        .then(() => {
+          let bot = testInfo.out.newBot;
+          this.createBotEventHandlers(bot);
+          if (!shouldFail) {
+            myAssert(testInfo, framework.getBotByRoomId(bot.room.id),
+              'After spawn new bot is not in framework\'s bot array');
+          }
+          return bot;
+        }).then((bot) => checkInterimtestInfo(testInfo, bot)));
   },
 
   botAddUsersToSpace: function (framework, testInfo, userEmails) {
@@ -295,7 +270,7 @@ module.exports = {
       eventPromises = this.registerMembershipDeletedEventsWhenDisallowedUserExits(framework, testInfo, numDisallowedUsersInSpace);
     } else if (guideRemoved) {
       // A currently uncovered test case is removing one guide when another is still present
-      eventPromises = this.registerGuideRemovedFromSpaceEvents(framework, testInfo, numDisallowedUsersInSpace);
+      eventPromises = this.registerGuideRemovedFromSpaceEvents(framework, testInfo);
     } else {
       eventPromises = this.registerMembershipDeletedHandlers(framework, testInfo);
     }
@@ -314,23 +289,6 @@ module.exports = {
       }).then(() => checkInterimtestInfo(testInfo));
   },
 
-  registerMembershipHandlers: function (framework, bot, testInfo) {
-    //initTestInfo(testInfo);
-    let eventPromises = [];
-    // These events should occur with a new membership
-    eventPromises.push(new Promise((resolve) => {
-      this.frameworkMembershipCreatedHandler(framework, testInfo, resolve);
-    }));
-    eventPromises.push(new Promise((resolve) => {
-      this.frameworkMemberEntersHandler(framework, testInfo, resolve);
-    }));
-    eventPromises.push(new Promise((resolve) => {
-      bot.memberEntersHandler(testInfo, resolve);
-    }));
-
-    return (eventPromises);
-  },
-
   registerMembershipEventsForGuideAdded: function (framework, disallowedEmails, testInfo) {
     //initTestInfo(testInfo);
     let eventPromises = [];
@@ -347,11 +305,11 @@ module.exports = {
     if (framework.membershipRulesAllowedResponse) {
       // When Guides are removed from space with bot expect a 
       // message from the bot saying it won't work
-        testInfo.checkMembershipRulesAllowedResponse = true;
-        eventPromises.push(new Promise((resolve) => {
+      testInfo.checkMembershipRulesAllowedResponse = true;
+      eventPromises.push(new Promise((resolve) => {
         this.frameworkMessageCreatedEventHandler(framework, testInfo, resolve);
-        }));
-      }
+      }));
+    }
   
     swallowedEvents = ['memberEnters', 'spawn']; 
     eventPromises.push(new Promise((resolve) => {
@@ -403,7 +361,7 @@ module.exports = {
       // Finally, we will get some membership-rules events, 
       // and one "swallowed" memberEnters for each dissallowed user
       swallowedEvents = ['despawn']; 
-    } else if (("guideEmails" in framework) && framework.guideEmails.length &&
+    } else if (('guideEmails' in framework) && framework.guideEmails.length &&
               framework.membershipRulesDisallowedResponse) {
       // Bot in Guided Mode being added to a space with no guides expect a 
       // message from the bot saying it won't work and a "swallowed" spawn event
@@ -478,7 +436,7 @@ module.exports = {
         }
         // Finally, we will get some membership-rules events, 
         swallowedEvents.push('memberEnters');
-        swallowedEvents.push('despawn')
+        swallowedEvents.push('despawn');
         disallowedMemberAdded = true;
       } else {
         // These events occur when a user is added to a disabled bot
@@ -517,7 +475,7 @@ module.exports = {
     return (eventPromises);
   },
 
-  registerGuideRemovedFromSpaceEvents: function (framework, testInfo, numDisallowedUsersInSpace) {
+  registerGuideRemovedFromSpaceEvents: function (framework, testInfo) {
     let eventPromises = [];
     let swallowedEvents;
     // Framework always gets the membership change event
@@ -535,12 +493,12 @@ module.exports = {
     // message from the bot saying it won't work
       testInfo.checkMembershipRulesDisallowedResponse = true;
       eventPromises.push(new Promise((resolve) => {
-      this.frameworkMessageCreatedEventHandler(framework, testInfo, resolve);
+        this.frameworkMessageCreatedEventHandler(framework, testInfo, resolve);
       }));
     }
     // Finally, we will get some membership-rules events, a "swallowed" memberExits
     // and a message about the re-spawning
-    swallowedEvents = ['despawn']
+    swallowedEvents = ['despawn'];
     eventPromises.push(new Promise((resolve) => {
       this.frameworkMembershipRulesEventHandler(framework,
         swallowedEvents, testInfo, true, resolve);
@@ -597,21 +555,22 @@ module.exports = {
         this.frameworkDespawnHandler(framework, testInfo, resolve);
       }));
     } else {
+      // Wait for the membership rules despawn event
       // There is no 'stop' event because the bot is not in the 'started' state
-      swallowedEventsArray = ['despawn'];
       leaveSpaceEvents.push(new Promise((resolve) => {
-        this.frameworkMembershipRulesEventHandler(framework,
-          swallowedEventsArray, testInfo, true, resolve);
-        }));
+        this.frameworkMembershipRulesEventHandler(framework, ['despawn'],
+          testInfo, true, resolve);
+      }));
     }
   
     return testInfo.config.botUnderTest.exit()
       .then(() => waitForPromisesWithTimeout(leaveSpaceEvents, this.preMochaTimeout, testInfo)
-      .then(() => checkInterimtestInfo(testInfo)));
+        .then(() => checkInterimtestInfo(testInfo)));
   },
 
   botCreateSpace: function (framework, testInfo, members) {
     initTestInfo(testInfo);
+    let botCreatedRoomBot = null;
     // Wait for the events associated with a new membership before completing test..
     const roomCreated = new Promise((resolve) => {
       this.frameworkRoomCreatedHandler(framework, testInfo, resolve);
@@ -627,18 +586,18 @@ module.exports = {
       .then((b) => {
         botCreatedRoomBot = b;
         myAssert(testInfo, validator.isBot(b),
-          `Bot returned by bot.newRoom is not valid.`);
+          'Bot returned by bot.newRoom is not valid.');
         myAssert(testInfo, validator.isRoom(b.room),
-          `Room returned by bot.newRoom is not valid.`);
+          'Room returned by bot.newRoom is not valid.');
         this.createBotEventHandlers(b);
-        return waitForPromisesWithTimeout([roomCreated], this.preMochaTimeout, testInfo)
+        return waitForPromisesWithTimeout([roomCreated], this.preMochaTimeout, testInfo);
       })
       // Wait for framework's membershipCreated event
       .then(() => {
         myAssert(testInfo, (testInfo.out.room.id == botCreatedRoomBot.room.id),
           'Room from framework roomCreated event does not match ' +
           'the one in the bot returned by newRoom()');
-        return waitForPromisesWithTimeout([membershipCreatedEvent], this.preMochaTimeout, testInfo)
+        return waitForPromisesWithTimeout([membershipCreatedEvent], this.preMochaTimeout, testInfo);
       })
       .then(() => {
         myAssert(testInfo, (testInfo.out.membership.id === botCreatedRoomBot.membership.id),
@@ -662,14 +621,14 @@ module.exports = {
     // We mention the bot when the test is running as a bot account
     // Only register for mention events, if we are mentioning the bot
     let isMention = false;
-    let bot = testInfo.config.botUnderTest
-    let markdown = testData.msgText
+    let bot = testInfo.config.botUnderTest;
+    let markdown = testData.msgText;
     if ((framework.isBotAccount) && (testInfo.config.roomUnderTest.type != 'direct')) {
       // Add a bot mention at the beginning of the message or position indicated
       if ('mentionIndex' in testData) {
-        let words = markdown.split(" ");
+        let words = markdown.split(' ');
         words.splice(testData.mentionIndex, 0, `<@personId:${bot.person.id}>`);
-        markdown = words.join(" ");
+        markdown = words.join(' ');
       } else {
         markdown = `<@personId:${bot.person.id}> ${markdown}`;
       }
@@ -677,7 +636,7 @@ module.exports = {
     }
 
     // As the user, send the message, mentioning the bot
-    msgObj = {
+    let msgObj = {
       roomId: bot.room.id,
       markdown: markdown
     };
@@ -702,9 +661,9 @@ module.exports = {
           myAssert(testInfo, validator.objIsEqual(t, testInfo.out.trigger),
             `trigger returned in framework.hears(${info.phrase}) was not as expected`);
           myAssert(testInfo, validator.objIsEqual(t.message, testInfo.out.message),
-          `trigger.message returned in framework.hears(${info.phrase}) was not as expected\n
+            `trigger.message returned in framework.hears(${info.phrase}) was not as expected\n
             got: "${t.message.text}", expected: ${testInfo.out.message.text}`);
-          if (("command" in info) && ("prompt" in info)) {
+          if (('command' in info) && ('prompt' in info)) {
             myAssert(testInfo, t.command == info.command,
               `trigger.command returned in framework.hears(${info.phrase}) was not as expected`);
             myAssert(testInfo, t.prompt == info.prompt,
@@ -716,7 +675,7 @@ module.exports = {
       if (bot.active) {
         // Only wait for it to be called if our bot is active (not disabled by membership rules)
         testInfo.in.expected.push(`hears(${info.phrase})`);
-        framework.debug(`Adding framework.hears(${info.phrase}) for test "${testInfo.config.testName}"`)
+        framework.debug(`Adding framework.hears(${info.phrase}) for test "${testInfo.config.testName}"`);
         eventPromises.push(calledHearsPromise);
       }
     });
@@ -725,14 +684,13 @@ module.exports = {
     // kick it all off with a message
     return testInfo.config.userUnderTest.messages.create(msgObj)
       .then((m) => {
-        message = m;
-        myAssert(testInfo, validator.isMessage(message),
+        myAssert(testInfo, validator.isMessage(m),
           `Test:${testInfo.config.testName}create message did not return a valid message`);
         // Wait for all the event handlers and the heard handler to fire
         return waitForPromisesWithTimeout(eventPromises, this.preMochaTimeout, testInfo);
       })
       .then(() => checkInterimtestInfo(testInfo))
-      .then(() => when(testInfo.out.trigger))
+      .then(() => when(testInfo.out.trigger));
   },
 
   botRespondsToTrigger: function (framework, testInfo, shouldBeAllowed) {
@@ -749,10 +707,10 @@ module.exports = {
     if (!testInfo.config.priorTestsTrigger) {
       if (bot.active) {
         // This can occur if the previous tests failed
-        return when.reject(new Error(`${testInfo.config.testName} didn\'t run. No trigger to respond to`));
+        return when.reject(new Error(`${testInfo.config.testName} didn't run. No trigger to respond to`));
       } else {
         // No trigger with a deactivated bot is normal.
-        botResponse.msgText = 'Membership Rules should have prevented this message from being sent!'
+        botResponse.msgText = 'Membership Rules should have prevented this message from being sent!';
       }
     } else {
       // Builds the response based on the trigger
@@ -763,7 +721,7 @@ module.exports = {
     }
     framework.debug(botResponse);
 
-    return this.botSendsMessage(framework, testInfo, botResponse, shouldFail)
+    return this.botSendsMessage(framework, testInfo, botResponse, shouldFail);
   },
 
   botSendsMessage: function(framework, testInfo, botMsgTest, shouldFail) {
@@ -771,9 +729,9 @@ module.exports = {
     let frameworkMessageFormat = framework.messageFormat; 
     let rejectMessage = `"${testInfo.config.testName}" failed:`; 
     let botMethod = ('botMethod' in botMsgTest) ? botMsgTest.botMethod : 'say';
-    let sentText = (botMsgTest.msgObject?.text) ? botMsgTest.msgObject.text : botMsgTest.msgText
+    let sentText = (botMsgTest.msgObject?.text) ? botMsgTest.msgObject.text : botMsgTest.msgText;
     let sentMarkdown = false; 
-    let sentFiles = (botMsgTest.msgObject?.file) ? botMsgTest.msgObject.file : botMsgTest.file 
+    let sentFiles = (botMsgTest.msgObject?.file) ? botMsgTest.msgObject.file : botMsgTest.file; 
     let sayPromise;
     let message = {};
 
@@ -797,16 +755,17 @@ module.exports = {
     // When the bot sends a message the framework WILL generate a
     // messageCreated event, but will not generate other message related events
     // that occur when the message is sent by any other member in the space
+    let messageEvent = null;
     if ((!shouldFail) && (bot.active)) {
       if (botMethod != 'censor') {
         messageEvent = new Promise((resolve) => {
           this.frameworkMessageCreatedEventHandler(framework, testInfo, resolve);
         });
-       } else {
+      } else {
         messageEvent = new Promise((resolve) => {
           this.frameworkMessageDeletedEventHandler(framework, testInfo, resolve);
         });                
-       }
+      }
     }
 
     if ('frameworkFormat' in botMsgTest) {
@@ -833,7 +792,7 @@ module.exports = {
     } else if (botMethod == 'sendCard') {
       myAssert(('cardJson' in botMsgTest),
         `${rejectMessage} invalid bot message test. If botMethod=="sendCard", test must include "cardJson"`);
-      cardJson = require(botMsgTest.cardJson);
+      let cardJson = require(botMsgTest.cardJson);
       if ('fallback' in botMsgTest) {
         sayPromise = bot.sendCard(cardJson, botMsgTest.fallback);
       } else {
@@ -849,26 +808,26 @@ module.exports = {
         } else if ('msgObject' in botMsgTest) {
           sayPromise = bot.say(botMsgTest.format, botMsgTest.msgObject);
         } else {
-          when.reject(new Error(`invalid bot message test. If "format" is set, test must also contain "msgObject" or "msgText"`))
+          when.reject(new Error('invalid bot message test. If "format" is set, test must also contain "msgObject" or "msgText"'));
         }
       } else if ('msgText' in botMsgTest) {
         sayPromise = bot.say(botMsgTest.msgText);
       } else if ('msgObject' in botMsgTest) {
         sayPromise = bot.say(botMsgTest.msgObject);
       } else {
-        when.reject(new Error(`invalid bot message test. bot.say test must contain "msgObject" or "msgText"`))
-    }
+        when.reject(new Error('invalid bot message test. bot.say test must contain "msgObject" or "msgText"'));
+      }
     }
     return when(sayPromise)
       .then((m) => {
         if (botMethod != 'censor') {
           message = m;
-          framework.messageFormat = frameworkMessageFormat
+          framework.messageFormat = frameworkMessageFormat;
           myAssert(testInfo, validator.isMessage(m),
             `${rejectMessage} bot.${botMethod} did not return a valid message`);
           if (sentText) {
             myAssert(testInfo, m.text == sentText,
-            `${rejectMessage} bot.${botMethod} did not return a message with same text field`);
+              `${rejectMessage} bot.${botMethod} did not return a message with same text field`);
           }
           if (sentMarkdown) {
             myAssert(testInfo, m.markdown.length,
@@ -876,18 +835,18 @@ module.exports = {
           }
           if (sentFiles) {
             myAssert(testInfo, m.files.length,
-            `${rejectMessage} bot.${botMethod} did not return a message webex file URLs`);
+              `${rejectMessage} bot.${botMethod} did not return a message webex file URLs`);
           }
           if (botMethod == 'sendCard') {
             myAssert((typeof m.attachments === 'object'),
-            `${rejectMessage} bot.${botMethod} did not return a message with a card attachment`);  
+              `${rejectMessage} bot.${botMethod} did not return a message with a card attachment`);  
           }
         }
         return waitForPromisesWithTimeout([messageEvent], this.preMochaTimeout, testInfo);
       })
       .then(() => {
         if (shouldFail) {
-          let msg = `${testInfo.config.testName} bot.${botMethod} was successful but should have failed.`
+          let msg = `${testInfo.config.testName} bot.${botMethod} was successful but should have failed.`;
           console.error(msg);
           return when.reject(new Error(msg));
         }
@@ -895,21 +854,21 @@ module.exports = {
           `${rejectMessage} message returned by API did not match the one from the messageCreated event`);
         return checkInterimtestInfo(testInfo, testInfo.out.message);
       }).catch((e) => {
-        framework.messageFormat = frameworkMessageFormat
+        framework.messageFormat = frameworkMessageFormat;
         if (shouldFail) {
           // bot.say correctly failed due to membership rules
-          return when.resolve(true)
+          return when.resolve(true);
         }
         console.error(`${testInfo.config.testName} failed: ${e.message}`);
         return when.reject(new Error(e));
       });
   },
 
-  botDeletesSpace: function(framework, testInfo, numOtherUsers) {
+  botDeletesSpace: function(framework, testInfo) {
     initTestInfo(testInfo);
     let room = testInfo.config.roomUnderTest;
     myAssert(testInfo, validator.isRoom(room),
-        'Invalid testInfo.config.roomUnderTest in common.botDeletesSpace()');
+      'Invalid testInfo.config.roomUnderTest in common.botDeletesSpace()');
     return framework.webex.memberships.list({roomId: room.id})
       .then((memberships) => memberships.items.length - 1)
       .catch((e) => {
@@ -944,10 +903,10 @@ module.exports = {
       
         return testInfo.config.botUnderTest.implode()
           .then(() => waitForPromisesWithTimeout(implodeEvents, this.preMochaTimeout, testInfo)
-          .then(() => {
-            delete testInfo.multipleEvents;
-            return checkInterimtestInfo(testInfo);
-          }));
+            .then(() => {
+              delete testInfo.multipleEvents;
+              return checkInterimtestInfo(testInfo);
+            }));
       });
   },
 
@@ -968,7 +927,7 @@ module.exports = {
         bot.mentionedHandler(testInfo, resolve);
       }));
     }
-    if ("files" in msg) {
+    if ('files' in msg) {
       eventPromises.push(new Promise((resolve) => {
         this.frameworkFilesHandler(framework, testInfo, resolve);
       }));
@@ -988,7 +947,7 @@ module.exports = {
 
   getInactiveBotEventArray: function (isMention, framework, msgObj, testInfo, hearsInfo) {
     let eventPromises = [];
-    let swallowedEventsArray = []
+    let swallowedEventsArray = [];
 
     // Wait for the events associated with a new message before completing test..
     eventPromises.push(new Promise((resolve) => {
@@ -996,12 +955,12 @@ module.exports = {
     }));
     swallowedEventsArray = ['message'];
     hearsInfo.forEach(() => {
-      swallowedEventsArray.push('hears')
+      swallowedEventsArray.push('hears');
     });
     if (isMention) {
       swallowedEventsArray.push('mentioned');
     }
-    if ("files" in msgObj) {
+    if ('files' in msgObj) {
       swallowedEventsArray.push('files');
     }
     if (this.framework.membershipRulesStateMessageResponse) {
@@ -1111,7 +1070,7 @@ module.exports = {
           // Need more events to emit before resolving promise, register another handler
           this.frameworkMembershipCreatedHandler(framework, testInfo, promiseResolveFunction);
         } else {
-          delete testInfo.multipleEvents.membershipCreated
+          delete testInfo.multipleEvents.membershipCreated;
           promiseResolveFunction(myAssert(testInfo, id === framework.id),
             'id returned in framework.on("membershipCreated") is not the one expected');
         }    
@@ -1153,7 +1112,7 @@ module.exports = {
           // If this isn't the disabled message from the bot check it on the next event
           testInfo.checkMembershipRulesStateMessageResponse = true;
         }
-        return
+        return;
       } else if (testInfo.checkMembershipRulesDisallowedResponse) {
         delete testInfo.checkMembershipRulesDisallowedResponse;
         // Assert that the a bot is sending the configured membership
@@ -1175,7 +1134,7 @@ module.exports = {
         myAssert(testInfo, (message.markdown == framework.membershipRulesAllowedResponse),
           `Bot responded to a membership change which re-enabled it with "${message.markdown}",
           expected "${framework.membershipRulesAllowedResponse}".`); 
-        }
+      }
       promiseResolveFunction(myAssert(testInfo, validator.isMessage(message),
         'memssageCreated event did not include a valid message'));
     });
@@ -1286,7 +1245,7 @@ module.exports = {
         'membership returned in framework.on("memberAddedAsModerator") is not the one expected');
       myAssert(testInfo, validator.isMembership(membership),
         'membership returned in framework.on("memberAddedAsModerator") is not valid');
-        promiseResolveFunction(myAssert(testInfo, (id === framework.id),
+      promiseResolveFunction(myAssert(testInfo, (id === framework.id),
         'id returned in framework.on("personEmemberAddedAsModeratornters") is not the one expected'));
     });
   },
@@ -1304,7 +1263,7 @@ module.exports = {
         'membership returned in framework.on("memberExits") is not the one expected');
       myAssert(testInfo, validator.isMembership(membership),
         'membership returned in framework.on("memberExits") is not valid');
-        promiseResolveFunction(myAssert(testInfo, (id === framework.id),
+      promiseResolveFunction(myAssert(testInfo, (id === framework.id),
         'id returned in framework.on("memberExits") is not the one expected'));
     });
   },
@@ -1319,7 +1278,7 @@ module.exports = {
         'membership returned in framework.on("membershipDeleted") is not valid');
       testInfo.out.membership = membership;
       myAssert(testInfo, validator.isMembership(membership),
-        'membershipDeleted event did not include a valid membership')
+        'membershipDeleted event did not include a valid membership');
       if (testInfo.multipleEvents?.membershipDeleted) {
         if (--testInfo.multipleEvents.membershipDeleted > 0) {
           this.frameworkMembershipDeletedHandler(framework, 
@@ -1369,42 +1328,42 @@ module.exports = {
         'bot returned in framework.on("membershipRulesAction") is still in the active state');
       // TODO -- could add some more type and event validation?
       switch (type) {
-        case ('state-change'):
-          framework.debug(`Membership Rules forced a "${event}" event`);
-          break;
-        case ('event-swallowed'):
-          framework.debug(`Membership Rules swallowed a "${event}" event`);
-          if (event === 'spawn') {
-            // set the "swallowed bot" in testInfo so it can leave spaces
-            testInfo.out.newBot = bot;
-            myAssert(testInfo, (args.length >= 2), 'did not get a membershipRulesChange object ' +
+      case ('state-change'):
+        framework.debug(`Membership Rules forced a "${event}" event`);
+        break;
+      case ('event-swallowed'):
+        framework.debug(`Membership Rules swallowed a "${event}" event`);
+        if (event === 'spawn') {
+          // set the "swallowed bot" in testInfo so it can leave spaces
+          testInfo.out.newBot = bot;
+          myAssert(testInfo, (args.length >= 2), 'did not get a membershipRulesChange object ' +
               'in membershipRulesAction event handler');
-            let actorId = args[0];
-            let membershipRulesChange = args[1];
-            myAssert(testInfo, ((typeof membershipRulesChange == 'object') && 
+          let actorId = args[0];
+          let membershipRulesChange = args[1];
+          myAssert(testInfo, ((typeof membershipRulesChange == 'object') && 
               (typeof membershipRulesChange.membership === 'object')),
-              'membershipRulesChange event did not return expected membershipRulesChange object');
-            if (membershipRulesChange.membershipRule === "restrictedToEmailDomains") {
-              // Validate that the membership belongs to the actor
-              // This won't always be the case (it's the email of the first member who is not in
-              // the allowed domains list), but they are the same in all of our test cases.
-              myAssert(testInfo, (membershipRulesChange.membership.personId === actorId),
+          'membershipRulesChange event did not return expected membershipRulesChange object');
+          if (membershipRulesChange.membershipRule === 'restrictedToEmailDomains') {
+            // Validate that the membership belongs to the actor
+            // This won't always be the case (it's the email of the first member who is not in
+            // the allowed domains list), but they are the same in all of our test cases.
+            myAssert(testInfo, (membershipRulesChange.membership.personId === actorId),
               'membershipRulesChange.membership.personId was not the same as the person who attempted to add ' +
                 'the bot when processing a swallowed "spawn" event in the membershipRulesAction handler');
-            } else {
-              // Validate that the membership in the membershipRulesChange belongs to the bot
-              myAssert(testInfo, (membershipRulesChange.membership.personId === bot.person.id),
+          } else {
+            // Validate that the membership in the membershipRulesChange belongs to the bot
+            myAssert(testInfo, (membershipRulesChange.membership.personId === bot.person.id),
               'membershipRulesChange.membership.personId was not the same as the bot\'s' +
                 'person ID when processing a swallowed "spawn" event in the membershipRulesAction handler');
-            }
           }
-          break;
-        case ('hears-swallowed'):
-          framework.debug(`Membership Rules swallowed a "${event}" event`);
-          break;
-        default:
-          myAssert(testInfo, true === false, `Got unexpected membershipsRules type: ${type}`);
-          break;
+        }
+        break;
+      case ('hears-swallowed'):
+        framework.debug(`Membership Rules swallowed a "${event}" event`);
+        break;
+      default:
+        myAssert(testInfo, true === false, `Got unexpected membershipsRules type: ${type}`);
+        break;
       }
       var index = expectedEvents.indexOf(event);
       if (index < 0) {
@@ -1433,16 +1392,16 @@ module.exports = {
       if (removedBy) {
         testInfo.out.removedBy = removedBy;
       }
-      if ((membershipRuleChange) && (membershipRuleChange.membershipRule === "restrictedToEmailDomains")) {
+      if ((membershipRuleChange) && (membershipRuleChange.membershipRule === 'restrictedToEmailDomains')) {
         // This despawn was caused by a disallowed member add
         if (testInfo.disallowedUserEmail.length) {
           myAssert(testInfo, (-1 !== testInfo.disallowedUserEmail.indexOf(membershipRuleChange.membership.personEmail)),
             `${testInfo.config.testName}failure processing "despawn": email of dissallowed ` +
-          `member did not match any of the expected emails`);
+          'member did not match any of the expected emails');
         } else {
           myAssert(testInfo, testInfo.disallowedUserEmail === membershipRuleChange.membership.personEmail,
             `${testInfo.config.testName}failure processing "despawn": email of dissallowed ` +
-            `member did not match expected email`);
+            'member did not match expected email');
         }
       }
 
@@ -1535,7 +1494,7 @@ module.exports = {
         } else {
           promiseResolveFunction(true);
         }
-        });
+      });
     };
 
     activeBot.memberAddedAsModerator = function (testInfo, promiseResolveFunction) {
@@ -1605,14 +1564,13 @@ module.exports = {
   // Internal function to delete spaces leftover from previous test runs
   //and check if the test bot already has a 1-1 space with the test user
   cleanupFromPreviousTestsAndFindDirectSpace: function(framework, user) {
-    let botForUser1on1Space = null;
     let leftoverTestSpaceBots = [];
     for (let bot of framework.bots) {
       assert(validator.isBot(bot),
         'bot in framework.bots did not validate preoprly!');
       if ((bot.room.title === User_Test_Space_Title) ||
         (bot.room.title === Bot_Test_Space_Title)) {
-          leftoverTestSpaceBots.push(bot);
+        leftoverTestSpaceBots.push(bot);
       } else if (bot.room.type == 'direct') {
         if (bot.isDirectTo == user.emails[0]) {
           framework.debug(`Found existing direct space with ${bot.room.title}.  Will run direct message tests.`);
@@ -1621,7 +1579,7 @@ module.exports = {
       }
     }
     if (leftoverTestSpaceBots.length) {
-      let delete_promises = []
+      let delete_promises = [];
       framework.debug(`Removing ${leftoverTestSpaceBots.length} rooms left over from previous test...`);
       delete_promises = _.map(leftoverTestSpaceBots, b => {
         let testInfo = {
@@ -1640,7 +1598,7 @@ module.exports = {
           framework.debug(e.message);
           return when(true);
         })
-      .then(() => when(true));
+        .then(() => when(true));
     } else {
       return when(true);
     }      
@@ -1667,32 +1625,32 @@ function initTestInfo(testInfo) {
 }
 
 function registerUnexpectedEventsHandler (framework, testInfo) {
-    framework.debug('Setting a catch-all events listener to detect malformed tests');
-    framework.onAny((eventName, ...args) => {
-      if (eventName == 'log') {
-        framework.debug(args[0]);
-        return;
+  framework.debug('Setting a catch-all events listener to detect malformed tests');
+  framework.onAny((eventName, ...args) => {
+    if (eventName == 'log') {
+      framework.debug(args[0]);
+      return;
+    }
+    let msg = `Got an unhandled ${eventName} in test:"${testInfo.config.testName}"`;
+    if (eventName == 'membershipRulesAction') {
+      msg = `Got an unhandled ${eventName} of type:${args[0]}`;
+      if (('event-swallowed' == args[0]) || ('state-change' == args[0])) {
+        msg += `:${args[1]}`;
       }
-      let msg = `Got an unhandled ${eventName} in test:"${testInfo.config.testName}"`
-      if (eventName == 'membershipRulesAction') {
-        msg = `Got an unhandled ${eventName} of type:${args[0]}`;
-        if (('event-swallowed' == args[0]) || ('state-change' == args[0])) {
-          msg += `:${args[1]}`;
-        }
-        msg += ` in test:"${testInfo.config.testName}"`
-      }
-      if ((framework.listenerCount(eventName) == 0) && 
-        (testInfo.config.testName != "framework init")) {
-        console.error(msg);
-        console.error(args[0]);
-        testInfo.out.unexpectedEventMessage.push(msg);
-      }
-    });
+      msg += ` in test:"${testInfo.config.testName}"`;
+    }
+    if ((framework.listenerCount(eventName) == 0) && 
+        (testInfo.config.testName != 'framework init')) {
+      console.error(msg);
+      console.error(args[0]);
+      testInfo.out.unexpectedEventMessage.push(msg);
+    }
+  });
 }
 
 function removeUnexpectedEventsHandler(framework) {
-    framework.offAny();
-    framework.debug('Clearing the catch-all events listener as final test spot bot leaves');
+  framework.offAny();
+  framework.debug('Clearing the catch-all events listener as final test spot bot leaves');
 }
 
 
@@ -1700,7 +1658,7 @@ function removeUnexpectedEventsHandler(framework) {
 function checkInterimtestInfo(testInfo, retVal=null) {
   let msg = '';
   if (testInfo.out.assertErrors.length) {
-    msg += `Test "${testInfo.config.testName}" failed assertion test(s):\n`
+    msg += `Test "${testInfo.config.testName}" failed assertion test(s):\n`;
     testInfo.out.assertErrors.forEach((message) => {
       msg += `${message}\n`;
     });
@@ -1737,7 +1695,7 @@ function checkTestInfoAfterTimout(e, ti) {
   }
   if (e.message === 'Timeout expired') {
     let result = difference(ti.in.expected, ti.out.got);
-    let msg = `Timed out while waiting for framework events in test:${ti.config.testName}!\n`
+    let msg = `Timed out while waiting for framework events in test:${ti.config.testName}!\n`;
     if (result.length) {
       msg += ` -- Expected: ${ti.in.expected}\n`;
       msg += ` -- Got: ${ti.out.got}\n`;
@@ -1754,8 +1712,9 @@ function checkTestInfoAfterTimout(e, ti) {
 
 
 function waitForPromisesWithTimeout(promiseArray, preMochaTimeout, testInfo) {
-  eventPromises = Promise.all(promiseArray);
-  timeoutPromise = new Promise((resolve, reject) => {
+  let eventPromises = Promise.all(promiseArray);
+  let timeoutId;
+  let timeoutPromise = new Promise((resolve, reject) => {
     timeoutId = setTimeout(() => {
       return reject(new Error('Timeout expired'));
     }, preMochaTimeout);
@@ -1764,26 +1723,24 @@ function waitForPromisesWithTimeout(promiseArray, preMochaTimeout, testInfo) {
   return Promise.race([
     eventPromises.then(() => clearTimeout(timeoutId)),
     Promise.race([eventPromises, timeoutPromise]).catch((error) => {
-      return checkTestInfoAfterTimout(error, testInfo)
+      return checkTestInfoAfterTimout(error, testInfo);
     }),
   ]);  
 }
 
-  // Create a custom assert function that will update our testInfo object
-  // This is necessary because if we assert in an event handler the
-  // framework will catch the exception and the test may or may not faile
-function myAssert (thisInfo, eval, msg) {
-  if (!eval) {
-    thisInfo.out.assertErrors.push(msg)
-    assert(eval, msg)
+// Create a custom assert function that will update our testInfo object
+// This is necessary because if we assert in an event handler the
+// framework will catch the exception and the test may or may report the actual failure
+function myAssert (thisInfo, assertTest, msg) {
+  if (!assertTest) {
+    thisInfo.out.assertErrors.push(msg);
+    assert(assertTest, msg);
   }
 }
 
-
-
 function asUserCleanupFromPreviousTests(userWebex, framework) {
   // Todo -- handle paginated responses...
-  let deletePromises = []
+  let deletePromises = [];
   return userWebex.rooms.list()
     .then((rooms) => {
       for (let room of rooms.items) {
@@ -1799,7 +1756,3 @@ function asUserCleanupFromPreviousTests(userWebex, framework) {
       return when(true);
     });
 }
-
-
-
-

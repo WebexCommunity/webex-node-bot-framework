@@ -159,7 +159,7 @@ module.exports = exports = function (connectionUrl) {
             }
           }));
         }
-        return when.promise((resolve, reject) => redis.del(id, (err, result) => {
+        return when.promise((resolve) => redis.del(id, (err) => {
           if (err) {
             resolve(true);
           } else {
