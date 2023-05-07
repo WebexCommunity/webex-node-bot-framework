@@ -151,6 +151,41 @@ module.exports = {
       });
   },
 
+  userSendsDMToBot: function (framework, testInfo, markdown, heardPromise) {
+    initTestInfo(testInfo);
+    let eventPromises = [];
+
+    // Wait for the events associated with a new message before completing test..
+    eventPromises.push(new Promise((resolve) => {
+      this.frameworkMessageCreatedEventHandler(framework, testInfo, resolve);
+    }));
+
+    // If there is a heardPromise this is a late Discovery Test
+    if (heardPromise) {
+      eventPromises.push(new Promise((resolve) => {
+        this.frameworkSpawnedHandler(framework, testInfo, resolve);
+      }));
+      eventPromises.push(heardPromise);
+    }
+
+    // As the user, send the message, mentioning the bot
+    return testInfo.config.userUnderTest.messages.create({
+      toPersonId: framework.person.id,
+      markdown: markdown
+    })
+      .then((m) => {
+        myAssert(testInfo, validator.isMessage(m),
+          'create message did not return a valid message');
+        testInfo.out.messageId = m.id;
+        // Wait for all the event handlers and the heard handler to fire
+        return waitForPromisesWithTimeout(eventPromises, this.preMochaTimeout, testInfo);
+      })
+      .catch((e) => {
+        console.error(`${testInfo.config.testName} failed: ${e.message}`);
+        return Promise.reject(e);
+      });
+  },
+
   addBotToSpace: function (framework, testInfo, shouldFail) {
     // Configure this test to Wait for the events associated with a new membership
     initTestInfo(testInfo);
