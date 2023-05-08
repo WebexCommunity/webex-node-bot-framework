@@ -10,18 +10,25 @@
 
 const Framework = require('../lib/framework');
 const Webex = require('webex');
+var common = require('./common/common');
+let testInfo  = common.testInfo;
+let assert = common.assert;
+let when = common.when;
+const _ = require('lodash');
+
 
 console.log('**********************************************');
 console.log('* Framework tests with late space discovery...');
 console.log('**********************************************\n');
 
 // Initialize the framework and user objects once for all the tests
-let framework, userWebex;
+let framework;
+let frameworkOptions = {};
 require('dotenv').config();
 if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   (typeof process.env.USER_API_TOKEN === 'string') &&
   (typeof process.env.HOSTED_FILE === 'string')) {
-  frameworkOptions = { token: process.env.BOT_API_TOKEN };
+  frameworkOptions.token = process.env.BOT_API_TOKEN;
   // This is the key to these tests, we wont discover any spaces on 
   // startup, just when a message:created event occurs
   frameworkOptions.maxStartupSpaces = 0;
@@ -29,8 +36,6 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   frameworkOptions.profileMsgProcessingTime = true;
 
   framework = new Framework(frameworkOptions);
-  let userOptions = {credentials: {access_token: process.env.USER_API_TOKEN}};
-  userWebex = Webex.init(userOptions);
 } else {
   console.error('Missing required environment variables:\n' +
     '- BOT_API_TOKEN -- token associatd with an existing bot\n' +
@@ -40,68 +45,90 @@ if ((typeof process.env.BOT_API_TOKEN === 'string') &&
   process.exit(-1);
 }
 
-
-// Load the common module which includes functions and variables
-// shared by multiple tests
-var common = require("./common/common");
+// Initialize the SDK for the user and set them in the test's common object
+let userOptions = {credentials: {access_token: process.env.USER_API_TOKEN}};
+let userWebex = Webex.init(userOptions);
 common.setFramework(framework);
 common.setUser(userWebex);
-let assert = common.assert;
-let validator = common.validator;
-let when = common.when;
 
+// Initialize the instance of framework that we will use across multiple tests
+describe('#framework', function() {
+  common.setMochaTimeout(this.timeout());
 
+  before(() => {
+    return common.initFramework('framework init', framework, userWebex)
+      .then(() => {
+        // Validate that the framework has no spawned bots initially
+        if (framework.bots.length) {
+          return when.reject(new Error('Framework.init() spawned bots despite maxStartupSpaces=0'));
+        }
+        console.log('Validated that framework initialized with no spawned bots as expected');
+        // Set a spawn handler to track the just-in-time spawned bot
+        framework.on('spawn', (bot, frameworkId) => {
+          console.log('Validated that a spawn event occurred after message was sent.');
+          assert((frameworkId === framework.id),
+            `In ${testInfo.config.testName}, the frameworkId passed to the spawned handler was not as expected`);
+        });
+      });
+  });
 
-// Start up an instance of framework that we will use across multiple tests
-describe('#framework', () => {
-  let testName = 'creates a bot just in time after message';
-  // Validate that framework starts and that we have a valid user
-  before(() => common.initFramework('framework init', framework, userWebex));
-
-  // Setup the promises for the events that come from user input that mentions a bot
-  // beforeEach(() => {
-  //   message = {};
-  //   // Wait for the events associated with a new message before completing test..
-  //   eventsData = {};
-  //   messageCreatedEvent = new Promise((resolve) => {
-  //     common.frameworkMessageCreatedEventHandler(testName, framework, eventsData, resolve);
-  //   });
-  //   frameworkMessageEvent = new Promise((resolve) => {
-  //     common.frameworkMessageHandler(testName, framework, eventsData, resolve);
-  //   });
-  // });
+  before(() => {
+    // Before starting the test validate that the test user has an
+    // existing 1-1 space with the test bot
+    let directSpaceExists = false;
+    return userWebex.memberships.list()
+      .then((m) => {
+        let directSpaces = _.filter(m.items, space => (space.roomType === 'direct'));
+        if (!directSpaces.length) {
+          return when.reject(new Error('Late Discovery tests only work if the test user and bot have an existing 1-1 space.'));
+        }
+        // Build a call to get memberships for all direct spaces
+        let lookupMemberships = _.map(directSpaces, s => {
+          return userWebex.memberships.list({roomId: s.roomId})
+            .then((m) => {
+              let theBot = _.filter(m.items, member => (member.personId == framework.person.id));
+              if (theBot.length) {
+                // Found a direct space with the bot, lets proceed!
+                directSpaceExists = true;
+              }
+              return when(true);
+            }).catch(() => when(true));
+        });
+        return when.all(lookupMemberships);
+      }).then(() => {
+        if (directSpaceExists) {
+          console.log('Validated that 1-1 Space exists between test user and bot.');
+          return when(true);
+        }
+        return when.reject(new Error('Late Discovery tests only work if the test user and bot have an existing 1-1 space.'));
+      });
+  });
 
   //Stop framework to shut down the event listeners
   after(() => common.stopFramework('shutdown framework', framework));
 
   // Test bot functions for direct messaging
   // These only work if the test bot and test user already have a direct space
-  it('creates a bot just in time after message', () => {
+  it('Sends a message to bot to force a just-in-time spawn', () => {
+    testInfo.config.testName = 'creates a bot just in time after message';
+    testInfo.config.userUnderTest = userWebex;
+    testInfo.out = {};
     // Wait for the hears event associated with the input text
     const heard = new Promise((resolve) => {
       framework.hears(/^hi.*/igm, (b, t) => {
         framework.debug('Bot heard message  that user posted');
+        assert((b.id == testInfo.out.newBot.id),
+          'Bot returned in framework.hears() does not match one returend in framework.on("spawn")');
+        assert((t.id == testInfo.out.messageId),
+          'Trigger returned in framework.hears() does not match the test message sent.');
+        console.log('Validated that framework.hears() was called with newly spawned bot from test message.');
         resolve(true);
       });
     });
 
-    // As the user, send the message, mentioning the bot
-    return userWebex.messages.create({
-      toPersonId: framework.person.id,
-      markdown: `Hi, this is a message with **no mentions**.`
-    })
-      .then((m) => {
-        message = m;
-        assert(validator.isMessage(message),
-          'create message did not return a valid message');
-        // Wait for all the event handlers and the heard handler to fire
-        return when(heard);
-        //return when.all([messageCreatedEvent, frameworkMessageEvent, heard]);
-      })
-      .catch((e) => {
-        console.error(`${testName} failed: ${e.message}`);
-        return Promise.reject(e);
-      });
+    // As the user, send a direct message to the bot
+    return common.userSendsDMToBot(framework, testInfo,
+      'Hi, this is a message with **no mentions**.', heard);
   });
 });
 

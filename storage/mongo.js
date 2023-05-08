@@ -150,7 +150,7 @@ class MongoStore {
    */
   getName() {
     return this.name;
-  };
+  }
 
   /**
    * Called by the framework, when a bot is spawned,
@@ -193,7 +193,7 @@ class MongoStore {
         this.logger.error(`Failed to contact DB on bot spawn for spaceId "${id}": ${e.message}.  Using default config`);
         return when(this.createDefaultConfig(id, initBotStorageData));
       });
-  };
+  }
 
   createDefaultConfig(id, initStorage) {
     debug(`Attempting to store default config for spaceId "${id}"`);
@@ -210,7 +210,7 @@ class MongoStore {
         console.error(`Failed to store default config for spaceId: "${id}": ${e.message}`);
         return when(initBotStorageData);
       });
-  };
+  }
 
   /**
    * Store key/value data.
@@ -257,7 +257,7 @@ class MongoStore {
         });
     }
     return when.reject(new Error('invalid args'));
-  };
+  }
 
   /**
    * Recall value of data stored by 'key'.
@@ -326,10 +326,10 @@ class MongoStore {
           }
         })
         .catch((e) => {
-          return when.reject(new Error(`Failed to find ${key} in recall() for spaceId "${id}"`));
+          return when.reject(new Error(`Failed to find ${key} in recall() for spaceId "${id}: ${e.msg}"`));
         });
     }
-  };
+  }
 
   /**
    * Forget a key or entire store.
@@ -378,7 +378,7 @@ class MongoStore {
           return when(val);
         } else {
           let update = {};
-          update[key] = "";
+          update[key] = '';
           return this.botStoreCollection.updateOne(
             { _id: id }, { $unset: update }, { upsert: true, writeConcern: 1 })
             .then((mongoResponse) => {
@@ -428,7 +428,7 @@ class MongoStore {
     }
     let event = appData.event;
     if (!this.metricsStoreCollection) {
-      return when.reject(new Error(`MongoStore.writeMetris(), no metrics collection ` +
+      return when.reject(new Error('MongoStore.writeMetris(), no metrics collection ' +
         `available.  Metric data for ${event} is lost.`));
     }
     if ((typeof bot !== 'object') || (!('room' in bot))) {
@@ -459,7 +459,7 @@ class MongoStore {
     } else {
       return this.writeMetricWithActorData(data, null);
     }
-  };
+  }
 
   /* Internal helper to write metrics after a syncrounous or async actor lookup */
   writeMetricWithActorData(data, actorPerson) {
@@ -478,7 +478,7 @@ class MongoStore {
         data.actorOrgId = actorPerson.orgId;
       }
     } catch (e) {
-      debug(`Unable to get actor info for metrics event.  Will write metric without it.`);
+      debug('Unable to get actor info for metrics event.  Will write metric without it.');
     }
     return this.metricsStoreCollection.insertOne(data)
       .then((mResponse) => {
@@ -490,8 +490,8 @@ class MongoStore {
       .catch((e) => {
         return when.reject(new Error(`Failed writing metric to database: ${e.message}.  Metric data is lost`));
       });
-  };
+  }
 
-};
+}
 
 module.exports = MongoStore;

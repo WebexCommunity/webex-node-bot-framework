@@ -1,10 +1,11 @@
 // template for creating custom storage modules
 
 'use strict';
+const when = require('when');
 
 module.exports = exports = function () {
   // define adaptor name and any other objects needed
-  const name = "template";
+  const name = 'template';
 
   return {
     /**
@@ -45,6 +46,9 @@ module.exports = exports = function () {
       // if not found, set the initial bot data passed in
       // if success, return promise that resolves to initBotData
       // if failure, returns a rejected promise
+      
+      // Remove this in your implementation
+      /* eslint no-unused-vars: 0 */
     },
 
     /**
@@ -62,6 +66,9 @@ module.exports = exports = function () {
       // if id does not exist, create
       // if success, return promise that resolves to value
       // if failure, returns a rejected promise
+
+      // Remove this in your implementation
+      /* eslint no-unused-vars: 0 */
     },
 
     /**
@@ -77,6 +84,9 @@ module.exports = exports = function () {
     recall: function (id, key) {
       // if exists, returns promise that resolves to value of id/key referenced
       // if does not exist, or a failure, returns a rejected promise
+
+      // Remove this in your implementation
+      /* eslint no-unused-vars: 0 */
     },
 
     /**
@@ -92,6 +102,9 @@ module.exports = exports = function () {
     forget: function (id, key) {
       // if exists, returns promise that resolves to value of deleted value
       // if does not exist, or a failure, returns a rejected promise
+
+      // Remove this in your implementation
+      /* eslint no-unused-vars: 0 */
     }
   };
 

@@ -1,0 +1,29 @@
+# This is copied from .gitignore
+# Folder view configuration files
+.DS_Store
+Desktop.ini
+
+# Thumbnail cache files
+._*
+Thumbs.db
+
+# Files that might appear on external disks
+.Spotlight-V100
+.Trashes
+
+# Environment specific files
+.env*
+node_modules
+
+# Private environments
+.env
+ToDo.private
+local-tests
+
+# Test version of sample and private tests
+example1.js
+maxStartupSpace.js
+demo-membership-rules.js
+
+# Future, utra-complicated membership rules tests
+test/common/guided-mode-with-email-rules-tests.js

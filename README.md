@@ -11,7 +11,7 @@ For developers who are familiar with flint, or who wish to port existing bots bu
 Feel free to join the ["Webex Node Bot Framework" space on Webex](https://eurl.io/#BJ7gmlSeU) to ask questions and share tips on how to leverage this framework.   This project is community supported so contributions are welcome.   If you are interested in making the framework better please see the [Contribution Guidelines](./docs/contributing.md).
 
 ## News
-* March, 2023 - Version 2.5.0 introduces two new elments of the [Trigger object](#Trigger)
+* May, 2023 - Version 2.5.0 introduces two new elments of the [Trigger object](#Trigger)
   * `trigger.command` will now contain the component of the user message that matched the `framework.hears` phrase.
   * `trigger.prompt` will contain all of the user message that was NOT part of the command or the bot mention.
 
@@ -22,6 +22,8 @@ framework.hears('echo', (bot, trigger) => {
   bot.say('markdown', `You said: ${trigger.prompt}`);
 }, '**echo** - I\'ll echo back the rest of your message');
 ```
+
+This release also includes updated [Contribution Guidelines](./docs/contributing.md) including details on [running the tests](./tests.md)
 
 * May, 2020 - Version 2 introduces a some new configuration options designed to help developers restrict access to their bot.   This can be helpful during the development phase (`guideEmails` parameter) or for production bots that should be restricted for use to users that have certain email domains (`restrictedToEmailDomains` parameter).   See [Membership-Rules README](./docs/membership-rules-readme.md)
   
@@ -369,7 +371,8 @@ This will cause your app to include framework logging which provides details abo
 <dt><a href="#Framework">Framework</a></dt>
 <dd></dd>
 <dt><a href="#Bot">Bot</a></dt>
-<dd></dd>
+<dd><p>Creates a Bot instance that is then attached to a Webex Team Room.</p>
+</dd>
 </dl>
 
 ## Objects
@@ -511,7 +514,8 @@ Options Object
 | [webhookUrl] | <code>string</code> |  | URL that is used for Webex API to send callbacks.  If not set events are received via websocket |
 | [webhookSecret] | <code>string</code> |  | If specified, inbound webhooks are authorized before being processed. Ignored if webhookUrl is not set. |
 | [httpsProxy] | <code>string</code> |  | If specified the https proxy to route request to webex through.  Ie: "https://proxy.mycompany.com:8090" |
-| [maxStartupSpaces] | <code>number</code> |  | If specified, the maximum number of spaces with our bot that the framework will discover during startup.           If not specified the framework will attempt to discover all the spaces the framework's identity is in and "spawn" a bot object for all of         them before emitting an "initiatialized" event.  For popular bots that belog to hundreds or thousands of spaces, this can result         in long startup times. Setting this to a number (ie: 100) will limit the number of bots spawned before initialization.         Bots that are driven by external events and rely on logic that checks if an appropriate bot object exists before sending a notification          should not modify the default.  Bots that are driven primarily by webex user commands to the bot may         set this to 0 or any positive number to facilitate a faster startup.  After initialization new bot objects are created ("spawned")         when the bot is added to a new space or, if the framework receives events in existing spaces that it did not discover during initialization.         In the case of these "late discoveries", bots objects are spawned "just in time".  This behavior is similar to the way         the webex teams clients work.  See the [Spawn Event docs](#"spawn") to discover how to handle the different types of spawn events. |
+| [maxStartupSpaces] | <code>number</code> |  | If specified, the maximum number of spaces with our bot that the framework will discover during startup.             If not specified the framework will attempt to discover all the spaces the framework's identity is in and "spawn" a bot object for all of           them before emitting an "initiatialized" event.  For popular bots that belog to hundreds or thousands of spaces, this can result           in long startup times. Setting this to a number (ie: 100) will limit the number of bots spawned before initialization.           Bots that are driven by external events and rely on logic that checks if an appropriate bot object exists before sending a notification            should not modify the default.  Bots that are driven primarily by webex user commands to the bot may           set this to 0 or any positive number to facilitate a faster startup.  After initialization new bot objects are created ("spawned")           when the bot is added to a new space or, if the framework receives events in existing spaces that it did not discover during initialization.           In the case of these "late discoveries", bots objects are spawned "just in time".  This behavior is similar to the way           the webex teams clients work.  See the [Spawn Event docs](#"spawn") to discover how to handle the different types of spawn events. |
+| [supressDirectSpaceSpawnFailures] | <code>boolean</code> | <code>true</code> | When a bot has a 1-1 space with a webex user who is no longer active the bot will fail to spawn.  By default these error messages are supressed.  Set to false to see them. |
 | [messageFormat] | <code>string</code> | <code>&quot;text&quot;</code> | Default Webex message format to use with bot.say(). |
 | [profileMsgProcessingTime] | <code>string</code> | <code>false</code> | Set to true to profile time spent in franmework and hears() callbacks per message. |
 | [initBotStorageData] | <code>object</code> | <code>{}</code> | Initial data for new bots to put into storage. |
@@ -519,11 +523,11 @@ Options Object
 | [webhookRequestJSONLocation] | <code>string</code> | <code>&quot;body&quot;</code> | The property under the Request to find the JSON contents. |
 | [removeWebhooksOnStart] | <code>Boolean</code> | <code>true</code> | If you wish to have the bot remove all account webhooks when starting. Ignored if webhookUrl is not set. |
 | [removeDeviceRegistrationsOnStart] | <code>Boolean</code> | <code>false</code> | If you use websockets and get "excessive device registrations" during iterative development, this will delete ALL device registrations.  Use with caution! Ignored if webhookUrl is set. |
-| [restrictedToEmailDomains] | <code>string</code> |  | Set to a comma seperated list of email domains the bot may interact with, ie "myco.com,myco2.com".           For more details see the [Membership-Rules README](./doc/membership-rules-readme.md) |
-| [guideEmails] | <code>string</code> |  | Set to a comma seperated list of Webex users emails who MUST be in a space in order for the bot to work, ie "user1@myco.com,user2@myco2.com".           For more details see the [Membership-Rules README](./doc/membership-rules-readme.md) |
-| [membershipRulesDisallowedResponse] | <code>string</code> |  | Message from bot when it detects it is in a space that does not conform to the membership rules          specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is         "Sorry, my use is not allowed for all the members in this space. Will ignore any new messages to me.".         No message will be sent if this is set to an empty string. |
-| [membershipRulesStateMessageResponse] | <code>string</code> |  | Message from bot when it is messaged in a space that does not conform to the membership rules         specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is         "Sorry, because my use is not allowed for all the members in this space I am ignoring any input.".         No message will be sent if this is set to an empty string. |
-| [membershipRulesAllowedResponse] | <code>string</code> |  | Message from bot when it detects that an the memberships of a space it is in have changed in         in order to conform with the membership rules specified by the The default messages is "I am now allowed to interact with all the members in this space and will no longer ignore any input.".         No message will be sent if this is set to an empty string. |
+| [restrictedToEmailDomains] | <code>string</code> |  | Set to a comma seperated list of email domains the bot may interact with, ie "myco.com,myco2.com".             For more details see the [Membership-Rules README](./doc/membership-rules-readme.md) |
+| [guideEmails] | <code>string</code> |  | Set to a comma seperated list of Webex users emails who MUST be in a space in order for the bot to work, ie "user1@myco.com,user2@myco2.com".             For more details see the [Membership-Rules README](./doc/membership-rules-readme.md) |
+| [membershipRulesDisallowedResponse] | <code>string</code> |  | Message from bot when it detects it is in a space that does not conform to the membership rules            specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is           "Sorry, my use is not allowed for all the members in this space. Will ignore any new messages to me.".           No message will be sent if this is set to an empty string. |
+| [membershipRulesStateMessageResponse] | <code>string</code> |  | Message from bot when it is messaged in a space that does not conform to the membership rules           specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is           "Sorry, because my use is not allowed for all the members in this space I am ignoring any input.".           No message will be sent if this is set to an empty string. |
+| [membershipRulesAllowedResponse] | <code>string</code> |  | Message from bot when it detects that an the memberships of a space it is in have changed in           in order to conform with the membership rules specified by the The default messages is "I am now allowed to interact with all the members in this space and will no longer ignore any input.".           No message will be sent if this is set to an empty string. |
 | [fedramp] | <code>Boolean</code> |  | If specified, enables the framework to support the Webex FedRAMP environment. |
 
 <a name="Framework+setWebexToken"></a>
@@ -805,6 +809,8 @@ before emitting and event
 <a name="Bot"></a>
 
 ## Bot
+Creates a Bot instance that is then attached to a Webex Team Room.
+
 **Kind**: global class  
 **Properties**
 
@@ -846,7 +852,7 @@ before emitting and event
     * [.sendCard(cardJson, fallbackText)](#Bot+sendCard) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.dmCard(person, cardJson, fallbackText)](#Bot+dmCard) ⇒ <code>Promise.&lt;Message&gt;</code>
     * [.uploadStream(filename, stream)](#Bot+uploadStream) ⇒ <code>Promise.&lt;Message&gt;</code>
-    * [.censor(messageId)](#Bot+censor) ⇒ <code>Promise.&lt;Message&gt;</code>
+    * [.censor(messageId)](#Bot+censor) ⇒ <code>Promise.&lt;null&gt;</code>
     * [.roomRename(title)](#Bot+roomRename) ⇒ <code>Promise.&lt;Room&gt;</code>
     * [.store(key, value)](#Bot+store) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
     * [.recall([key])](#Bot+recall) ⇒ <code>Promise.&lt;String&gt;</code> \| <code>Promise.&lt;Number&gt;</code> \| <code>Promise.&lt;Boolean&gt;</code> \| <code>Promise.&lt;Array&gt;</code> \| <code>Promise.&lt;Object&gt;</code>
@@ -855,8 +861,6 @@ before emitting and event
 <a name="new_Bot_new"></a>
 
 ### new Bot(framework, options, webex)
-Creates a Bot instance that is then attached to a Webex Team Room.
-
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1168,9 +1172,9 @@ Send a threaded message reply
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| replyTo | <code>String</code> \| <code>Object</code> |  | MessageId or message object or attachmentAction object to send to reply to. |
+| replyTo | <code>String</code> \| <code>Object</code> |  | MessageId or message object or attachmentAction object to send to reply to.                                    Passing a message object ensures that the reply will succeed even if the parent message is also a reply in a thread. |
 | message | <code>String</code> \| <code>Object</code> |  | Message to send to room. This can be a simple string, or a message object for advanced use. |
-| [format] | <code>String</code> | <code>text</code> | Set message format. Valid options are 'text' or 'markdown'. Ignored if message is an object |
+| [format] | <code>String</code> | <code>text</code> | Set message format. Valid options are 'text' or 'markdown'. Default format is used if not set. |
 
 **Example**  
 ```js
@@ -1181,31 +1185,26 @@ framework.hears('/hello', (bot, trigger) => {
 ```
 **Example**  
 ```js
-// Markdown Method 1 - Define markdown as default
-framework.messageFormat = 'markdown';
-framework.hears('/hello', (bot, trigger) => {
-  bot.reply(trigger.message, '**hello**, How are you today?');
-}, '**hello** - say hello to the bot);
-```
-**Example**  
-```js
-// Markdown Method 2 - Define message format as part of argument string
-framework.hears('/hello', (bot, trigger) => {
-  bot.reply(trigger.message, '**hello**, How are you today?', 'markdown');
-}, '**hello** - say hello to the bot);
-```
-**Example**  
-```js
-// Mardown Method 3 - Use an object (use this method of bot.reply() when needing to send a file in the same message as markdown text.
-framework.hears('/hello', (bot, trigger) => {
-  bot.reply(trigger.message, {markdown: '*Hello <@personEmail:' + trigger.personEmail + '|' + trigger.personDisplayName + '>*'});
-}, '**hello** - say hello to the bot);
-```
-**Example**  
-```js
 // Reply to a card when a user hits an action.submit button
 framework.on('attachmentAction', (bot, trigger) => {
   bot.reply(trigger.attachmentAction, 'Thanks for hitting the button');
+});
+```
+**Example**  
+```js
+// Reply to a reply
+// The Webex messaging API does not allow a reply to a reply.
+// If the replyTo parameter is a message object, the framework
+// will look for a parentId in that object and pass it to webex, effectively
+// allowing a framework based app to support a reply to a reply.
+framework.hears('This is a reply', (bot, trigger) => {
+  // This will work even if the parent message is already a reply
+  bot.reply(trigger.message, 'and this is a reply to a reply');
+  // This only works if replyTo is a message object.  It will fail if
+  // replyTo is the messageId of a message that is already a reply.
+  // So for example this won't work:
+  return bot.reply(trigger.message.id, 'this will fail if the message was already a reply')
+    .catch((e) => console.log(e.message));
 });
 ```
 <a name="Bot+dm"></a>
@@ -1385,10 +1384,11 @@ framework.hears('/file', (bot, trigger) => {
 ```
 <a name="Bot+censor"></a>
 
-### bot.censor(messageId) ⇒ <code>Promise.&lt;Message&gt;</code>
+### bot.censor(messageId) ⇒ <code>Promise.&lt;null&gt;</code>
 Remove Message By Id.
 
 **Kind**: instance method of [<code>Bot</code>](#Bot)  
+**Returns**: <code>Promise.&lt;null&gt;</code> - - API returns 204 with no content upon success  
 
 | Param | Type |
 | --- | --- |

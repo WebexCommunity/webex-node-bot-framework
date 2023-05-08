@@ -36,32 +36,10 @@ After rebuilding the docs check to see if README.md has changed and needs to be 
 
 ## Run (and update?) the tests
 
-This pacakage includes a suite of [mocha](https://mochajs.org/) tests that validate the functionality of the framework.  Before submitting a pull request, please run at least the basic tests as described below.  
+This pacakage includes a suite of [mocha](https://mochajs.org/) tests that validate the functionality of the framework.  Before submitting a pull request, please run at least the basic tests as described in the [Running the Tests](./tests.md) section of the test documentation.
 
-If your PR includes new functionality, you should add to the test suite.  It is recommended that you familiarize yourself with the tests BEFORE beginning any feature related work.  See the [Running the Tests](./tests.md) for more details on how the tests work.  
+If your PR includes new functionality, you should add to the test suite.  It is recommended that you familiarize yourself with the tests BEFORE beginning any feature related work.  Please review the [framework tests documentation](./tests.md), before beginning any feature functionality development.
 
-The basic tests require the following environment variables which will be read in from a .env file, in the test directory, if one is available.
-| Variable| Value | Purpose                    |
-| --------------- | -------------- | ------------------------------ | 
-|BOT_API_TOKEN             | Token of a bot created on [Webex For Developers](https://developer.webex.com/my-apps/new/bot)| Identity of bot to test framework with.  There is no need to have any actual bot code associated with this token, in fact its probably better if there isnt.|
-|USER_API_TOKEN             | Token of a user that the test bot will interact with.  This must be an existing Webex user that has logged in at least once.  Tokens can be grabbed from [Webex For Developers](https://developer.webex.com/docs/getting-started| This user will create rooms with the bot, (and vice versa) and exchange messages with it.  Rooms will be deleted at the end of the test.|
-|HOSTED_FILE             | URL for a file to upload in some of the message tests.| Any file suppported by Webex Teams will do, perhaps the one here: https://www.webex.com/content/dam/wbx/us/images/hp/hp_56565/Teams_Iconx2.png|
-|DEBUG             | framework| Optionally set DEBUG=framework for extended debug output during the test run.|
-
-When the environment is set, run the tests:
-```bash
-npm i --only=dev 
-npm run test
-```
-(note: the dependencies only need to be installed once)
-
-These tests exercise the most common tasks in the framework including creating, deleting and modifying spaces and space memberships, responding to messages and validating all types of responses such as files, cards and replies.   Running this set of tests should be the bare minimum before submitting a PR.  
-
-Note that the test set will exercise tests in a 1-1 space with the user specified via the USER_API_TOKEN and the test bot specified with the BOT_API_TOKEN **if this space already exists**, however it will not create this space since there is no way to "clean up" a 1-1 space.   To ensure that these tests run, manually create a 1-1 space between the test user and the test bot.  
-
-There are a variety of additional tests that exercise less used features such as the mongo storage driver or using the framework with an authroized user's token instead of a bot token.
-
-For more details on the full set of tests and guidelines for how to create users and bots in order to generate the tokens needed for the tests see [Running the Tests](./tests.md)
 
 # Support this Project
 
