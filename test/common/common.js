@@ -1578,7 +1578,6 @@ module.exports = {
   },
 
 
-
   // Additional framework events to-do
   // attachmentAction
   // files (and for bot)
@@ -1687,7 +1686,6 @@ function removeUnexpectedEventsHandler(framework) {
   framework.offAny();
   framework.debug('Clearing the catch-all events listener as final test spot bot leaves');
 }
-
 
 
 function checkInterimtestInfo(testInfo, retVal=null) {
