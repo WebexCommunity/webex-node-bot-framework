@@ -27,6 +27,11 @@ module.exports = {
     'semi': [
       'error',
       'always'
-    ]
+    ],
+    'eol-last': [
+      'error',
+      'always'
+    ],
+    'no-multiple-empty-lines': 'error'
   }
 };
