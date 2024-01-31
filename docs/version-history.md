@@ -1,5 +1,9 @@
 # Version History
 
+## v 2.5.1
+* Bump dependencies to remove security vulnerabilities.
+* Override upstream packages use of request with postman-request
+
 ## v 2.5.0
 * Added the new `command` and `prompt` elements to the `trigger` object that is passed as a parameter to matching `framework.hears()` callbacks.
   * `trigger.command` will be the portion of the user message that matched the phrase specified in the `framework.hears()`
