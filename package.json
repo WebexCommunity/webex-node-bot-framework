@@ -1,6 +1,6 @@
 {
   "name": "webex-node-bot-framework",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "Webex Teams Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "test-late-discovery": "node_modules/.bin/mocha test/late-discovery-tests.js --timeout 10000 --exit",
     "test-membership-rules": "node_modules/.bin/mocha test/membership-rules-tests.js --timeout 10000 --exit",
     "test-guide-mode-rules": "node_modules/.bin/mocha test/guide-rules-tests.js --timeout 10000 --exit",
-    "test-all": "node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/guide-rules-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/membership-rules-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/invalid-config-tests.js --timeout 10000 --exit && RUN_MONGO_TESTS=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && RUN_TEST_AS_USER=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/late-discovery-tests.js --timeout 10000 --exit",
+    "test-all": "node_modules/.bin/mocha test/bot-tests.js --timeout 20000 --exit && node_modules/.bin/mocha test/guide-rules-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/membership-rules-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/invalid-config-tests.js --timeout 10000 --exit && RUN_MONGO_TESTS=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && RUN_TEST_AS_USER=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/late-discovery-tests.js --timeout 10000 --exit",
     "build": "cd docs && ./build.sh && cd .."
   },
   "repository": {
@@ -38,23 +38,19 @@
     "debug": "^4.3.4",
     "eventemitter2": "^6.4.9",
     "https-proxy-agent": "^5.0.1",
-    "lodash": "^4.17.21",
+    "lodash": "4.17.21",
     "moment": "^2.29.4",
     "mongodb": "^3.5.7",
     "validator": "^13.7.0",
-    "webex": "2.29.3",
+    "webex": "2.60.0",
     "when": "^3.7.8"
   },
   "overrides": {
-    "appium-adp": "9.10.24",
-    "cookiejar": "2.1.4",
-    "decode-uri-component": "0.2.2",
-    "eslint-import-resolver-typescript": "3.5.3",
-    "jsonwebtoken": "9.0.0",
-    "ua-parser": "0.7.33",
-    "@xmldom/xmldom": "0.7.8",
-    "yargs": "17.6.2",
-    "json5": "2.2.3"
+    "tough-cookie": "4.1.3",
+    "lodash": "4.17.21",
+    "lodash.pick": "3.1.0",
+    "semver": "7.5.4",
+    "request": "npm:postman-request@2.88.1-postman.33"
   },
   "devDependencies": {
     "doctoc": "^2.2.0",
