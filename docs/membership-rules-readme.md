@@ -10,7 +10,7 @@ In many cases developers may build bots that are meant to be used only by employ
 
 Sometimes, it may be desirable for the bot to be functional only when it is in spaces that have specific people in them. For example when a bot is first being developed, the developer may want the bot to only work in spaces that they are in.  They can then invite other users to these spaces to provide them with a "guided experience" of the bot. Setting the framework config's  `guideEmails` parameter to a comma separated list of webex user email addreses instructs the framework to essentially ignore any spaces where the membership list does not include a guide.
 
-If both `restrictedToEmailDomans` and `guideEmails` are set the domain restrictions take precedence, meaning that guides MUST belong to one of the restricted domains.
+If both `restrictedToEmailDomains` and `guideEmails` are set the domain restrictions take precedence, meaning that guides MUST belong to one of the restricted domains.
 
 ## How it works
 
