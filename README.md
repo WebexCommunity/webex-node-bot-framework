@@ -97,6 +97,15 @@ mkdir myproj
 cd myproj
 npm install webex-node-bot-framework
 ```
+#### Configure .env file
+convert .env.local file to .env file
+   # Copy this file to .env and replace with live values
+   BOTTOKEN="YOUR_BOT_ACCESS_TOKEN"
+   
+   # Optional: If you want to use webhooks instead of websockets uncomment the following lines
+   # WEBHOOKURL="http://_REPLACE_THIS_WITH_NGROK_URL_.ngrok.io"
+   # PORT=7001
+
 #### Example Template Using Express
 ```js
 var Framework = require('webex-node-bot-framework'); 
