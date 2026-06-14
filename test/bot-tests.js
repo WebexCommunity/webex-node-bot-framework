@@ -5,7 +5,7 @@
  */
 
 const Framework = require('../lib/framework');
-const Webex = require('webex');
+const Webex = require('webex-node');
 let MongoStore = {};
 
 // Initialize the framework and user objects once for all the tests

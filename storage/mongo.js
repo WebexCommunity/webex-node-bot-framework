@@ -81,7 +81,6 @@ class MongoStore {
     this.memStore = {};
 
     // this.connectUrl = encodeURI(`mongodb+srv://${config.mongoUser}:${config.mongoPass}@${config.mongoConnectionStringSuffix}`);
-    // this.connectUrl = encodeURI(`mongodb+srv://tropoBot:7M9rdmW6Goq1yAwg@cluster0-5rfnd.mongodb.net/new-cardSchool-dev?retryWrites=true&w=majority`);
     this.connectUrl = encodeURI(config.mongoUri);
 
     // default to false if the value is not set in the config

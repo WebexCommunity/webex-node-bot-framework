@@ -1,17 +1,17 @@
 {
   "name": "webex-node-bot-framework",
-  "version": "2.5.1",
+  "version": "3.0.0",
   "description": "Webex Teams Bot Framework for Node JS",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit",
+    "test": "node_modules/.bin/mocha test/bot-tests.js --timeout 30000 --exit",
     "test-invalid-config": "node_modules/.bin/mocha test/invalid-config-tests.js --timeout 10000 --exit",
-    "test-as-user": "RUN_TEST_AS_USER=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit",
-    "test-mongo": "RUN_MONGO_TESTS=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit",
-    "test-late-discovery": "node_modules/.bin/mocha test/late-discovery-tests.js --timeout 10000 --exit",
-    "test-membership-rules": "node_modules/.bin/mocha test/membership-rules-tests.js --timeout 10000 --exit",
-    "test-guide-mode-rules": "node_modules/.bin/mocha test/guide-rules-tests.js --timeout 10000 --exit",
-    "test-all": "node_modules/.bin/mocha test/bot-tests.js --timeout 20000 --exit && node_modules/.bin/mocha test/guide-rules-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/membership-rules-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/invalid-config-tests.js --timeout 10000 --exit && RUN_MONGO_TESTS=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && RUN_TEST_AS_USER=true node_modules/.bin/mocha test/bot-tests.js --timeout 10000 --exit && node_modules/.bin/mocha test/late-discovery-tests.js --timeout 10000 --exit",
+    "test-as-user": "RUN_TEST_AS_USER=true node_modules/.bin/mocha test/bot-tests.js --timeout 30000 --exit",
+    "test-mongo": "RUN_MONGO_TESTS=true node_modules/.bin/mocha test/bot-tests.js --timeout 30000 --exit",
+    "test-late-discovery": "node_modules/.bin/mocha test/late-discovery-tests.js --timeout 30000 --exit",
+    "test-membership-rules": "node_modules/.bin/mocha test/membership-rules-tests.js --timeout 30000 --exit",
+    "test-guide-mode-rules": "node_modules/.bin/mocha test/guide-rules-tests.js --timeout 30000 --exit",
+    "test-all": "node_modules/.bin/mocha test/bot-tests.js --timeout 30000 --exit && node_modules/.bin/mocha test/guide-rules-tests.js --timeout 30000 --exit && node_modules/.bin/mocha test/membership-rules-tests.js --timeout 30000 --exit && node_modules/.bin/mocha test/invalid-config-tests.js --timeout 10000 --exit && RUN_MONGO_TESTS=true node_modules/.bin/mocha test/bot-tests.js --timeout 30000 --exit && RUN_TEST_AS_USER=true node_modules/.bin/mocha test/bot-tests.js --timeout 30000 --exit && node_modules/.bin/mocha test/late-discovery-tests.js --timeout 30000 --exit",
     "build": "cd docs && ./build.sh && cd .."
   },
   "repository": {
@@ -32,25 +32,50 @@
   "author": "JP Shipherd <jpbulk@gmail.com>",
   "license": "MIT",
   "engines": {
+    "node": ">=22",
     "npm": ">=8.3.0"
   },
   "dependencies": {
     "debug": "^4.3.4",
     "eventemitter2": "^6.4.9",
     "https-proxy-agent": "^5.0.1",
-    "lodash": "4.17.21",
+    "lodash": "4.18.1",
     "moment": "^2.29.4",
     "mongodb": "^3.5.7",
-    "validator": "^13.7.0",
-    "webex": "2.60.0",
+    "validator": "^13.15.35",
+    "webex-node": "3.12.0",
     "when": "^3.7.8"
   },
   "overrides": {
+    "@expo/bunyan": {
+      "uuid": "11.1.1"
+    },
+    "@expo/rudder-sdk-node": {
+      "uuid": "11.1.1"
+    },
+    "@xmldom/xmldom": "0.8.13",
+    "fast-xml-parser": "5.8.0",
+    "node-jose": {
+      "uuid": "11.1.1"
+    },
     "tough-cookie": "4.1.3",
-    "lodash": "4.17.21",
+    "joi": "18.2.1",
+    "lodash": "4.18.1",
     "lodash.pick": "3.1.0",
+    "postcss": "8.5.15",
+    "qs": "6.15.2",
+    "react-native": "0.73.11",
     "semver": "7.5.4",
-    "request": "npm:postman-request@2.88.1-postman.33"
+    "serialize-javascript": "7.0.5",
+    "send": "0.19.0",
+    "tar": "7.5.16",
+    "xcode": {
+      "uuid": "11.1.1"
+    },
+    "request": {
+      ".": "npm:postman-request@2.88.1-postman.48",
+      "uuid": "11.1.1"
+    }
   },
   "devDependencies": {
     "doctoc": "^2.2.0",

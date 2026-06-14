@@ -5,7 +5,7 @@
  */
 
 const Framework = require('../lib/framework');
-const Webex = require('webex');
+const Webex = require('webex-node');
 var common = require('./common/common');
 
 console.log('************************************');
