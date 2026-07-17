@@ -2,6 +2,8 @@
 
 ### Node JS Bot Framework for Cisco Webex
 
+> ⚠️ **Maintenance status:** This repository is maintained on a best-effort basis for security fixes, dependency and runtime updates, and low-risk compatibility work. Pull requests are still considered, but new feature development is not planned.
+
 This project is inspired by, and provides an alternate implementation of, the awesome [node-flint](https://github.com/flint-bot/flint/) framework by [Nick Marus](https://github.com/nmarus).  The framework makes it easy to quickly develop a Webex messaging bot, abstracting away some of the complexity of Webex For Developers interfaces, such as registering for events and calling REST APIs. A bot developer can use the framework to focus primarily on how the bot will interact with users in Webex, by writing "handlers" for various message or membership events in spaces where the bot has been added.
 
 The primary change in this implementation is that it is based on the [webex-jssdk](https://webex.github.io/webex-js-sdk) which continues to be supported as new features and functionality are added to Webex.  
