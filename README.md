@@ -82,7 +82,7 @@ This release also includes updated [Contribution Guidelines](./docs/contributing
   - [MongoStore](#mongostore)
 - [License](#license)
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<!-- END doctoc -->
 ## Installation
 
 #### Via Git
@@ -392,7 +392,7 @@ This will cause your app to include framework logging which provides details abo
 <dd><p>Framework log event.</p>
 <p>Applications may implement a framework.on(&quot;log&quot;) handler to process
 log messags from the framework, such as details about events that were
-not sent due to mebership rules.  See <a href="./doc/membership-rules-readme.md">Membership-Rules README</a></p>
+not sent due to mebership rules.  See <a href="./docs/membership-rules-readme.md">Membership-Rules README</a></p>
 </dd>
 <dt><a href="#event_stop">"stop"</a></dt>
 <dd><p>Framework stop event.</p>
@@ -525,8 +525,8 @@ Options Object
 | [webhookRequestJSONLocation] | <code>string</code> | <code>&quot;body&quot;</code> | The property under the Request to find the JSON contents. |
 | [removeWebhooksOnStart] | <code>Boolean</code> | <code>true</code> | If you wish to have the bot remove all account webhooks when starting. Ignored if webhookUrl is not set. |
 | [removeDeviceRegistrationsOnStart] | <code>Boolean</code> | <code>false</code> | If you use websockets and get "excessive device registrations" during iterative development, this will delete ALL device registrations.  Use with caution! Ignored if webhookUrl is set. |
-| [restrictedToEmailDomains] | <code>string</code> |  | Set to a comma seperated list of email domains the bot may interact with, ie "myco.com,myco2.com".             For more details see the [Membership-Rules README](./doc/membership-rules-readme.md) |
-| [guideEmails] | <code>string</code> |  | Set to a comma seperated list of Webex users emails who MUST be in a space in order for the bot to work, ie "user1@myco.com,user2@myco2.com".             For more details see the [Membership-Rules README](./doc/membership-rules-readme.md) |
+| [restrictedToEmailDomains] | <code>string</code> |  | Set to a comma seperated list of email domains the bot may interact with, ie "myco.com,myco2.com".             For more details see the [Membership-Rules README](./docs/membership-rules-readme.md) |
+| [guideEmails] | <code>string</code> |  | Set to a comma seperated list of Webex users emails who MUST be in a space in order for the bot to work, ie "user1@myco.com,user2@myco2.com".             For more details see the [Membership-Rules README](./docs/membership-rules-readme.md) |
 | [membershipRulesDisallowedResponse] | <code>string</code> |  | Message from bot when it detects it is in a space that does not conform to the membership rules            specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is           "Sorry, my use is not allowed for all the members in this space. Will ignore any new messages to me.".           No message will be sent if this is set to an empty string. |
 | [membershipRulesStateMessageResponse] | <code>string</code> |  | Message from bot when it is messaged in a space that does not conform to the membership rules           specified by the `restrictedToEmailDomains` and/or the `guideEmails` parameters.   Default messages is           "Sorry, because my use is not allowed for all the members in this space I am ignoring any input.".           No message will be sent if this is set to an empty string. |
 | [membershipRulesAllowedResponse] | <code>string</code> |  | Message from bot when it detects that an the memberships of a space it is in have changed in           in order to conform with the membership rules specified by the The default messages is "I am now allowed to interact with all the members in this space and will no longer ignore any input.".           No message will be sent if this is set to an empty string. |
@@ -1476,7 +1476,7 @@ Framework log event.
 
 Applications may implement a framework.on("log") handler to process
 log messags from the framework, such as details about events that were
-not sent due to mebership rules.  See [Membership-Rules README](./doc/membership-rules-readme.md)
+not sent due to mebership rules.  See [Membership-Rules README](./docs/membership-rules-readme.md)
 
 **Kind**: event emitted  
 **Properties**
